@@ -1,10 +1,10 @@
-#mixing rule:
-#==
+# mixing rule:
+#= =
 an operation on a vector of properties that returns a single sumber.
 is a weighted operation on p, by the weights x.
 # 
 
-==#
+= =#
 """
     mixing_rule(op, x, p)
 
@@ -20,18 +20,18 @@ function mixing_rule(op, x, p)
         res1 = zero(eltype(x))
         for i = 1:N
             res1 += p[i] * x[i]^2
-            for j = 1:i-1
+            for j = 1:i - 1
                 res1 += 2 * x[i] * x[j] * op(p[i], p[j])
             end
         end
     end
     return res1
 end
-#
-#Abstract mixing rule, generates a mixing rule,based on 
+# 
+# Abstract mixing rule, generates a mixing rule,based on 
 # an operation, so mij = xi*xj*op(pi,pj)*Aij
-#example: mixing_rule(geometric_mean_rule,x,Tc,1.-K)
-#
+# example: mixing_rule(geometric_mean_rule,x,Tc,1.-K)
+# 
 """
     mixing_rule(op, x, p,A)
 
@@ -48,19 +48,19 @@ function mixing_rule(op, x, p, A)
         res1 = zero(eltype(x))
         for i = 1:N
             res1 += p[i] * x[i]^2
-            for j = 1:i-1
+            for j = 1:i - 1
                 res1 += 2 * x[i] * x[j] * op(p[i], p[j]) * A[i, j]
             end
         end
     end
     return res1
 end
-#
-#Abstract asymetric mixing rule 
-#Adds a Asymetric matrix A_asym, and a op_sim(xi,xj,Aij)
-#the mayor example is the GERG2008 equation, where
-#op_asym(xi,xj,Aij) = (xi+xj)/(Aij^2*xi + xj)
-#
+# 
+# Abstract asymetric mixing rule 
+# Adds a Asymetric matrix A_asym, and a op_sim(xi,xj,Aij)
+# the mayor example is the GERG2008 equation, where
+# op_asym(xi,xj,Aij) = (xi+xj)/(Aij^2*xi + xj)
+# 
 """
     mixing_rule_asymetric(op, op_asym, x, p, A, A_asym)
 
@@ -80,7 +80,7 @@ function mixing_rule_asymetric(op, op_asym, x, p, A, A_asym)
         for i = 1:N
             x[i] != 0 && begin
                 res1 += p[i] * x[i]^2
-                for j = 1:i-1
+                for j = 1:i - 1
                     res1 +=
                         2 *
                         x[i] *
@@ -121,7 +121,7 @@ function mixing_matrix!(A, op, p)
         res1 = zero(eltype(p))
         for i = 1:N
             A[i, i] = p[i]
-            for j = 1:i-1
+            for j = 1:i - 1
                 A[i, j] = op(p[i], p[j])
                 A[j, i] = op(p[i], p[j])
             end
@@ -130,13 +130,20 @@ function mixing_matrix!(A, op, p)
     return A
 
 end
+
+
+
+
+
+
+
 """
     mixing_matrix!(op, p)
 
 returns a matrix of size nxn , where A[i,j] = op(p[i],p[j])
 """ 
-function mixing_matrix(op,p)
+function mixing_matrix(op, p)
     N = length(p)
-    A = Matrix{eltype(p)}(undef,N,N)
-    return mixing_matrix!(A,op,p)
+    A = Matrix{eltype(p)}(undef, N, N)
+    return mixing_matrix!(A, op, p)
 end
