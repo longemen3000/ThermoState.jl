@@ -8,7 +8,9 @@ include("utilities.jl")
 include("properties.jl")
 include("units.jl")
 include("spec.jl")
-export Spec
+include("specs_model.jl")
+
+export Spec,Specs,specs,value,specification,values
 export Enthalpy, Entropy, InternalEnergy, 
 Gibbs, Helmholtz, 
 Volume, Pressure, Temperature, Mass, Moles,
@@ -16,4 +18,4 @@ MassNumbers, MolNumbers, MassFractions, MolFractions,
 PhaseFractions, VaporFraction,
 MolecularWeight
 
-end # module,
+end # module
