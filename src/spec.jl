@@ -29,10 +29,6 @@ struct VaporFraction <: AbstractFractionSpec end
 # for now,in a different category
 struct MolecularWeight <: AbstractSpec end
 
-# for checking if there is a amount of mass specified:
-const TOTAL_MASS_SPECS = Union{Mass,Moles,MassNumbers,MolNumbers}
-
-
 # total units, function necessary to defining a new spec
 total_units(x::Enthalpy) = u"J"
 total_units(x::Entropy) = u"J/K"
@@ -40,8 +36,6 @@ total_units(x::InternalEnergy) = u"J"
 total_units(x::Gibbs) = u"J"
 total_units(x::Helmholtz) = u"J"
 total_units(x::Volume) = u"m^3"
-
-
 
 total_units(x::Pressure) = u"Pa"
 total_units(x::Temperature) = u"K"
@@ -58,6 +52,7 @@ total_units(x::VaporFraction) = Unitful.NoUnits
 mol_units(x::AbstractIntensiveSpec) = total_units(x) / u"mol"
 mass_units(x::AbstractIntensiveSpec) = total_units(x) / u"kg"
 
+
 struct Spec{T <: AbstractSpec,U}
     type::T
     val::U
@@ -70,118 +65,135 @@ value(s::Spec) = s.val
 specification(s::Spec) = s.type
 
 function Base.show(io::IO, x::Spec{T}) where T
-    specname = string(nameof(T)) * " specification: " * string(x.val)
-    println(io, specname)
+    specname = "Spec{" * string(T) * "}(" * string(value(x)) * ")"
+    print(io, specname)
 end
 
 # extensive specs are chosen as molar specs, in the sense that they can be extensive or
 # intensive units (u/kg) or (u/mol).
-
-function check_spec_units(t::AbstractSpec, u::Unitful.Quantity,perm=true)
-    
-    x = total_units(t) 
-    is_total = true
-    is_mol = true
-    inverted = true
-    if perm == true
-        if Unitful.dimension(u) == Unitful.dimension(x)
-            is_total = true
-            is_mol = false
-            inverted = false
-        elseif Unitful.dimension(u) == Unitful.dimension(x / u"mol")
-            is_total = false
-            is_mol = true
-            inverted = false
-        elseif Unitful.dimension(u) == Unitful.dimension(x / u"kg")   
-            is_total = false
-            is_mol = false
-            inverted = true
-        elseif Unitful.dimension(u) == Unitful.dimension(1 / x)
-            is_total = true
-            is_mol = false
-            inverted = true
-        elseif Unitful.dimension(u) == Unitful.dimension(u"mol" / x)
-            is_total = false
-            is_mol = true
-            inverted = true
-        elseif Unitful.dimension(u) == Unitful.dimension(u"kg" / x)   
-            is_total = false
-            is_mol = false
-            inverted = true
-        elseif Unitful.dimension(u) == Unitful.dimension(1 / x)
-            is_total = true
-            is_mol = true
-            inverted = true
-        else
-            throw(ArgumentError("the input value is not a type of " * string(typeof(t))))
-        end
-        return is_total, is_mol, inverted
+#ustrip and convert
+function _ucs(u,x,normalize_units=false)
+    if normalize_units
+        return Unitful.ustrip(Unitful.uconvert(u,x))
     else
-        if Unitful.dimension(u) == Unitful.dimension(x)
-            is_total = true
-            is_mol = false
-            inverted = false
-        else
-            throw(ArgumentError("the input value is not a type of " * string(typeof(t))))
-        end
-        return is_total, is_mol, inverted
+        return x
     end
 end
 
-
-
-function Spec(t::AbstractIntensiveSpec, u::Unitful.Quantity)
-    is_total, is_mol, inverted = check_spec_units(t, u)
-    return Spec(t, u, is_total, is_mol, inverted)
+function _ucs(u,x::AbstractVector,normalize_units=false)
+    if normalize_units
+        return Unitful.ustrip.(Unitful.uconvert.(u,x))
+    else
+        return x
+    end
 end
 
-
-function Spec(t::AbstractIntensiveSpec, u::AbstractVector)
-    return Spec(t,eltype(u))
+function _udim(u::Unitful.Quantity)
+    return dimension(u)
 end
 
-function Spec(t::Union{Pressure,Temperature}, u::T) where T<:Number
-    return Spec(t, u, false, false, false) 
+function _udim(u::AbstractVector{Unitful.Quantity})
+    return dimension(eltype(u))
 end
 
-function Spec(t::Union{Pressure,Temperature}, u::Unitful.Quantity)
-    is_total, is_mol, inverted = check_spec_units(t, u,false)
-    return Spec(t, u, is_total, is_mol, inverted)
+function check_spec_units(t::T, u::U,perm::Bool=true,normalize_units::Bool=false) where {T<:AbstractSpec,U<:Unitful.Quantity}    
+    x = total_units(t) 
+    if perm == true
+        if _udim(u) == Unitful.dimension(x)
+            is_total = true
+            is_mol = false
+            inverted = false
+            _u =  _ucs(x,u,normalize_units)
+        elseif _udim(u) == Unitful.dimension(x / u"mol")
+            is_total = false
+            is_mol = true
+            inverted = false
+            _u = _ucs(x / u"mol",u,normalize_units)
+        elseif _udim(u) == Unitful.dimension(x / u"kg")   
+            is_total = false
+            is_mol = false
+            inverted = true
+            _u = _ucs(x / u"kg",u,normalize_units)
+        elseif _udim(u) == Unitful.dimension(1 / x)
+            is_total = true
+            is_mol = false
+            inverted = true
+            _u = _ucs(1 / x,u,normalize_units)
+        elseif _udim(u) == Unitful.dimension(u"mol" / x)
+            is_total = false
+            is_mol = true
+            inverted = true
+            _u = _ucs(u"mol" / x,u,normalize_units)
+        elseif _udim(u) == Unitful.dimension(u"kg" / x)   
+            is_total = false
+            is_mol = false
+            inverted = true
+            _u = _ucs(u"kg" / x,u,normalize_units)
+        else
+            throw(ArgumentError("the input value is not a type of " * string(typeof(t))))
+        end
+        return _u,is_total, is_mol, inverted
+    else
+        if _udim(u) == Unitful.dimension(x)
+            is_total = true
+            is_mol = false
+            inverted = false
+            _u = _ucs(x,u,normalize_units)
+            return _u, is_total, is_mol, inverted
+        else
+            throw(ArgumentError("the input value is not a type of " * string(typeof(t))))
+        end
+        
+    end
 end
 
-function Spec(t::AbstractIntensiveSpec, u::T) where T<:Number
-    return Spec(t, u, false, true, false) # molar unit as default
+function Spec(t::Type{T},u;normalize_units::Bool=false)  where T <: AbstractSpec
+    return Spec(t(),u,normalize_units=normalize_units)
 end
 
-function Spec(t::AbstractTotalSpec, u::Unitful.Quantity)
-    is_total, is_mol, inverted = check_spec_units(t, u,false)
-    return Spec(t, u, is_total, is_mol, inverted)
+function Spec(t::AbstractIntensiveSpec, u::Unitful.Quantity;normalize_units::Bool=false)
+    _u,is_total, is_mol, inverted = check_spec_units(t, u,true,normalize_units)
+    return Spec(t, _u, is_total, is_mol, inverted)
 end
 
-function Spec(t::AbstractTotalSpec, u::AbstractVector)
-    return Spec(t,eltype(u))
+function Spec(t::Union{Pressure,Temperature}, u::T;normalize_units::Bool=false) where T<:Number
+    return Spec(t, u, false, true, false) 
 end
 
-function Spec(t::AbstractTotalSpec, u)
+function Spec(t::Union{Pressure,Temperature}, u::Unitful.Quantity;normalize_units::Bool=false)
+    _u,is_total, is_mol, inverted = check_spec_units(t, u,false,normalize_units)
+    return Spec(t, _u, is_total, is_mol, inverted)
+end
+
+function Spec(t::AbstractIntensiveSpec, u::T;normalize_units::Bool=false) where T<:Number
+    return Spec(t, u, true, false, false) # molar unit as default
+end
+
+function Spec(t::AbstractTotalSpec, u::Unitful.Quantity;normalize_units::Bool=false)
+    _u,is_total, is_mol, inverted = check_spec_units(t, u,false,normalize_units)
+    return Spec(t, _u, is_total, is_mol, inverted)
+end
+
+function Spec(t::AbstractTotalSpec, u;normalize_units::Bool=false)
     return Spec(t, u, false, false, false) # total unit as default
 end
 
-function Spec(t::CategoricalSpec, u::Symbol)
-    return Spec(t, u, false, false, false)
+function Spec(t::Union{MassNumbers,MolNumbers}, u::AbstractVector{Unitful.Quantity};normalize_units::Bool=false)
+    _u,is_total, is_mol, inverted = check_spec_units(t, u,false,normalize_units)
+    return Spec(t, _u, is_total, is_mol, inverted)
 end
 
-
-
-
-
-
-
-
-
+function Spec(t::Union{MassFractions,MolFractions}, u::AbstractVector{Unitful.Quantity};normalize_units::Bool=false)
+    if isapprox(sum(u), 1.0) & (any(x -> x < zero(x), u))
+        return Spec(t, u, false, true, false) 
+    else
+        throw(ArgumentError("the the vector of values is not a valid fraction"))
+    end
+end
 
 function Spec(t::AbstractFractionSpec, u::AbstractVector)
-    if isapprox(sum(u), 1.0) & (any(x -> x < zero(x), 1.0))
-        return Spec(t, u, false, true, false) # molar unit as default
+    if isapprox(sum(u), 1.0) & (any(x -> x < zero(x), u))
+        return Spec(t, u, false, true, false) 
     else
         throw(ArgumentError("the the vector of values is not a valid fraction"))
     end
@@ -194,7 +206,6 @@ function Spec(t::AbstractFractionSpec, u::Real)
         throw(ArgumentError("the value " * string(u) * " is not between 0 and 1."))
     end 
 end
-
 
 struct Specs{T}
     specs::T
@@ -305,8 +316,8 @@ function _specs_P(kwargs,kw)::Int64
     end
 end
 
-function specs(;check=true,kwargs...)
-    f0 = k -> Spec(kw_to_spec[k],getproperty(kwargs.data,k))
+function specs(;check=true,normalize_units=true,kwargs...)
+    f0 = k -> Spec(kw_to_spec[k],getproperty(kwargs.data,k);normalize_units=normalize_units)
     if check == true
         component_basis = _specs_components(kwargs.data)
         amount_basis = _specs_amount_basis(kwargs.data,component_basis)
