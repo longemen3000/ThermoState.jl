@@ -1,9 +1,23 @@
 struct FromSpecs end
 
+#unified ustrip uconvert
+function _ucs(u,x,normalize_units=false)
+    if normalize_units
+        return Unitful.ustrip(Unitful.uconvert(u,x))
+    else
+        return x
+    end
+end
 
+function _ucs(u,x::AbstractVector,normalize_units=false)
+    if normalize_units
+        return Unitful.ustrip.(Unitful.uconvert.(u,x))
+    else
+        return x
+    end
+end
 
 function _default_units(x::T,is_mol,is_total,inverted) where T <: AbstractSpec
-
     if !is_mol & is_total & !inverted#total units
         return total_units(x)
     elseif is_mol & !is_total & !inverted
@@ -11,90 +25,56 @@ function _default_units(x::T,is_mol,is_total,inverted) where T <: AbstractSpec
     elseif !is_mol & is_total & !inverted
         return mass_units(x)
     elseif !is_mol & is_total & inverted #total units
-        return 1/total_units(x)
+        return inv(total_units(x))
     elseif is_mol & !is_total & inverted
-        return 1/mol_units(x)
+        return inv(mol_units(x))
     elseif !is_mol & is_total & inverted
-        return 1/mass_units(x)
+        return inv(mass_units(x))
     end
 end
 
-function _conform1(s::Spec{T,U},is_mol,is_total,inverted) where {T,U}
+function conform1(s::Spec{T,U},is_mol,is_total,inverted) where {T,U}
     val = value(s)
     _spec = specification(s)
     if s.inverted != inverted
         val = 1/val
     end
     if (s.is_mol==is_mol) &(s.is_total==is_total)
-        if !(U<:Unitful.Quantity)
-            return val,true
-        else
-            u = _default_units(_spec,false,true,false)
-            if unit(u) == unit(val)
-                return Unitful.ustrip(val)
-            else
-                return Unitful.ustrip(Unitful.uconvert(u,val))
-            end
-        end
+        return _ups(val,true)
     else
         return val,false
     end
 end
 
-@inline function spec_in(val,specs)
-    for spec in specs
-        if specification(spec) == val
-            return spec
-        end
-    end
-    throw(error(string(val) * "not found in specifications"))
-end
-
-
-#requires no conversion
-_uconvert1(unit,value) = value,true,true 
-_uconvert(unit::Unitful.Quantity,value::Unitful.Quantity) = Unitful.ustrip(Unitful.uconvert(unit,value)),true,true
-
-#requires conversion to default unit
-
-#this requires uconvert(unit/default,value)
-_uconvert1(unit::Unitful.Quantity,value) = value,false,false
-#this requires uconvert(default,value)
-_uconvert1(unit,value::Unitful.Quantity) = value,false,true
-
-function uconvert_and_strip2(value,unit,default)
-    val,done,has_units = _uconvert1(unit,value)
-    if done
-        return val
+function throw_get_spec(val,specs)
+    res = get_spec(val,specs)
+    if res !== nothing
+        return res
     else
-        if has_units
-            return Unitful.ustrip(Unitful.uconvert(default,value))
-        else
-            return Unitful.ustrip(Unitful.uconvert(unit/default,value))
-        end
+        throw(error(string(val) * " not found in specifications"))
     end
 end
 
-function pressure(model::FromSpecs,props::Specs;mw=nothing,unit=nothing)
-    spec_p = spec_in(Pressure(),props.specs)
-    p,_ = _conform1(spec_p,false,true,false)
-    if unit !== nothing
-        default_unit = unit/_default_units(Pressure(),false,true,false)
-        return Unitful.ustrip(Unitful.uconvert(default_unit,p))
+
+
+function pressure(model::FromSpecs,props::Specs,unit::T=u"Pa") where T <: Unitful.PressureUnits
+    spec_p = throw_get_spec(Pressure(),props.specs)
+    p,_ = conform1(spec_p,false,true,false)
+    if unit !== u"Pa"
+        default_unit = _ucs(unit/_default_units(Pressure(),false,true,false),one(p),true)
+        return default_unit*p 
     else
         return p
     end
 end
 
-function temperature(model::FromSpecs,props::Specs;mw=nothing,unit=nothing)
-    spec_t = spec_in(Temperature(),props.specs)
-    t,_ = _conform1(spec_t,false,true,false)
-    if unit !== nothing
-        default_unit = unit/_default_units(Temperature(),false,true,false)
-        return Unitful.ustrip(Unitful.uconvert(default_unit,t))
+function temperature(model::FromSpecs,props::Specs,unit::T=u"K") where T <: Unitful.TemperatureUnits
+    spec_t = throw_get_spec(Temperature(),props.specs)
+    t,_ = conform1(spec_t,false,true,false)
+    if unit !== u"K"
+        default_unit = _ucs(unit/_default_units(Temperature(),false,true,false),one(t),true)
+        return default_unit*t
     else
         return t
     end
 end
-
-
