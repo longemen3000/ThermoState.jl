@@ -115,7 +115,7 @@ function _ups(x,normalize_units=false)
     end
 end
 
-function _ups(u,x::AbstractVector,normalize_units=false)
+function _ups(x::AbstractVector,normalize_units=false)
     if normalize_units
         return Unitful.ustrip.(Unitful.upreferred.(x))
     else
@@ -213,6 +213,11 @@ _is_molar(::Mass) = false
 _is_molar(::Moles) = true
 
 
+is_molar(s::Spec) = s.is_mol & !s.is_total
+is_total(s::Spec) = !s.is_mol & s.is_total
+is_mass(s::Spec) = !s.is_mol & s.is_total
+
+
 #special case for just real numbers, the tags are calculated on a type basis
 function check_spec_units(t::T, u::U,perm::Bool=true,normalize_units::Bool=false) where {T<:AbstractSpec,U<:Real}    
     return u,_is_total(t),_is_molar(t),_is_inverted(t)
@@ -301,6 +306,24 @@ function get_spec(val,specs)
     return nothing
 end
 
+function throw_get_spec(val,specs)
+    res = get_spec(val,specs)
+    if res !== nothing
+        return res
+    else
+        throw(error(string(val) * " not found in specifications"))
+    end
+end
+
+@inline function Base.getindex(specs::Specs,val::Int)
+    return specs.specs[val]
+end
+
+#linear search on values
+@inline function Base.getindex(specs::Specs,val::AbstractSpec)
+    return throw_get_spec(val,specs)
+end
+
 function has_spec(val,specs)::Bool
     for spec in specs.specs
         if specification(spec) == val
@@ -374,6 +397,8 @@ const KW_TO_SPEC = Dict{Symbol,AbstractSpec}(
 ,:p =>  Pressure()
 ,:t =>  Temperature()
 ,:v =>  MolVolume()
+,:g =>  Gibbs()
+,:a =>  Helmholtz()
 ,:V =>  TotalVolume()
 ,:rho =>  MolDensity() #for flexibility
 ,:ρ =>  MolDensity() #also for flexibility
@@ -450,3 +475,5 @@ function specs_grid(;check=true,normalize_units=true,kwargs...)
     return map(f0,Iterators.product(values(kwargs.data)...))
 
 end
+
+

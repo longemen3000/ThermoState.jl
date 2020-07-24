@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.com/longemen3000/PhysPropsRules.jl.svg?branch=master)](https://travis-ci.com/longemen3000/PhysPropsRules.jl)
 
 Basic block for interfacing with thermodynamic models.
-The idea is yo have a common interface of the form:
+The idea is to have a common interface of the form:
 
 ```julia
 property(model,specs,options)
@@ -41,16 +41,18 @@ and extract values for the use of property models. calling the `specs` functions
 Stracting a specification from the `Specs` struct can be done as if the specifications themselves are a thermodinamic model: 
 
 ```julia
-mass_rho=mass_density(FromSpecs(),props,mw=18.0u"g/mol",units=)
+mass_rho=mass_density(FromSpecs(),props,"kg/L",18.0u"g/mol")
 ```
 so, instead of defining multiple functions for each combination of specifications, you just dispatch your new model on:
 ```julia
 function property(model::MyModel,specs::Specs;kwargs...)
-    v = mol_volume(FromSpecs(),specs,mw=molecular_weight(model),units = u"mol/cm3")
-    T = mol_volume(FromSpecs(),specs) #default: SI units (Kelvin)
+    v = mol_volume(FromSpecs(),specs,unit,molecular_weight(model),"cm^3/mol")
+    T = mol_volume(FromSpecs(),specs,molecular_weight(model)) #default: SI units (Kelvin)
     return property_impl(v,T)
 end
 ```
+
+
 This package is experimental and many features could (and will) change, please write any sugerences on the issues!
 
 
