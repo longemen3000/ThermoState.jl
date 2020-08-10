@@ -1,110 +1,222 @@
-abstract type AbstractSpec end
-abstract type AbstractIntensiveSpec <: AbstractSpec  end
-abstract type AbstractTotalSpec <: AbstractSpec  end
-abstract type AbstractFractionSpec <: AbstractSpec  end
-abstract type CategoricalSpec <: AbstractSpec  end
+module Types
+    abstract type AbstractSpec end
+    abstract type SpecModifier <: AbstractSpec  end
 
-struct Enthalpy <: AbstractIntensiveSpec end
-struct Entropy <: AbstractIntensiveSpec end
-struct InternalEnergy <: AbstractIntensiveSpec end
-struct Gibbs <: AbstractIntensiveSpec end
-struct Helmholtz <: AbstractIntensiveSpec end
-struct VolumeAmount <: AbstractIntensiveSpec end
-
-abstract type AbstractVolumeSpec <: AbstractIntensiveSpec end
-struct MolVolume <: AbstractVolumeSpec end
-struct MolDensity <: AbstractVolumeSpec end
-struct MassVolume <: AbstractVolumeSpec end
-struct MassDensity <: AbstractVolumeSpec end
-struct TotalVolume <: AbstractVolumeSpec end
+    abstract type AbstractIntensiveSpec{T1<:SpecModifier} <: AbstractSpec  end
+    abstract type AbstractTotalSpec <: AbstractSpec  end
+    abstract type AbstractFractionSpec <: AbstractSpec  end
+    abstract type CategoricalSpec <: AbstractSpec  end
 
 
-struct Pressure <: AbstractIntensiveSpec end
-struct Temperature <: AbstractIntensiveSpec end
 
-struct Mass <: AbstractTotalSpec end
-struct Moles <: AbstractTotalSpec end
+    struct SINGLE_COMPONENT <: SpecModifier end
+    struct ONE_MOL <: SpecModifier end
 
-# those are vectors, 
-struct MassNumbers <: AbstractTotalSpec end
-struct MolNumbers <: AbstractTotalSpec end
-struct MaterialCompounds <: AbstractTotalSpec end
-struct MaterialAmount <: AbstractTotalSpec end
+    struct MOLAR <: SpecModifier end
+    struct MASS <: SpecModifier end
+    struct TOTAL <: SpecModifier end
+    struct FRACTION <: SpecModifier end
+    struct DENSITY <: SpecModifier end
+    struct VOLUME <: SpecModifier end
 
 
-struct MassFractions <: AbstractFractionSpec end
-struct MolFractions <: AbstractFractionSpec end
-struct PhaseFractions <: AbstractFractionSpec end
-struct VaporFraction <: AbstractFractionSpec end
-# for now,in a different category
-struct MolecularWeight <: AbstractSpec end
-struct PurePhase <: CategoricalSpec end
+    abstract type AbstractEnergySpec{T1} <: AbstractIntensiveSpec{T1} end
+
+    struct Enthalpy{T} <: AbstractEnergySpec{T} end
+    struct InternalEnergy{T} <: AbstractEnergySpec{T} end
+    struct Gibbs{T} <: AbstractEnergySpec{T} end
+    struct Helmholtz{T} <: AbstractEnergySpec{T} end
+
+    struct Entropy{T} <: AbstractIntensiveSpec{T} end
+
+    struct VolumeAmount{T1,T2<:SpecModifier} <: AbstractIntensiveSpec{T1} end
+
+    struct Pressure <: AbstractSpec end
+    struct Temperature <: AbstractSpec end
+
+    struct Mass <: AbstractTotalSpec end
+    struct Moles <: AbstractTotalSpec end
+
+    # those are vectors, 
+
+    struct MaterialCompounds{T1<:SpecModifier,T2<:SpecModifier} <: AbstractTotalSpec end
+
+    struct MaterialAmount{T1<:SpecModifier} <: AbstractTotalSpec end
+
+
+    struct PhaseFractions <: AbstractFractionSpec end
+    struct VaporFraction <: AbstractFractionSpec end
+
+    struct PhaseTag <: CategoricalSpec end
+    struct TwoPhaseEquilibrium <: CategoricalSpec end
+
+    struct Options <: CategoricalSpec end
+
+    #not defined for now
+    struct MolecularWeight <: AbstractSpec end
+
+    export AbstractSpec 
+    export SpecModifier 
+    export AbstractIntensiveSpec 
+    export AbstractTotalSpec 
+    export AbstractFractionSpec 
+    export CategoricalSpec 
+    export SINGLE_COMPONENT  
+    export ONE_MOL  
+    export MOLAR  
+    export MASS  
+    export TOTAL  
+    export FRACTION  
+    export DENSITY  
+    export VOLUME  
+    export AbstractEnergySpec  
+    export Enthalpy 
+    export InternalEnergy
+    export Gibbs  
+    export Helmholtz  
+    export Entropy  
+    export VolumeAmount 
+    export Pressure 
+    export Temperature 
+    export Mass 
+    export Moles 
+    export MaterialCompounds 
+    export MaterialAmount 
+    export PhaseFractions 
+    export VaporFraction 
+    export PhaseTag 
+    export TwoPhaseEquilibrium 
+    export Options 
+    export MolecularWeight
+
+end
+
+using .Types
+
+const KW_TO_SPEC = IdDict{Symbol,Any}(
+:h =>  Enthalpy{MOLAR}()
+,:g =>  Gibbs{MOLAR}()
+,:a =>  Helmholtz{MOLAR}()
+,:u =>  InternalEnergy{MOLAR}()
+
+,:mol_h =>  Enthalpy{MOLAR}()
+,:mol_g =>  Gibbs{MOLAR}()
+,:mol_a =>  Helmholtz{MOLAR}()
+,:mol_u =>  InternalEnergy{MOLAR}()
+
+,:mass_h =>  Enthalpy{MASS}()
+,:mass_g =>  Gibbs{MASS}()
+,:mass_a =>  Helmholtz{MASS}()
+,:mass_u =>  InternalEnergy{MASS}()
+
+,:total_h =>  Enthalpy{TOTAL}()
+,:total_g =>  Gibbs{TOTAL}()
+,:total_a =>  Helmholtz{TOTAL}()
+,:total_u =>  InternalEnergy{TOTAL}()
+
+,:s =>  Entropy{MOLAR}()
+,:mol_s =>  Entropy{MOLAR}()
+,:mass_s =>  Entropy{MASS}()
+,:total_s =>  Entropy{TOTAL}()
+
+,:p =>  Pressure()
+,:P =>  Pressure()
+,:t =>  Temperature()
+,:T => Temperature()
+
+,:v =>  VolumeAmount{MOLAR,VOLUME}()
+,:mol_v =>  VolumeAmount{MOLAR,VOLUME}()
+,:mass_v =>  VolumeAmount{MASS,VOLUME}()
+,:total_v =>  VolumeAmount{TOTAL,VOLUME}()
+
+,:rho =>  VolumeAmount{MOLAR,DENSITY}() 
+,:mol_rho =>  VolumeAmount{MOLAR,DENSITY}() 
+,:mass_rho =>  VolumeAmount{MOLAR,DENSITY}() 
+
+,:ρ =>  VolumeAmount{MOLAR,DENSITY}()
+,:mol_ρ =>  VolumeAmount{MOLAR,DENSITY}()
+,:mass_ρ =>  VolumeAmount{MOLAR,DENSITY}() 
+,:mass =>  MaterialAmount{MASS}()
+,:moles =>  MaterialAmount{MOLAR}()
+,:xn =>  MaterialCompounds{MOLAR,FRACTION}()
+,:xm =>   MaterialCompounds{MASS,FRACTION}()
+,:n =>  MaterialCompounds{MOLAR,TOTAL}()
+,:m =>   MaterialCompounds{MASS,TOTAL}()
+,:mw =>  MolecularWeight()
+,:vfrac =>  VaporFraction() #looking for better name
+,:phase_fracs =>  PhaseFractions() #looking for better name
+
+,:phase =>PhaseTag()
+
+,:sat => TwoPhaseEquilibrium()
+,:vle => TwoPhaseEquilibrium()
+,:lle => TwoPhaseEquilibrium()
+
+,:single_component => SINGLE_COMPONENT()
+,:one_mol => ONE_MOL()
+,:options => Options()
+)
+
+
+
+
+
+
 
 # total units, function necessary to defining a new spec
-total_units(x::Enthalpy) = u"J"
-total_units(x::Entropy) = u"J/K"
-total_units(x::InternalEnergy) = u"J"
-total_units(x::Gibbs) = u"J"
-total_units(x::Helmholtz) = u"J"
-total_units(x::TotalVolume) = u"m^3"
+default_spec_units(x::AbstractSpec) = default_spec_units(typeof(x))
+default_spec_units(::Type{MOLAR}) = u"mol"
+default_spec_units(::Type{MASS}) = u"kg"
+default_spec_units(::Type{TOTAL}) = Unitful.NoUnits
 
-total_units(x::Pressure) = u"Pa"
-total_units(x::Temperature) = u"K"
-total_units(x::Mass) = u"kg"
-total_units(x::Moles) = u"mol"
-total_units(x::MassNumbers) = u"kg"
-total_units(x::MolNumbers) = u"mol"
 
-total_units(x::MassFractions) = Unitful.NoUnits
-total_units(x::MolFractions) = Unitful.NoUnits
-total_units(x::PhaseFractions) = Unitful.NoUnits
-total_units(x::VaporFraction) = Unitful.NoUnits
-
-function total_units(x::T,inverted::Bool) where T<:AbstractSpec
-    if inverted
-        return inv(total_units(x))
-    else
-        return total_units(x)
-    end
-end
-function mol_units(x::T) where T <: AbstractIntensiveSpec
-    return total_units(x) / u"mol"
+function default_spec_units(::Type{T1}) where T1 <: AbstractEnergySpec{T2} where T2
+    return u"J"/default_spec_units(T2)
 end
 
-function mol_units(x::T,inverted::Bool) where T<:AbstractIntensiveSpec
-    if inverted
-        return inv(mol_units(x))
-    else
-        return mol_units(x)
-    end
+
+function default_spec_units(::Type{Entropy{T}}) where T
+    return u"J/K"/default_spec_units(T)
 end
 
-function mass_units(x::T) where T <: AbstractIntensiveSpec
-    return total_units(x) / u"kg"
+default_spec_units(::Type{Pressure}) = u"Pa" 
+default_spec_units(::Type{Temperature}) = u"K" 
+
+
+function default_spec_units(::Type{VolumeAmount{T,VOLUME}}) where T
+    return u"m^3"/default_spec_units(T)
 end
-function mass_units(x::T,inverted::Bool) where T<:AbstractSpec
-    if inverted
-        return inv(mass_units(x))
-    else
-        return mass_units(x)
-    end
+
+function default_spec_units(::Type{VolumeAmount{T,DENSITY}}) where T
+    return default_spec_units(T)/u"m^3"
 end
+
+function default_spec_units(::Type{MaterialAmount{T1}}) where T1
+    return default_spec_units(T1)
+end
+
+function default_spec_units(::Type{MaterialCompounds{T,FRACTION}}) where T
+    return Unitful.NoUnits
+end
+
+function default_spec_units(x::Type{MaterialCompounds{T,TOTAL}}) where T
+    return default_spec_units(T)
+end
+
+
+
+default_spec_units(x::Type{PhaseFractions}) = Unitful.NoUnits
+default_spec_units(x::Type{VaporFraction}) = Unitful.NoUnits
 
 struct Spec{T <: AbstractSpec,U}
     type::T
     val::U
-    is_mol::Bool
-    is_total::Bool
-    inverted::Bool
 end
 
 value(s::Spec) = s.val
 specification(s::Spec) = s.type
 
-function Base.show(io::IO, x::Spec{T}) where T
-    specname = "Spec{" * string(T) * "}(" * string(value(x)) * ")"
-    print(io, specname)
-end
+
 
 #preferred stripped
 function _ups(x,normalize_units=false)
@@ -123,190 +235,145 @@ function _ups(x::AbstractVector,normalize_units=false)
     end
 end
 
-function _udim(u::Unitful.Quantity)
-    return dimension(u)
-end
-
-function _udim(u::AbstractVector{Unitful.Quantity})
-    return dimension(eltype(u))
-end
-
-function check_spec_units(t::T, u::U,perm::Bool=true,normalize_units::Bool=false) where {T<:AbstractSpec,U<:Unitful.Quantity}    
-    if perm == true
-        if total_units(t)== _udim(u)
-            is_total = true
-            is_mol = false
-            inverted = false
-            _u =  _ups(u,normalize_units)
-        elseif Unitful.dimension(mol_units(t)) == _udim(u)
-            is_total = false
-            is_mol = true
-            inverted = false
-            _u = _ups(u,normalize_units)
-        elseif Unitful.dimension(mass_units(t)) == _udim(u) 
-            is_total = false
-            is_mol = false
-            inverted = true
-            _u = _ups(u,normalize_units)
-        elseif Unitful.dimension(total_units(t,true)) == _udim(u)
-            is_total = true
-            is_mol = false
-            inverted = true
-            _u = _ups(u,normalize_units)
-        elseif Unitful.dimension(mol_units(t,true)) == _udim(u)
-            is_total = false
-            is_mol = true
-            inverted = true
-            _u = _ups(u,normalize_units)
-        elseif Unitful.dimension(mass_units(t,true)) == _udim(u)  
-            is_total = false
-            is_mol = false
-            inverted = true
-            _u = _ups(u,normalize_units)
-        else
-            throw(ArgumentError("the INPUT value is not a type of " * string(typeof(t))))
-        end
-        return _u,is_total, is_mol, inverted
+#check units and normalizes
+function check_and_norm(::SP,val::U,normalize_units::Bool=false) where {SP<:AbstractSpec,U<:Unitful.Quantity}
+    if dimension(default_spec_units(SP)) == dimension(val)
+    return _ups(val,normalize_units)
     else
-        if Unitful.dimension(total_units(t)) == _udim(u)
-            is_total = true
-            is_mol = false
-            inverted = false
-            _u = _ups(u,normalize_units)
-            return _u, is_total, is_mol, inverted
-        else
-            throw(ArgumentError("the input value is not a type of " * string(typeof(t))))
-        end
-        
+        throw(ArgumentError("the input value is not a type of " * string(SP)))
+    end
+end
+function check_and_norm_vec(::SP,val::U,normalize_units::Bool=false) where {SP<:AbstractSpec,U<:AbstractVector{<: Unitful.Quantity}}
+    if dimension(default_spec_units(SP)) == dimension(eltype(val))
+    return _ups(val,normalize_units)
+    else
+        throw(ArgumentError("the input value is not a type of " * string(SP)))
     end
 end
 
 
-_is_inverted(::AbstractSpec) = false
-_is_inverted(::MolDensity) = true
-_is_inverted(::MassDensity) = true
-
-
-
-_is_molar(::MassVolume) = false
-_is_molar(::MassDensity) = false
-
-_is_total(::TotalVolume) = true
-
-
-_is_molar(::AbstractIntensiveSpec) = true
-_is_total(::AbstractIntensiveSpec) = false
-
-_is_molar(::Union{Pressure,Temperature}) = false
-_is_total(::Union{Pressure,Temperature}) = true
-
-_is_total(::AbstractTotalSpec) = true
-
-_is_total(::MolFractions) = false
-_is_total(::MassFractions) = false
-
-_is_molar(::MolNumbers) = true
-_is_molar(::MassNumbers) = false
-_is_molar(::MolFractions) = true
-_is_molar(::MassFractions) = false
-_is_molar(::Mass) = false
-_is_molar(::Moles) = true
-
-
-is_molar(s::Spec) = s.is_mol & !s.is_total
-is_total(s::Spec) = !s.is_mol & s.is_total
-is_mass(s::Spec) = !s.is_mol & s.is_total
-
-
-#special case for just real numbers, the tags are calculated on a type basis
-function check_spec_units(t::T, u::U,perm::Bool=true,normalize_units::Bool=false) where {T<:AbstractSpec,U<:Real}    
-    return u,_is_total(t),_is_molar(t),_is_inverted(t)
+function check_and_norm_vec(::SP,val::U,normalize_units::Bool=false) where {SP<:AbstractSpec,U<:Real}
+    throw(ArgumentError("invalid material compounds specification, provide a vector."))
 end
 
-function Spec(t::AbstractIntensiveSpec, u,normalize_units::Bool=false)
-    _u,is_total, is_mol, inverted = check_spec_units(t, u,true,normalize_units)
-    return Spec(t, _u, is_total, is_mol, inverted)
+function check_and_norm_vec(::SP,val::U,normalize_units::Bool=false) where {SP<:AbstractSpec,U<:AbstractVector{<:Real}}
+    return _ups(val,normalize_units)
 end
 
-function Spec(t::AbstractVolumeSpec, u,normalize_units::Bool=false)
-    _u,is_total, is_mol, inverted = check_spec_units(t, u,true,normalize_units)
-    return Spec(VolumeAmount(), _u, is_total, is_mol, inverted)
-end
+function check_and_norm(::SP,val::U,normalize_units::Bool=false) where {SP<:AbstractSpec,U<:Real}
+    return _ups(val,normalize_units)
 
-function Spec(t::Union{Pressure,Temperature}, u,normalize_units::Bool=false)
-    _u,is_total, is_mol, inverted = check_spec_units(t, u,false,normalize_units)
-    return Spec(t, _u, is_total, is_mol, inverted)
-end
-
-function Spec(t::AbstractTotalSpec, u::Unitful.Quantity,normalize_units::Bool=false)
-    _u,is_total, is_mol, inverted = check_spec_units(t, u,false,normalize_units)
-    return Spec(t, _u, is_total, is_mol, inverted)
 end
 
 
-function Spec(t::AbstractTotalSpec, u,normalize_units::Bool=false)
-    return Spec(t, u, false, false, false) # total unit as default
+function spec(sp::AbstractIntensiveSpec, val,normalize_units::Bool=false)
+    val = check_and_norm(sp,val,normalize_units)
+    return Spec(sp,val)
 end
 
-function Spec(t::Union{MassNumbers,MolNumbers}, u,normalize_units::Bool=false)
-    _u,is_total, is_mol, inverted = check_spec_units(t, u,false,normalize_units)
-    return Spec(MaterialCompounds(), _u,is_total, is_mol, inverted)
+function spec(sp::Union{Pressure,Temperature}, val,normalize_units::Bool=false)
+    val = check_and_norm(sp,val,normalize_units)
+    return Spec(sp,val)
 end
 
-function Spec(t::Union{Mass,Moles}, u,normalize_units::Bool=false)
-    _u,is_total, is_mol, inverted = check_spec_units(t, u,false,normalize_units)
-    return Spec(MaterialAmount(), _u,is_total, is_mol, inverted)
+function spec(sp::MaterialAmount, val,normalize_units::Bool=false)
+    val = check_and_norm(sp,val,normalize_units)
+    return Spec(sp,val)
+end
+
+function spec(sp::MaterialCompounds{T1,TOTAL}, val::V,normalize_units::Bool=false) where {T1,V<:AbstractVector} 
+    val = check_and_norm_vec(sp,val,normalize_units)
+    return Spec(sp,val)
 end
 
 
 _is_frac(x::Real) = (zero(x) <= x <= one(x))
-_is_frac(u::AbstractVector{Real}) = all(x -> x ≥ zero(x), u) && isapprox(sum(u), one(eltype(u)))
+function _is_frac_vec(u::T1) where T1<:AbstractVector{<:Real}
+    return all(x -> x ≥ zero(x), u) && isapprox(sum(u), one(eltype(u)))
+end
 
-function Spec(t::Union{MolFractions,MassFractions} ,u,normalize_units::Bool=false)
-    if _is_frac(u)
-        return Spec(MaterialCompounds(), u, false, _is_molar(t), false) 
+function spec(sp::MaterialCompounds{T1,FRACTION}, val::V,normalize_units::Bool=false) where {T1,V<:AbstractVector} 
+    if _is_frac_vec(val)
+        return Spec(sp,val)
     else
         throw(ArgumentError("the the vector of values is not a valid fraction"))
     end
 end
 
-function Spec(t::AbstractFractionSpec, u::AbstractVector{Real})
-    if _is_frac(u)
-        return Spec(t, u, false, false, false) 
+
+function spec(t::AbstractFractionSpec, u::AbstractVector{Real},normalize_units::Bool=false)
+    if _is_frac_vec(u)
+        return Spec(t, u) 
     else
         throw(ArgumentError("the the vector of values is not a valid fraction"))
     end
 end
 
-function Spec(t::AbstractFractionSpec, u::Real)
+function spec(t::AbstractFractionSpec, u::Real,normalize_units::Bool=false)
     if _is_frac(u)
-        return Spec(t, u, false, false, false)
+        return Spec(t, float(u))
     else
         throw(ArgumentError("the value " * string(u) * " is not between 0 and 1."))
     end 
 end
 
-function Spec(t::T, u::Symbol,normalize_units::Bool=false) where T<:CategoricalSpec
-    return Spec(t, u, false, false, false)
+#catch all for non numerical specs
+function spec(t::T, u,normalize_units::Bool=false) where T<:CategoricalSpec
+    return Spec(t,u)
 end
 
-struct Specs{T}
-    specs::T
+
+function spec(;kwargs...)   
+    if hasproperty(kwargs.data,:normalize_units)
+        norm_units = getproperty(kwargs.data,:normalize_units)
+        if length(kwargs.data)==2
+            kw1,kw2 = keys(kwargs)
+            if kw1 == :normalize_units
+                return spec(KW_TO_SPEC[kw2],last(Base.values(kwargs.data)),norm_units)
+            else
+                return spec(KW_TO_SPEC[kw1],first(Base.values(kwargs.data)),norm_units)
+            end
+        else
+            throw("invalid keyword combination.")
+        end
+    else
+        if length(kwargs.data)==1
+            return spec(KW_TO_SPEC[first(keys(kwargs.data))],first(Base.values(kwargs.data)))
+        else
+            throw("invalid keyword combination.")
+        end
+    end
+end
+
+struct Specs{T1,T2}
+    amount_type::T1
+    specs::T2
     checked::Bool
 end
 
-values(s::Specs) = s.specs
+Base.values(s::Specs) = s.specs
 
-function get_spec(val,specs)
-    for spec in specs.specs
-        if specification(spec) == val
+function get_spec(val,specs::Tuple)
+    for spec in specs
+        if typeof(specification(spec)) <: typeof(val) 
             return spec
         end
     end
     return nothing
 end
 
-function throw_get_spec(val,specs)
+function get_spec(val::Type{T},specs::Tuple) where T<: AbstractSpec
+    for spec in specs
+        if typeof(specification(spec)) <: T
+            return spec
+        end
+    end
+    return nothing
+end
+
+get_spec(val,spec::Specs) = get_spec(val,spec.specs)
+ 
+function throw_get_spec(val,specs::Specs)
     res = get_spec(val,specs)
     if res !== nothing
         return res
@@ -324,19 +391,29 @@ end
     return throw_get_spec(val,specs)
 end
 
-function has_spec(val,specs)::Bool
+function has_spec(val,specs::Specs)::Bool
     for spec in specs.specs
-        if specification(spec) == val
+        if typeof(specification(spec)) <: typeof(val) 
             return true
         end
     end
     return false
 end
 
+function has_spec(val,specs::Tuple)::Bool
+    for spec in specs
+        if typeof(specification(spec)) <: typeof(val) 
+            return true
+        end
+    end
+    return false
+end
+
+
 #returns the specification symbol in multicomponent
 #returns :singlecomponent if there are no specifications
 #throws error if more than one specification is found
-function _specs_components(kwargs)
+function _specs_components(kwargs::NamedTuple)
    
     xn = hasproperty(kwargs,:xn)
    xm = hasproperty(kwargs,:xm)
@@ -350,84 +427,60 @@ function _specs_components(kwargs)
     elseif moles & !(mass)
         :moles
     else mass & !(moles)
-        :mass 
+        :mass
     end)
 
     if !(xn | xm | n | m )
-        return :singlecomponent,amount_basis
+        return :single_component,amount_basis
     elseif (xn & !(xm | n | m))
         return :xn,amount_basis
     elseif (xm & !(xn | n | m))
         return :xm,amount_basis
     elseif (n & !(xm | xn | m))
-        return :n,:n
+        if ! (moles | mass) 
+            return :n,:n
+        end
     elseif (m & !(xm | xn | n))
         if ! (moles | mass) 
             return :m,:m
         end
     else
-        throw(error("incorrect mass or molar specifications."))
+        throw(ArgumentError("incorrect mass or molar specifications."))
     end
 end
 #gives the appropiate symbol to extract amount of matter
 
 
 #this needs future work to specify
-function _specs_phase_basis(kwargs)::Symbol
-    pure_phase = hasproperty(kwargs,:pure_phase)
+function _specs_phase_basis(kwargs::NamedTuple)::Symbol
     vfrac = hasproperty(kwargs,:vfrac)
     phase_fracs = hasproperty(kwargs,:phase_fracs)
-    if !(vfrac | phase_fracs | pure_phase) #assumes one phase default
+    sat = hasproperty(kwargs,:sat)
+    vle = hasproperty(kwargs,:vle)
+    lle = hasproperty(kwargs,:lle)
+
+    #(vfrac|sat|vle||lle|) & !(phase_fracs | phase)
+    if !(vfrac|sat|vle|lle|phase_fracs) #asume one phase
         return :one_phase
-    elseif pure_phase & !(vfrac | phase_fracs)
-        return :pure_phase
-    elseif vfrac & !(phase_fracs | pure_phase)
+    elseif (vfrac|sat|vle|lle) & !(phase_fracs)
         return :two_phase
-    elseif phase_fracs & !(vfrac | pure_phase)
+    elseif !(vfrac|sat|vle|lle) & (phase_fracs )
         return :multi_phase
     else
-        throw(error("there are more than one phase specification"))
+        throw(ArgumentError("there are more than one phase specification"))
     end
 end
 
-const KW_TO_SPEC = Dict{Symbol,AbstractSpec}(
-:h =>  Enthalpy()
-,:s =>  Entropy()
-,:u =>  InternalEnergy()
-,:p =>  Pressure()
-,:t =>  Temperature()
-,:v =>  MolVolume()
-,:g =>  Gibbs()
-,:a =>  Helmholtz()
-,:V =>  TotalVolume()
-,:rho =>  MolDensity() #for flexibility
-,:ρ =>  MolDensity() #also for flexibility
-,:vm =>  MassVolume()
-,:rhom =>  MassDensity() #for flexibility
-,:ρm =>  MassDensity() #also for flexibility
-,:mass =>  Mass()
-,:moles =>  Moles()
-,:xn =>  MolFractions()
-,:xm =>  MassFractions()
-,:n =>  MolNumbers()
-,:m =>  MassNumbers()
-,:mw =>  MolecularWeight()
-,:vfrac =>  VaporFraction() #looking for better name
-,:phase_fracs =>  PhaseFractions() #looking for better name
-,:pure_phase =>PurePhase()
-)
-
-
-function _specs_C(kwargs,kw)::Int64
-    if kw == :singlecomponent
+function _specs_C(kwargs::NamedTuple,kw)::Int64
+    if kw == :single_component
         return 1
     else
         return length(getproperty(kwargs,kw))
     end
 end
 
-function _specs_P(kwargs,kw::Symbol)::Int64
-    if (kw == :one_phase) |  (kw == :pure_phase)
+function _specs_P(kwargs::NamedTuple,kw::Symbol)::Int64
+    if (kw == :one_phase)
         return 1
     elseif kw == :two_phase
         return 2
@@ -436,33 +489,40 @@ function _specs_P(kwargs,kw::Symbol)::Int64
     end
 end
 
+function _specs_F(kwargs::NamedTuple,component_basis::Symbol,amount_basis::Symbol,phase_basis::Symbol)::Int64
+    F = length(kwargs)
+    
+    phase = Int(hasproperty(kwargs,:phase))
+    options = Int(hasproperty(kwargs,:options))
+    F = F - phase - options
+    F = F - Int(component_basis != :single_component)
+    F = F - Int((amount_basis != :one_mol) &
+    (amount_basis != :n) &
+    (amount_basis != :m))
+    F = F - Int(phase_basis != :one_phase)
+    return F
+end
+
 function specs(;check=true,normalize_units=true,kwargs...)
-    f0 = k -> Spec(KW_TO_SPEC[k],getproperty(kwargs.data,k),normalize_units)
+    f0 = k -> spec(KW_TO_SPEC[k],getproperty(kwargs.data,k),normalize_units)
+    tup = map(f0,keys(kwargs.data))
     if check == true
         component_basis,amount_basis = _specs_components(kwargs.data)
         phase_basis = _specs_phase_basis(kwargs.data)
+        mass_tup = (KW_TO_SPEC[component_basis],KW_TO_SPEC[amount_basis])
         C = _specs_C(kwargs.data,component_basis)
         P = _specs_P(kwargs.data,phase_basis)
-        F = C - P + 2 #behold, the gibbs phase rule!
-        F1 = length(kwargs.data)
-        (component_basis != :singlecomponent) && (F1 = F1-1)
-
-        if (amount_basis != :one_mol) & (amount_basis != :m) & (amount_basis != :n)
-            F1 = F1-1
-        end
-        (phase_basis != :one_phase) && (F1 = F1-1)
-        if F1 > F
+        F = _specs_F(kwargs.data,component_basis,amount_basis,phase_basis)
+        DF = C - P + 2 - F#behold, the gibbs phase rule!
+        if DF<0
             throw(error("the variables are overspecified."))
-        elseif F1 > F
+        elseif DF>0
             throw(error("the variables are underspecified."))
         else
-        
-            tup = map(f0,keys(kwargs.data))
-            return Specs(tup,true)
+            return Specs(mass_tup,tup,true)
         end
     else
-        tup = map(f0,keys(kwargs.data))
-        return Specs(tup,false)
+        return Specs(nothing,tup,false)
     end
 end
 
@@ -473,7 +533,7 @@ function specs_grid(;check=true,normalize_units=true,kwargs...)
         specs(;check=check,normalize_units=normalize_units,_kwargs...)
     end
     return map(f0,Iterators.product(values(kwargs.data)...))
-
 end
 
-
+#function specs(args::Vararg{Spec};check=true,normalize_units=true)
+#end

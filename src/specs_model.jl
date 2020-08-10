@@ -1,5 +1,6 @@
 struct FromSpecs end
-
+const UnitReal = Union{Real,Unitful.Quantity}
+const URVec = AbstractVector{T} where T<:UnitReal
 #unified ustrip uconvert
 function _ucs(u,x,normalize_units=false)
     if normalize_units
@@ -17,37 +18,6 @@ function _ucs(u,x::AbstractVector,normalize_units=false)
     end
 end
 
-function _default_units(x::T,is_total,is_mol,inverted) where T <: AbstractSpec
-    if !is_mol & is_total & !inverted#total units
-        return total_units(x)
-    elseif is_mol & !is_total & !inverted
-        return mol_units(x)
-    elseif !is_mol & is_total & !inverted
-        return mass_units(x)
-    elseif !is_mol & is_total & inverted #total units
-        return inv(total_units(x))
-    elseif is_mol & !is_total & inverted
-        return inv(mol_units(x))
-    elseif !is_mol & is_total & inverted
-        return inv(mass_units(x))
-    end
-end
-
-#fast conform  for pressure and temperature
-function conform_pt(s::Spec{T,U},is_total,is_mol,inverted) where {T,U}
-    val = value(s)
-    if (s.is_mol==is_mol) &(s.is_total==is_total)
-        if s.inverted != inverted
-            val = inv(val)
-        end
-        return _ups(val,true),true
-    else
-        throw(error("spec cannot be converted to the correct units"))
-    end
-end
-
-
-
 #upreferred, but the standard unit with just numbers is transformed to kg/mol
 function mw_mul(x,mw::Unitful.Quantity)
     return upreferred(x*mw)
@@ -57,7 +27,6 @@ function mw_mul(x,mw)
     return 0.001*x*mw
 end
 
-
 function mw_div(x,mw::Unitful.Quantity)
     return upreferred(x/mw)
 end
@@ -66,310 +35,398 @@ function mw_div(x,mw)
     return 1000.0*x/mw
 end
 
-function amount_type(specs::Specs)
-    amount = has_spec(MaterialAmount(),specs)
-    compounds = has_spec(MaterialCompounds(),specs)
+function amount_type(specs::Tuple)
+    xn = has_spec(MaterialCompounds{MOLAR,FRACTION}(),specs)
+   xm =  has_spec(MaterialCompounds{MASS,FRACTION}(),specs)
+   n =  has_spec(MaterialCompounds{MOLAR,TOTAL}(),specs)
+   m =  has_spec(MaterialCompounds{MASS,TOTAL}(),specs)
+   mass = has_spec(MaterialAmount{MASS}(),specs)
+   moles = has_spec(MaterialAmount{MOLAR}(),specs)
+#if no specification
+    amount_basis = (if ! (moles | mass) #one mol basis default
+        ONE_MOL()
+    elseif moles & !(mass)
+        MaterialAmount{MOLAR}()
+    else mass & !(moles)
+        MaterialAmount{MASS}()
+    end)
+
+    if !(xn | xm | n | m )
+        return (SINGLE_COMPONENT(),amount_basis)
+    elseif (xn & !(xm | n | m))
+        return (MaterialCompounds{MOLAR,FRACTION}(),amount_basis)
+    elseif (xm & !(xn | n | m))
+        return (MaterialCompounds{MASS,FRACTION}(),amount_basis)
+    elseif (n & !(xm | xn | m))
+        if ! (moles | mass) 
+            return (MaterialCompounds{MOLAR,TOTAL}(),MaterialCompounds{MOLAR,TOTAL}())
+        end
+    elseif (m & !(xm | xn | n))
+        if ! (moles | mass) 
+            return (MaterialCompounds{MASS,TOTAL}(),MaterialCompounds{MASS,TOTAL}())
+        end
+    else
+        throw(error("incorrect mass or molar specifications."))
+    end
+end
+
+function amount_type(specs::Specs{Nothing}) 
+    return amount_type(specs.specs)
+end
+
+function amount_type(specs::Specs{T}) where T<:Tuple
+    amount,compounds = specs.amount_type
     return amount,compounds
 end
 
-function mass2(specs,mw)
-    _amount,_compounds = amount_type(specs)
-    if _amount #amount is specified
-        amount = get_spec(MaterialAmount(),specs)
-        if !_compounds #monocomponent
-            if amount.is_mol #monocomponent, mol
-                return _ups(mw_mul(value(amount),mw),true)
-            else #monocomponent, mass
-                return _ups(value(amount),true)
-            end
-        else #multicomponent fractions
-            compounds = get_spec(MaterialCompounds(),specs)
-            if !compounds.is_total #only fractions
-                if amount.is_mol #moles
-                    _moles = value(amount)
-                    if compounds.is_mol #moles, mol fractions
-                        #mw_i * xi = (gc/molc) * molc/molmix = gc/molmix (*molmix)
-                        sum_x_mw = mapreduce(mw_mul,+,value(compounds),mw)
-                        return _ups(_moles*sum_x_mw,true)
-                    else #moles, mass fractions
-                        #mw_i / wi = (molc/gc) * gc/gmix = molmix/gmix 
-                        #mass = molmix / (molmix/gmix)
-                        sum_x_mw = mapreduce(mw_div,+,value(compounds),mw)
-                        return _ups(_moles/sum_x_mw,true)
-                    end
-                else #mass specified
-                    return _ups(value(amount),true)
-                end
-            end
-        end
-    else 
-        if !_compounds #monocomponent, one mol
-            return _ups(1.0,true)
-        else #vector of compounds
-            compounds = get_spec(MaterialCompounds(),specs)
-            if compounds.is_total #only option
-                if !compounds.is_mol
-                    return _ups(sum(value(compounds)),true)
-                else
-               ###### needs mass
-                    ### exists mol numbers
-                    #mw_i * ni = (gc/molc) * molc = gc, sum(gc) = gmix
-                    sum_n_mw = mapreduce(mw_mul,+,value(compounds),mw)
-                    return _ups(sum_n_mw,true)
-                end
-            end
-        end
-    end
+moles2(a::Specs,mw) = moles3(amount_type(a),a,mw)
+mass2(a::Specs,mw) =  mass3(amount_type(a),a,mw)
+kg_per_mol2(a::Specs,mw) =  kg_per_mol3(amount_type(a),a,mw)
+
+##one mol cases
+
+#those cases should rarely be called
+function moles3(::Tuple{T,ONE_MOL},specs::Specs,mw::Nothing) where T<:SpecModifier
+    return 1.0
 end
 
-function moles2(specs,mw)
-    _amount,_compounds = amount_type(specs)
-    if _amount #amount is specified
-        amount = get_spec(MaterialAmount(),specs)
-        if !_compounds #monocomponent
-            if amount.is_mol #mol specified
-                return _ups(value(amount),true)
-            else #mass specified
-                return _ups(mw_div(value(amount),mw),true)
-            end
-        else #multicomponent system
-            compounds = get_spec(MaterialCompounds(),specs)
-            if !compounds.is_total #only fractions valid
-                
-                if amount.is_mol #mol specified
-                    return _ups(value(amount),true)
-                else #mass specified
-                    _mass = value(amount)
-                    if !compounds.is_mol #mass fractions and mass
-                        #mw_i * xmi = gc/gmix / (molc/gc)= molc/gmix (sum)-> molmix/gmix
-                        # molmix = molmix/gmix * (gmix)
-                        sum_x_mw = mapreduce(mw_div,+,value(compounds),mw)
-                        return _ups(_mass*sum_x_mw,true)
-                    else #mol fraction and mass
-                        #xni * mwi = mc/mmix * (gc/molc)= gc/molmix (sum)-> gmix/molmix
-                        #molmix = gmix / (gmix/molmix)
-                        sum_x_mw = mapreduce(mw_mul,+,value(compounds),mw)
-                        return _ups(value(amount)/sum_x_mw,true)
-
-                    end
-                end
-            end
-        end
-    else 
-        if !_compounds #monocomponent, one mol
-            return one(_ups(one(mw),true))
-        else #vector of compounds
-            compounds = get_spec(MaterialCompounds(),specs)
-            if compounds.is_total #only option
-                if !compounds.is_mol
-                    ###### needs mol
-                    ### exists mass numbers
-                    #mw_i * xmi = gc* (molc/gc)= molc, molmix = sum(molc)
-                    sum_n_mw = mapreduce(mw_div,+,value(compounds),mw)
-                    return _ups(sum_n_mw,true)                
-                else
-                    _ups(sum(value(compounds)),true)
-                end
-            end
-        end
-    end
+function moles3(::Tuple{T,ONE_MOL},specs::Specs,mw::T2) where T<:SpecModifier where T2 <:UnitReal
+    return one(T2)
 end
 
-function kg_per_mol2(specs,mw)
-    _amount,_compounds = amount_type(specs)
-    if _amount #amount is specified
-        amount = get_spec(MaterialAmount(),specs)
-        if !_compounds #monocomponent
-            return _ups(1.0,true)
-        else #multicomponent system
-            compounds = get_spec(MaterialCompounds(),specs)
-            if !compounds.is_total #only fractions valid
-                if compounds.is_mol & amount.is_mol #moles, mol fractions
-                    _moles = value(amount)
-                    #mw_i * xi = (gc/molc) * molc/molmix = gc/molmix sum_> gmix/molmix
-                    sum_x_mw = mapreduce(mw_mul,+,value(compounds),mw)
-                    return _ups(sum_x_mw,true)
-                elseif (!compounds.is_mol) & amount.is_mol#moles, mass fractions
-                    _moles = value(amount)
-                    #mw_i / wi = (molc/gc) * gc/gmix sum-> molmix/gmix 
-                    sum_x_mw = mapreduce(mw_div,+,value(compounds),mw)
-                    return _ups(1.0/sum_x_mw,true)
-                elseif  (!amount.is_mol) & (!compounds.is_mol) #mass fractions and mass
-                    _mass = value(amount)
-                    #mw_i * xmi = gc/gmix / (molc/gc)= molc/gmix (sum)-> molmix/gmix
-                    sum_x_mw = mapreduce(mw_div,+,value(compounds),mw)
-                    return _ups(1.0/sum_x_mw,true)
-                elseif  (!amount.is_mol) & (compounds.is_mol) #mol fraction and mass
-                    _mass = value(amount)
-                    #xni * mwi = mc/mmix * (gc/molc)= gc/molmix (sum)-> gmix/molmix
-                    #molmix = gmix / (gmix/molmix)
-                    sum_x_mw = mapreduce(mw_mul,+,value(compounds),mw)
-                    return _ups(sum_x_mw,true)
-                end
-            end
-        end
-    else #amount not specified
-        if !_compounds #monocomponent, one mol
-            return _ups(mw_mul(1.0,mw),true)
-        else #multicomponent
-            compounds = get_spec(MaterialCompounds(),specs)
-            if compounds.is_total #only option
-                if !compounds.is_mol #mw from mol numbers
-                    #molc * gc/molc = gc sum-> gmix
-                    gmix = mapreduce(mw_mul,+,value(compounds),mw)
-                    molmix = sum(value(compounds))
-                    return _ups(gmix/molmix,true)                
-                else #mw from mass numbers
-                    #gc / (gc/molc) = molc sum-> molmix
-                    molmix = mapreduce(mw_div,+,value(compounds),mw)
-                    gmix = sum(value(compounds))
-                    return _ups(gmix/molmix,true)                
-                end
-            end
-        end
-    end
+#error?
+function moles3(::Tuple{T,ONE_MOL},specs::Specs,mw::T2) where T<:SpecModifier where T2<:AbstractVector{T3} where T3 <: UnitReal
+    return one(T3)
 end
 
-#conforms with transformations on mol <-> mass <-> total
-function conform2(s::Spec{T,U},_specs,_is_total::Bool,_is_mol::Bool,_inverted::Bool,mw) where {T,U}
-    val = value(s)
-    if s.inverted #standard form
-        val = inv(val)
-    end
-    
-    if _is_mol && !_is_total #required molar units
-        if is_total(s)
-            return _ups(val/moles2(_specs,mw),true)
-        else #mass
-            return _ups(val/kg_per_mol2(_specs,mw),true)
-        end
-    elseif !_is_mol && !_is_total #required mass units
-        if is_total(s)
-            return _ups(val/mass2(_specs,mw),true)
-        else
-            return _ups(val*kg_per_mol2(_specs,mw),true)
-        end
-        
-    elseif !_is_mol && _is_total #required total units
-        if is_molar(s)
-            return _ups(val*moles2(_specs,mw),true)
-        else
-            return _ups(val/mass2(_specs,mw),true)
-        end
-    end
+function moles3(::Tuple{SINGLE_COMPONENT,MaterialAmount{MOLAR}},specs::Specs,mw::T) where T <:UnitReal
+    return _ups(value(get_spec(MaterialAmount{MOLAR}(),specs)),true)
 end
 
-#conforms with inversions, used in molar densities
-function conform3(s::Spec{T,U},_specs,is_total::Bool,is_mol::Bool,inverted::Bool,mw) where {T,U}
-    valc2 =  conform2(s,_specs,is_total,is_mol,inverted,mw)
-    if inverted #requires inversion
-        if !(s.inverted) #not inverted
-            valc2 =  inv(valc2)
-        end
-        return valc2
-    else #does not require inversion
-        if s.inverted #but is inverted
-            valc2 =  inv(valc2)
-        end
-        return valc2        
-    end 
+function moles3(::Tuple{SINGLE_COMPONENT,MaterialAmount{MASS}},specs::Specs,mw::T) where T <:UnitReal
+    # g/(g/mol) = mol 
+    x = mw_div(value(get_spec(MaterialAmount{MASS}(),specs)),mw)
+    return _ups(x,true)
 end
 
-#unified conform for specs that require transformations
-function conform0(s::Spec{T,U},_specs,is_total::Bool,is_mol::Bool,inverted::Bool,mw) where {T,U}
-    val = value(s)
-    if (s.is_mol==is_mol) &(s.is_total==is_total)
-        if s.inverted != inverted
-            val = inv(val)
-        end
-        return _ups(val,true)
-    else
-        return conform3(s,_specs,is_total,is_mol,inverted,mw)
-    end
+
+## total ammounts:
+function moles3(::Tuple{T,T},specs::Specs,mw) where T<:MaterialCompounds{MOLAR,TOTAL}
+    return _ups(sum(value(get_spec(T(),specs))),true)
 end
 
-function mol_frac2(specs,mw)
-    _amount,_compounds = amount_type(specs)
-    if !_compounds 
-        return [1.0]
-    else
-        elements = get_spec(MaterialCompounds(),specs)
-        if elements.!is_total #a fraction
-            if elements.is_mol #molar fraction
-                return value(elements)
-            else# mass fraction
-            end
-        else #mass or mol number
-            if elements.is_mol #molar number
-                n = sum(value(elements))
-                return _ups(value(elements)/n,true)
-            else# mass number
-            end 
-        end
-    end
+function moles3(::Tuple{T,T},specs::Specs,mw::T2) where T<:MaterialCompounds{MASS,TOTAL} where T2<: URVec
+    ###### needs mol
+    ### exists mass numbers
+    #mw_i * xmi = gc* (molc/gc)= molc, molmix = sum(molc)
+    compounds = value(get_spec(T(),specs))
+    sum_n_mw = mapreduce(mw_div,+,compounds,mw)
+    return _ups(sum_n_mw,true)  
 end
 
-function mass_frac2(specs,mw)
-    _amount,_compounds = amount_type(specs)
-    if !_compounds 
-        return [1.0]
-    else
-        elements = get_spec(MaterialCompounds(),specs)
-        if elements.!is_total #a fraction
-            if elements.is_mol #molar fraction
-            else# mass fraction
-                return value(elements)
-            end
-        else #mass or mol number
-            if elements.is_mol #molar number
-            else# mass number
-                n = sum(value(elements))
-                return _ups(value(elements)/n,true)
-            end 
-        end
-    end
+function moles3(::Tuple{T,MaterialAmount{MOLAR}},specs::Specs,mw) where T
+    return _ups(value(get_spec(MaterialAmount{MOLAR}(),specs)),true)
 end
 
-function mol_num2(specs,mw)
-    _amount,_compounds = amount_type(specs)
-    if !_compounds 
-        return [1.0]
-    else
-        elements = get_spec(MaterialCompounds(),specs)
-        if elements.!is_total #a fraction
-            if elements.is_mol #molar fraction
-                x = value(elements)
-                n = value(get_spec(MaterialAmount(),specs))
-                return _ups(x*n,true)
-            else# mass fraction
-            end
-        else #mass or mol number
-            if elements.is_mol #molar number
-                return value(elements)
-            else# mass number
-            end 
-        end
-    end
+#inverse operations with fractions
+function moles3(::Tuple{MaterialCompounds{MOLAR,FRACTION},MaterialAmount{MASS}},specs::Specs,mw::T) where T<:URVec
+    #mol fraction and mass
+    #xni * mwi = mc/mmix * (gc/molc)= gc/molmix (sum)-> gmix/molmix
+    #molmix = gmix / (gmix/molmix)
+    compounds = get_spec(MaterialCompounds{MOLAR,FRACTION}(),specs)
+    amount = get_spec(MaterialAmount{MASS}(),specs)
+    sum_x_mw = mapreduce(mw_mul,+,value(compounds),mw)
+    return _ups(value(amount)/sum_x_mw,true)  
 end
 
-function mass_num2(specs,mw)
-    _amount,_compounds = amount_type(specs)
-    if !_compounds 
-        return [1.0]
-    else
-        elements = get_spec(MaterialCompounds(),specs)
-        if elements.!is_total #a fraction
-            if elements.is_mol #molar fraction
-            else# mass fraction
-                x = value(elements)
-                n = value(get_spec(MaterialAmount(),specs))
-                return _ups(x*n,true)
-            end
-        else #mass or mol number
-            if elements.is_mol #molar number
-            else# mass number
-                return value(elements)
-            end 
-        end
-    end
+function moles3(::Tuple{MaterialCompounds{MASS,FRACTION},MaterialAmount{MASS}},specs::Specs,mw::T) where T<:URVec
+    #mass fractions and mass
+    #mw_i * xmi = gc/gmix / (molc/gc)= molc/gmix (sum)-> molmix/gmix
+    # molmix = molmix/gmix * (gmix)
+    compounds = get_spec(MaterialCompounds{MASS,FRACTION}(),specs)
+    amount = get_spec(MaterialAmount{MASS}(),specs)
+    sum_x_mw = mapreduce(mw_div,+,value(compounds),mw)
+    return _ups(value(amount)*sum_x_mw,true)  
+end
+
+function mass3(::Tuple{SINGLE_COMPONENT,ONE_MOL},specs::Specs,mw::T2) where T2 <:UnitReal
+    return _ups(mw_mul(one(T2),mw),true)
+end
+
+#mass defined
+function mass3(::Tuple{T,MaterialAmount{MASS}},specs::Specs,mw) where T
+    return _ups(value(get_spec(MaterialAmount{MASS}(),specs)),true)
+end
+
+## total ammounts:
+function mass3(::Tuple{T,T},specs::Specs,mw) where T<:MaterialCompounds{MASS,TOTAL}
+    return _ups(sum(value(get_spec(T(),specs))),true)
+end
+
+function mass3(::Tuple{T,T},specs::Specs,mw::T2) where T<:MaterialCompounds{MOLAR,TOTAL} where T2<:URVec
+    ###### needs mass
+    ### exists mol numbers
+    #mw_i * ni = (gc/molc) * molc = gc, sum(gc) = gmix
+    compounds = get_spec(T(),specs)
+    sum_n_mw = mapreduce(mw_mul,+,value(compounds),mw)
+    return _ups(sum_n_mw,true)
+end
+
+#inverse operations with fractions
+function mass3(::Tuple{MaterialCompounds{MOLAR,FRACTION},MaterialAmount{MOLAR}},specs::Specs,mw::T2) where T2<:URVec
+    #moles, mol fractions
+    #mw_i * xi = (gc/molc) * molc/molmix = gc/molmix (*molmix)
+    amount = get_spec(MaterialAmount{MOLAR}(),specs)
+    compounds = get_spec(MaterialCompounds{MOLAR,FRACTION}(),specs)
+    sum_x_mw = mapreduce(mw_mul,+,value(compounds),mw)
+    return _ups(value(amount)*sum_x_mw,true)
+end
+
+function mass3(::Tuple{MaterialCompounds{MASS,FRACTION},MaterialAmount{MOLAR}},specs::Specs,mw::T2) where T2<:URVec
+    #mass fractions and mass
+    #mw_i * xmi = gc/gmix / (molc/gc)= molc/gmix (sum)-> molmix/gmix
+    # molmix = molmix/gmix * (gmix)
+    compounds = get_spec(MaterialCompounds{MASS,FRACTION}(),specs)
+    amount = get_spec(MaterialAmount{MASS}(),specs)
+    sum_x_mw = mapreduce(mw_div,+,value(compounds),mw)
+    return _ups(value(amount)*sum_x_mw,true)  
+end
+
+#single component cases, all the same
+function kg_per_mol3(::Tuple{SINGLE_COMPONENT,ONE_MOL},specs::Specs,mw::T2) where T2 <:UnitReal
+    return _ups(mw_mul(one(T2),mw),true)
+end
+
+function kg_per_mol3(::Tuple{SINGLE_COMPONENT,MaterialAmount},specs::Specs,mw::T2) where {T2 <:UnitReal}
+    return _ups(mw_mul(one(T2),mw),true)
+end
+
+#total amounts:
+function kg_per_mol3(::Tuple{T,T},specs::Specs,mw) where T<:MaterialCompounds{MASS,TOTAL}
+    #mw from mass numbers
+    #gc / (gc/molc) = molc sum-> molmix
+    compounds = get_spec(T(),specs)
+    molmix = mapreduce(mw_div,+,value(compounds),mw)
+    gmix = sum(value(compounds))
+    return _ups(gmix/molmix,true)  
+end
+
+function kg_per_mol3(::Tuple{T,T},specs::Specs,mw) where T<:MaterialCompounds{MOLAR,TOTAL}   
+    #mw from mol numbers
+    #molc * gc/molc = gc sum-> gmix
+    compounds = get_spec(T(),specs)
+    gmix = mapreduce(mw_mul,+,value(compounds),mw)
+    molmix = sum(value(compounds))
+    return _ups(gmix/molmix,true) 
+end
+
+#fraction amounts
+function kg_per_mol3(::Tuple{MaterialCompounds{MOLAR,FRACTION},MaterialAmount{T}},specs::Specs,mw) where T<:SpecModifier
+    #mol fraction and mass
+    #xni * mwi = mc/mmix * (gc/molc)= gc/molmix (sum)-> gmix/molmix
+    compounds = get_spec(MaterialCompounds{MOLAR,FRACTION}(),specs)
+    sum_x_mw = mapreduce(mw_mul,+,value(compounds),mw)
+    return _ups(one(sum_x_mw)/sum_x_mw,true)
+end
+
+function kg_per_mol3(::Tuple{MaterialCompounds{MASS,FRACTION},MaterialAmount{T}},specs::Specs,mw) where T<:SpecModifier
+    #mass fractions and mass
+    compounds = get_spec(MaterialCompounds{MASS,FRACTION}(),specs)
+    #xmi * mwi = gc/gmix / gc/molc = molc/gmix (sum)-> molmix/gmix
+    sum_x_mw = mapreduce(mw_div,+,value(compounds),mw)
+    return _ups(one(sum_x_mw)/sum_x_mw,true)
+end
+
+#invariant
+function to_spec(sps,sp::Spec{SP},mw,::MOLAR) where {SP<:AbstractIntensiveSpec{MOLAR}} 
+    return _ups(value(sp),true)
+end
+
+function to_spec(sps,sp::Spec{SP},mw,any_value) where {SP<:Union{Pressure,Temperature}} 
+    return _ups(value(sp),true)
+end
+
+function to_spec(sps,sp::Spec{SP},mw,::MASS) where {SP<:AbstractIntensiveSpec{MASS}} 
+    return _ups(value(sp),true)
+end
+
+function to_spec(sps,sp::Spec{SP},mw,::TOTAL) where {SP<:AbstractIntensiveSpec{TOTAL}} 
+    return _ups(value(sp),true)
+end
+
+#to mass
+
+#from molar to mass
+function to_spec(sps,sp::Spec{SP},mw,::MASS) where {SP<:AbstractIntensiveSpec{MOLAR}} 
+    return _ups(value(sp),true)/kg_per_mol2(sps,mw)
+end
+
+
+function to_spec(sps,sp::Spec{SP},mw,::MASS) where {SP<:AbstractIntensiveSpec{TOTAL}}
+    return _ups(value(sp),true)/mass2(sps,mw)
+end
+
+#to mol
+function to_spec(sps,sp::Spec{SP},mw,::MOLAR) where {SP<:AbstractIntensiveSpec{MASS}}
+    return _ups(value(sp),true)*kg_per_mol2(sps,mw)
+end
+
+function to_spec(sps,sp::Spec{SP},mw,::MOLAR) where {SP<:AbstractIntensiveSpec{TOTAL}}
+    return _ups(value(sp),true)/moles2(sps,mw)
+end
+
+
+
+#volume and density 
+#same value
+function to_spec_vol(sps,sp::Spec{T},mw,::T) where {T<:VolumeAmount}
+    return _ups(value(sp),true)
+end
+
+#inversion
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{T,VOLUME}},mw,::VolumeAmount{T,DENSITY}) where {T<:SpecModifier}
+    val = value(sp)
+    return _ups(one(val)/val,true)
+end
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{T,DENSITY}},mw,::VolumeAmount{T,VOLUME}) where {T<:SpecModifier}
+    val = value(sp)
+    return _ups(one(val)/val,true)
+end
+
+#same type, volume
+function to_spec_vol(sps,sp::Spec{VolumeAmount{MOLAR,VOLUME}},mw,::VolumeAmount{MASS,VOLUME})
+    val = value(sp)
+    return _ups(val*kg_per_mol2(sp,mw),true)
+end
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{MASS,VOLUME}},mw,::VolumeAmount{MOLAR,VOLUME})
+    val = value(sp)
+    return _ups(val/kg_per_mol2(sp,mw),true)
+end
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{MOLAR,VOLUME}},mw,::VolumeAmount{TOTAL,VOLUME})
+    val = value(sp)
+    return _ups(val*moles2(sp,mw),true)
+end
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{TOTAL,VOLUME}},mw,::VolumeAmount{MOLAR,VOLUME})
+    val = value(sp)
+    return _ups(val/moles2(sp,mw),true)
+end
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{MASS,VOLUME}},mw,::VolumeAmount{TOTAL,VOLUME})
+    val = value(sp)
+    return _ups(val*mass2(sp,mw),true)
+end
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{TOTAL,VOLUME}},mw,::VolumeAmount{MASS,VOLUME})
+    val = value(sp)
+    return _ups(val/mass2(sp,mw),true)
+end
+
+#same type, density
+function to_spec_vol(sps,sp::Spec{VolumeAmount{MOLAR,DENSITY}},mw,::VolumeAmount{MASS,DENSITY})
+    val = value(sp)
+    return _ups(val/kg_per_mol2(sp,mw),true)
+end
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{MASS,DENSITY}},mw,::VolumeAmount{MOLAR,DENSITY})
+    val = value(sp)
+    return _ups(val*kg_per_mol2(sp,mw),true)
+end
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{MOLAR,DENSITY}},mw,::VolumeAmount{TOTAL,DENSITY})
+    val = value(sp)
+    return _ups(val/moles2(sp,mw),true)
+end
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{TOTAL,DENSITY}},mw,::VolumeAmount{MOLAR,DENSITY})
+    val = value(sp)
+    return _ups(val*moles2(sp,mw),true)
+end
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{MASS,DENSITY}},mw,::VolumeAmount{TOTAL,DENSITY})
+    val = value(sp)
+    return _ups(val/mass2(sp,mw),true)
+end
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{TOTAL,DENSITY}},mw,::VolumeAmount{MASS,DENSITY})
+    val = value(sp)
+    return _ups(val*mass2(sp,mw),true)
+end
+
+
+#all different combinations
+function to_spec_vol(sps,sp::Spec{VolumeAmount{MOLAR,VOLUME }},mw,::VolumeAmount{TOTAL, DENSITY})
+    val = value(sp)
+    totv = val*moles2(sps,mw)
+    return _ups(one(totv)/totv,true)
+  end
+  
+function to_spec_vol(sps,sp::Spec{VolumeAmount{MOLAR,VOLUME }},mw,::VolumeAmount{MASS, DENSITY})
+    val = value(sp)
+    val2 = val*kg_per_mol2(sps,mw)
+    return _ups(one(val2)/val2,true)
+end
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{TOTAL, VOLUME }},mw,::VolumeAmount{MOLAR, DENSITY})
+    val = value(sp)
+    val2 = val/moles2(sps,mw)
+    return _ups(one(val2)/val2,true)
+end
+function to_spec_vol(sps,sp::Spec{VolumeAmount{TOTAL, VOLUME }},mw,::VolumeAmount{MASS, DENSITY})
+    val = value(sp)
+    val2 = val/mass2(sps,mw)
+    return _ups(one(val2)/val2,true)
+end
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{MASS, VOLUME }},mw,::VolumeAmount{MOLAR, DENSITY})
+    val = value(sp)
+    val2 = val/kg_per_mol2(sps,mw)
+    return _ups(one(val2)/val2,true)
+end
+function to_spec_vol(sps,sp::Spec{VolumeAmount{MASS, VOLUME }},mw,::VolumeAmount{TOTAL, DENSITY})
+    val = value(sp)
+    val2 = val*mass2(sps,mw)
+    return _ups(one(val2)/val2,true)
+end
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{TOTAL, DENSITY }},mw,::VolumeAmount{MOLAR, VOLUME})
+    val = value(sp)
+    val2 = val*moles2(sps,mw)
+    return _ups(one(val2)/val2,true)
+end
+function to_spec_vol(sps,sp::Spec{VolumeAmount{MASS, DENSITY }},mw,::VolumeAmount{MOLAR, VOLUME})
+    val = value(sp)
+    val2 = val/kg_per_mol2(sps,mw)
+    return _ups(one(val2)/val2,true)
+end
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{MOLAR,DENSITY }},mw,::VolumeAmount{TOTAL, VOLUME})
+    val = value(sp)
+    val2 = val/moles2(sps,mw)
+    return _ups(one(val2)/val2,true)
+end 
+function to_spec_vol(sps,sp::Spec{VolumeAmount{MASS, DENSITY }},mw,::VolumeAmount{TOTAL, VOLUME})
+    val = value(sp)
+    val2 = val/mass2(sps,mw)
+    return _ups(one(val2)/val2,true)
+end
+
+function to_spec_vol(sps,sp::Spec{VolumeAmount{MOLAR,DENSITY }},mw,::VolumeAmount{MASS, VOLUME})
+    val = value(sp)
+    val2 = val*kg_per_mol2(sps,mw)
+    return _ups(one(val2)/val2,true)
+end
+function to_spec_vol(sps,sp::Spec{VolumeAmount{TOTAL, DENSITY }},mw,::VolumeAmount{MASS, VOLUME})
+    val = value(sp)
+    val2 = val*mass2(sps,mw)
+    return _ups(one(val2)/val2,true)
+end
+  
+  
+function to_spec(sps,sp::Spec{SP1},mw,x::SP2) where {SP1<:VolumeAmount,SP2<:VolumeAmount}
+    return to_spec_vol(sps,sp,mw,x)
 end

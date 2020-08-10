@@ -148,5 +148,5 @@ function mixing_matrix(op, p)
     return mixing_matrix!(A, op, p)
 end
 
-a_in_b(t1, t2) = all(in(t2), t1)
-tuple_comparison(t1, t2) = ((length(t1) == length(t2)) && a_in_b(t1, t2) && a_in_b(t2, t1))
+#a_in_b(t1, t2) = all(in(t2), t1)
+#tuple_comparison(t1, t2) = ((length(t1) == length(t2)) && a_in_b(t1, t2) && a_in_b(t2, t1))

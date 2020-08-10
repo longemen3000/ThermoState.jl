@@ -5,28 +5,26 @@ using Unitful
 import Unitful: @u_str
 
 include("utilities.jl")
-include("properties.jl")
+include("docs.jl")
 include("units.jl")
 include("spec.jl")
+include("show.jl")
+include("specs_model.jl")
+include("spec_compounds.jl")
+include("fromspecs_props.jl")
+
+
 #Spec Dispatch Types
-export Enthalpy, Entropy, InternalEnergy, 
-Gibbs, Helmholtz, 
-VolumeAmount, Pressure, Temperature, MaterialAmount,
-MaterialCompounds, PhaseFractions, VaporFraction,
-MolecularWeight,
-PurePhase
 #Spec types
 export Spec,Specs
 
 #spec functions
-export specs,specs_grid
+export spec,specs,specs_grid
 
 #spec utilities
 export value,specification,values
-include("specs_model.jl")
 #FromSpecs Model
 export FromSpecs
-include("fromspecs_props.jl")
 export pressure,temperature,mass,moles
 
 
