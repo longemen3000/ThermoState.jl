@@ -1,10 +1,10 @@
 #functions for calculated properties, they require a model and a property (for example Cp(T))
 """
-    mol_helmholtz(model,args...)::Real
-    mol_helmholtz(model,specs::Specs,options)::Real
+    mol_helmholtz(model,specs::Specs,unit,[options...])::Real
 
-Compute the molar helmholtz energy. (ideal helmholtz + residual helmholtz), evaluated in the arguments.
-It shall return a numeric value with units: J/mol.
+Compute the molar helmholtz energy (J/mol).
+If you need unitful units, use the macro @to_units before the function call
+
 """
 function mol_helmholtz end
 
@@ -19,6 +19,16 @@ used in equilibria calculation
 function residual_helmholtz end   
 
 """
+    mol_gibbs(model,specs::Specs,unit,[options...])::Real
+
+Compute the molar gibbs energy (J/mol), from or using the specifications as base.
+If you need unitful units, use the macro @to_units before the function call
+
+"""
+function mol_gibbs end
+
+
+"""
     pressure(model,specs::Specs,[options])::Real
 
 Compute the pressure of a model evaluated in the arguments.
@@ -27,7 +37,9 @@ It shall return a numeric value with units: Pa.
 
 """
 
-function pressure  end   
+function pressure  end
+
+
 """
     compressibility_factor(model,specs::Specs,options)::Real
 

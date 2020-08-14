@@ -6,8 +6,8 @@ import Unitful: @u_str
 
 include("utilities.jl")
 include("docs.jl")
-include("units.jl")
 include("spec.jl")
+include("units.jl")
 include("show.jl")
 include("specs_model.jl")
 include("spec_compounds.jl")
@@ -22,10 +22,11 @@ export Spec,Specs
 export spec,specs,specs_grid
 
 #spec utilities
-export value,specification,values
+export value,specification,values,get_spec
 #FromSpecs Model
 export FromSpecs
 export pressure,temperature,mass,moles
+export @to_units
 
 
 end # module

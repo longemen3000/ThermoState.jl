@@ -95,7 +95,7 @@ function Base.show(::IO, sp::Spec{T}) where T
     print(" : ")
     a = value(sp)
     if is_real(a) 
-        print(a," ",default_spec_units(T))
+        print(a," ",default_units(T))
     else 
         print(a)
     end

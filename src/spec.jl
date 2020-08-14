@@ -131,11 +131,11 @@ const KW_TO_SPEC = IdDict{Symbol,Any}(
 
 ,:rho =>  VolumeAmount{MOLAR,DENSITY}() 
 ,:mol_rho =>  VolumeAmount{MOLAR,DENSITY}() 
-,:mass_rho =>  VolumeAmount{MOLAR,DENSITY}() 
+,:mass_rho =>  VolumeAmount{MASS,DENSITY}() 
 
 ,:ρ =>  VolumeAmount{MOLAR,DENSITY}()
 ,:mol_ρ =>  VolumeAmount{MOLAR,DENSITY}()
-,:mass_ρ =>  VolumeAmount{MOLAR,DENSITY}() 
+,:mass_ρ =>  VolumeAmount{MASS,DENSITY}() 
 ,:mass =>  MaterialAmount{MASS}()
 ,:moles =>  MaterialAmount{MOLAR}()
 ,:xn =>  MaterialCompounds{MOLAR,FRACTION}()
@@ -158,55 +158,69 @@ const KW_TO_SPEC = IdDict{Symbol,Any}(
 )
 
 
+"""
+    default_units(::Union{Type{AbstractSpec},Type{property_function}})    
 
+returns a default unit of a spec
+
+# Examples
+```julia-repl
+default_units(pressure) #function name
+Pa
+
+default_units(Gibbs{MOLAR}) #spec type
+J/mol
+```
+"""
+function default_units end
 
 
 
 
 # total units, function necessary to defining a new spec
-default_spec_units(x::AbstractSpec) = default_spec_units(typeof(x))
-default_spec_units(::Type{MOLAR}) = u"mol"
-default_spec_units(::Type{MASS}) = u"kg"
-default_spec_units(::Type{TOTAL}) = Unitful.NoUnits
+default_units(x::AbstractSpec) = default_units(typeof(x))
+default_units(::Type{MOLAR}) = u"mol"
+default_units(::Type{MASS}) = u"kg"
+default_units(::Type{TOTAL}) = Unitful.NoUnits
 
 
-function default_spec_units(::Type{T1}) where T1 <: AbstractEnergySpec{T2} where T2
-    return u"J"/default_spec_units(T2)
+function default_units(::Type{T1}) where T1 <: AbstractEnergySpec{T2} where T2
+    return u"J"/default_units(T2)
 end
 
 
-function default_spec_units(::Type{Entropy{T}}) where T
-    return u"J/K"/default_spec_units(T)
+function default_units(::Type{Entropy{T}}) where T
+    return u"J/K"/default_units(T)
 end
 
-default_spec_units(::Type{Pressure}) = u"Pa" 
-default_spec_units(::Type{Temperature}) = u"K" 
+default_units(::Type{Pressure}) = u"Pa" 
+default_units(::Type{Temperature}) = u"K" 
 
 
-function default_spec_units(::Type{VolumeAmount{T,VOLUME}}) where T
-    return u"m^3"/default_spec_units(T)
+function default_units(::Type{VolumeAmount{T,VOLUME}}) where T
+    return u"m^3"/default_units(T)
 end
 
-function default_spec_units(::Type{VolumeAmount{T,DENSITY}}) where T
-    return default_spec_units(T)/u"m^3"
+function default_units(::Type{VolumeAmount{T,DENSITY}}) where T
+    return default_units(T)/u"m^3"
 end
 
-function default_spec_units(::Type{MaterialAmount{T1}}) where T1
-    return default_spec_units(T1)
+function default_units(::Type{MaterialAmount{T1}}) where T1
+    return default_units(T1)
 end
 
-function default_spec_units(::Type{MaterialCompounds{T,FRACTION}}) where T
+function default_units(::Type{MaterialCompounds{T,FRACTION}}) where T
     return Unitful.NoUnits
 end
 
-function default_spec_units(x::Type{MaterialCompounds{T,TOTAL}}) where T
-    return default_spec_units(T)
+function default_units(x::Type{MaterialCompounds{T,TOTAL}}) where T
+    return default_units(T)
 end
 
 
 
-default_spec_units(x::Type{PhaseFractions}) = Unitful.NoUnits
-default_spec_units(x::Type{VaporFraction}) = Unitful.NoUnits
+default_units(x::Type{PhaseFractions}) = Unitful.NoUnits
+default_units(x::Type{VaporFraction}) = Unitful.NoUnits
 
 struct Spec{T <: AbstractSpec,U}
     type::T
@@ -219,7 +233,7 @@ specification(s::Spec) = s.type
 
 
 #preferred stripped
-function _ups(x,normalize_units=false)
+function _ups(x,normalize_units=true)
     if normalize_units
         return Unitful.ustrip(Unitful.upreferred(x))
     else
@@ -227,7 +241,7 @@ function _ups(x,normalize_units=false)
     end
 end
 
-function _ups(x::AbstractVector,normalize_units=false)
+function _ups(x::AbstractVector,normalize_units=true)
     if normalize_units
         return Unitful.ustrip.(Unitful.upreferred.(x))
     else
@@ -236,15 +250,15 @@ function _ups(x::AbstractVector,normalize_units=false)
 end
 
 #check units and normalizes
-function check_and_norm(::SP,val::U,normalize_units::Bool=false) where {SP<:AbstractSpec,U<:Unitful.Quantity}
-    if dimension(default_spec_units(SP)) == dimension(val)
+function check_and_norm(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:Unitful.Quantity}
+    if dimension(default_units(SP)) == dimension(val)
     return _ups(val,normalize_units)
     else
         throw(ArgumentError("the input value is not a type of " * string(SP)))
     end
 end
-function check_and_norm_vec(::SP,val::U,normalize_units::Bool=false) where {SP<:AbstractSpec,U<:AbstractVector{<: Unitful.Quantity}}
-    if dimension(default_spec_units(SP)) == dimension(eltype(val))
+function check_and_norm_vec(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:AbstractVector{<: Unitful.Quantity}}
+    if dimension(default_units(SP)) == dimension(eltype(val))
     return _ups(val,normalize_units)
     else
         throw(ArgumentError("the input value is not a type of " * string(SP)))
@@ -252,36 +266,36 @@ function check_and_norm_vec(::SP,val::U,normalize_units::Bool=false) where {SP<:
 end
 
 
-function check_and_norm_vec(::SP,val::U,normalize_units::Bool=false) where {SP<:AbstractSpec,U<:Real}
+function check_and_norm_vec(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:Real}
     throw(ArgumentError("invalid material compounds specification, provide a vector."))
 end
 
-function check_and_norm_vec(::SP,val::U,normalize_units::Bool=false) where {SP<:AbstractSpec,U<:AbstractVector{<:Real}}
+function check_and_norm_vec(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:AbstractVector{<:Real}}
     return _ups(val,normalize_units)
 end
 
-function check_and_norm(::SP,val::U,normalize_units::Bool=false) where {SP<:AbstractSpec,U<:Real}
+function check_and_norm(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:Real}
     return _ups(val,normalize_units)
 
 end
 
 
-function spec(sp::AbstractIntensiveSpec, val,normalize_units::Bool=false)
+function spec(sp::AbstractIntensiveSpec, val,normalize_units::Bool=true)
     val = check_and_norm(sp,val,normalize_units)
     return Spec(sp,val)
 end
 
-function spec(sp::Union{Pressure,Temperature}, val,normalize_units::Bool=false)
+function spec(sp::Union{Pressure,Temperature}, val,normalize_units::Bool=true)
     val = check_and_norm(sp,val,normalize_units)
     return Spec(sp,val)
 end
 
-function spec(sp::MaterialAmount, val,normalize_units::Bool=false)
+function spec(sp::MaterialAmount, val,normalize_units::Bool=true)
     val = check_and_norm(sp,val,normalize_units)
     return Spec(sp,val)
 end
 
-function spec(sp::MaterialCompounds{T1,TOTAL}, val::V,normalize_units::Bool=false) where {T1,V<:AbstractVector} 
+function spec(sp::MaterialCompounds{T1,TOTAL}, val::V,normalize_units::Bool=true) where {T1,V<:AbstractVector} 
     val = check_and_norm_vec(sp,val,normalize_units)
     return Spec(sp,val)
 end
@@ -292,7 +306,7 @@ function _is_frac_vec(u::T1) where T1<:AbstractVector{<:Real}
     return all(x -> x ≥ zero(x), u) && isapprox(sum(u), one(eltype(u)))
 end
 
-function spec(sp::MaterialCompounds{T1,FRACTION}, val::V,normalize_units::Bool=false) where {T1,V<:AbstractVector} 
+function spec(sp::MaterialCompounds{T1,FRACTION}, val::V,normalize_units::Bool=true) where {T1,V<:AbstractVector} 
     if _is_frac_vec(val)
         return Spec(sp,val)
     else
@@ -301,7 +315,7 @@ function spec(sp::MaterialCompounds{T1,FRACTION}, val::V,normalize_units::Bool=f
 end
 
 
-function spec(t::AbstractFractionSpec, u::AbstractVector{Real},normalize_units::Bool=false)
+function spec(t::AbstractFractionSpec, u::AbstractVector{Real},normalize_units::Bool=true)
     if _is_frac_vec(u)
         return Spec(t, u) 
     else
@@ -309,7 +323,7 @@ function spec(t::AbstractFractionSpec, u::AbstractVector{Real},normalize_units::
     end
 end
 
-function spec(t::AbstractFractionSpec, u::Real,normalize_units::Bool=false)
+function spec(t::AbstractFractionSpec, u::Real,normalize_units::Bool=true)
     if _is_frac(u)
         return Spec(t, float(u))
     else
@@ -318,7 +332,7 @@ function spec(t::AbstractFractionSpec, u::Real,normalize_units::Bool=false)
 end
 
 #catch all for non numerical specs
-function spec(t::T, u,normalize_units::Bool=false) where T<:CategoricalSpec
+function spec(t::T, u,normalize_units::Bool=true) where T<:CategoricalSpec
     return Spec(t,u)
 end
 

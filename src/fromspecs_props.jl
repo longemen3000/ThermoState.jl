@@ -28,15 +28,11 @@ function pressure(model::FromSpecs,props::Specs,unit::T=u"Pa") where T <: Unitfu
     end
 end
 
+#special treatment because of affine units
 function temperature(model::FromSpecs,props::Specs,unit::T=u"K") where T <: Unitful.TemperatureUnits
     sval = throw_get_spec(Temperature(),props)
-    val = to_spec(props,sval,nothing,Temperature())
-    if unit !== u"K"
-        default_unit = _ups(one(val)*u"K"/unit,true)
-        return default_unit*val 
-    else
-        return val
-    end
+    val = to_spec(props,sval,nothing,Temperature())*u"K"
+    return Unitful.ustrip(Unitful.uconvert(unit,val))
 end
 
 
