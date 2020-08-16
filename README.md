@@ -180,10 +180,11 @@ struct MyIdealGas
     mw::Float64
 end
 
-function pressure(model::MyIdealGas,props::Specs,unit=u"m^3")
+function pressure(model::MyIdealGas,props::Specs,unit=u"Pa")
     v = mol_volume(FromSpecs(),props,u"m^3/mol",model.mw)
     t = temperature(FromSpecs(),props) #K as default, doesnt require mw
-    return 8.314*t/v
+    p =  (8.314*t/v)u"Pa"
+    return Unitful.ustrip(Unitful.uconvert(unit,p))
 end
 ```
 
