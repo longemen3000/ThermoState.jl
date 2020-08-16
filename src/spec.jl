@@ -2,22 +2,28 @@ module Types
     abstract type AbstractSpec end
     abstract type SpecModifier <: AbstractSpec  end
 
-    abstract type AbstractIntensiveSpec{T1<:SpecModifier} <: AbstractSpec  end
+    struct SingleComponent <: AbstractSpec end
+    struct OneMol <: AbstractSpec end
+
+    abstract type MassBasisModifier <: SpecModifier end
+    struct MOLAR <: MassBasisModifier end
+    struct MASS <: MassBasisModifier end
+    struct TOTAL <: MassBasisModifier end
+
+    abstract type CompoundModifier <: SpecModifier end
+    struct FRACTION <: CompoundModifier end
+    struct TOTAL_AMOUNT <: CompoundModifier end
+
+    abstract type VolumeModifier <: SpecModifier end
+    struct DENSITY <: VolumeModifier end
+    struct VOLUME <: VolumeModifier end
+
+    abstract type AbstractIntensiveSpec{T1<:MassBasisModifier} <: AbstractSpec  end
     abstract type AbstractTotalSpec <: AbstractSpec  end
     abstract type AbstractFractionSpec <: AbstractSpec  end
     abstract type CategoricalSpec <: AbstractSpec  end
 
 
-
-    struct SINGLE_COMPONENT <: SpecModifier end
-    struct ONE_MOL <: SpecModifier end
-
-    struct MOLAR <: SpecModifier end
-    struct MASS <: SpecModifier end
-    struct TOTAL <: SpecModifier end
-    struct FRACTION <: SpecModifier end
-    struct DENSITY <: SpecModifier end
-    struct VOLUME <: SpecModifier end
 
 
     abstract type AbstractEnergySpec{T1} <: AbstractIntensiveSpec{T1} end
@@ -29,7 +35,7 @@ module Types
 
     struct Entropy{T} <: AbstractIntensiveSpec{T} end
 
-    struct VolumeAmount{T1,T2<:SpecModifier} <: AbstractIntensiveSpec{T1} end
+    struct VolumeAmount{T1,T2<:VolumeModifier} <: AbstractIntensiveSpec{T1} end
 
     struct Pressure <: AbstractSpec end
     struct Temperature <: AbstractSpec end
@@ -39,9 +45,9 @@ module Types
 
     # those are vectors, 
 
-    struct MaterialCompounds{T1<:SpecModifier,T2<:SpecModifier} <: AbstractTotalSpec end
+    struct MaterialCompounds{T1<:MassBasisModifier,T2<:CompoundModifier} <: AbstractTotalSpec end
 
-    struct MaterialAmount{T1<:SpecModifier} <: AbstractTotalSpec end
+    struct MaterialAmount{T1<:MassBasisModifier} <: AbstractTotalSpec end
 
 
     struct PhaseFractions <: AbstractFractionSpec end
@@ -61,12 +67,13 @@ module Types
     export AbstractTotalSpec 
     export AbstractFractionSpec 
     export CategoricalSpec 
-    export SINGLE_COMPONENT  
-    export ONE_MOL  
+    export SingleComponent 
+    export OneMol  
     export MOLAR  
     export MASS  
     export TOTAL  
-    export FRACTION  
+    export FRACTION 
+    export TOTAL_AMOUNT 
     export DENSITY  
     export VOLUME  
     export AbstractEnergySpec  
@@ -140,9 +147,10 @@ const KW_TO_SPEC = IdDict{Symbol,Any}(
 ,:moles =>  MaterialAmount{MOLAR}()
 ,:xn =>  MaterialCompounds{MOLAR,FRACTION}()
 ,:xm =>   MaterialCompounds{MASS,FRACTION}()
-,:n =>  MaterialCompounds{MOLAR,TOTAL}()
-,:m =>   MaterialCompounds{MASS,TOTAL}()
+,:n =>  MaterialCompounds{MOLAR,TOTAL_AMOUNT}()
+,:m =>   MaterialCompounds{MASS,TOTAL_AMOUNT}()
 ,:mw =>  MolecularWeight()
+
 ,:vfrac =>  VaporFraction() #looking for better name
 ,:phase_fracs =>  PhaseFractions() #looking for better name
 
@@ -152,8 +160,8 @@ const KW_TO_SPEC = IdDict{Symbol,Any}(
 ,:vle => TwoPhaseEquilibrium()
 ,:lle => TwoPhaseEquilibrium()
 
-,:single_component => SINGLE_COMPONENT()
-,:one_mol => ONE_MOL()
+,:single_component => SingleComponent()
+,:one_mol => OneMol()
 ,:options => Options()
 )
 
@@ -213,7 +221,7 @@ function default_units(::Type{MaterialCompounds{T,FRACTION}}) where T
     return Unitful.NoUnits
 end
 
-function default_units(x::Type{MaterialCompounds{T,TOTAL}}) where T
+function default_units(x::Type{MaterialCompounds{T,TOTAL_AMOUNT}}) where T
     return default_units(T)
 end
 
@@ -295,7 +303,7 @@ function spec(sp::MaterialAmount, val,normalize_units::Bool=true)
     return Spec(sp,val)
 end
 
-function spec(sp::MaterialCompounds{T1,TOTAL}, val::V,normalize_units::Bool=true) where {T1,V<:AbstractVector} 
+function spec(sp::MaterialCompounds{T1,TOTAL_AMOUNT}, val::V,normalize_units::Bool=true) where {T1,V<:AbstractVector} 
     val = check_and_norm_vec(sp,val,normalize_units)
     return Spec(sp,val)
 end
@@ -405,115 +413,155 @@ end
     return throw_get_spec(val,specs)
 end
 
-function has_spec(val,specs::Specs)::Bool
-    for spec in specs.specs
-        if typeof(specification(spec)) <: typeof(val) 
+function has_spec(val,tup::Tuple)::Bool
+    @inbounds for i in 1:length(tup)
+        if typeof(specification(tup[i])) <: typeof(val) 
             return true
         end
     end
     return false
 end
 
-function has_spec(val,specs::Tuple)::Bool
-    for spec in specs
-        if typeof(specification(spec)) <: typeof(val) 
+function has_spec(val::Type{T},tup::Tuple) where T<: AbstractSpec
+    @inbounds for i in 1:length(tup)
+        if typeof(specification(tup[i])) <: T 
             return true
         end
     end
     return false
 end
 
+has_spec(val,sp::Specs) = has_spec(val,sp.specs)
 
 #returns the specification symbol in multicomponent
 #returns :singlecomponent if there are no specifications
 #throws error if more than one specification is found
-function _specs_components(kwargs::NamedTuple)
-   
-    xn = hasproperty(kwargs,:xn)
-   xm = hasproperty(kwargs,:xm)
-   n = hasproperty(kwargs,:n)
-   m = hasproperty(kwargs,:m)
-   mass = hasproperty(kwargs,:mass)
-   moles = hasproperty(kwargs,:moles)
-#if no specification
-    amount_basis = (if ! (moles | mass) #one mol basis default
-        :one_mol
-    elseif moles & !(mass)
-        :moles
-    else mass & !(moles)
-        :mass
-    end)
 
-    if !(xn | xm | n | m )
-        return :single_component,amount_basis
-    elseif (xn & !(xm | n | m))
-        return :xn,amount_basis
-    elseif (xm & !(xn | n | m))
-        return :xm,amount_basis
-    elseif (n & !(xm | xn | m))
-        if ! (moles | mass) 
-            return :n,:n
-        end
-    elseif (m & !(xm | xn | n))
-        if ! (moles | mass) 
-            return :m,:m
-        end
-    else
-        throw(ArgumentError("incorrect mass or molar specifications."))
-    end
+const AMOUNT_CONST =Dict{Int,Any}(
+    0 => (SingleComponent(),OneMol())
+    ,1 => (SingleComponent(),MaterialAmount{MOLAR}())
+    ,2 => (SingleComponent(),MaterialAmount{MASS}())
+    ,110 => (MaterialCompounds{MOLAR,FRACTION}(),OneMol())
+    ,111 => (MaterialCompounds{MOLAR,FRACTION}(),MaterialAmount{MOLAR}())
+    ,112 => (MaterialCompounds{MOLAR,FRACTION}(),MaterialAmount{MASS}())
+    ,120 => (MaterialCompounds{MASS,FRACTION}(),OneMol())
+    ,121 => (MaterialCompounds{MASS,FRACTION}(),MaterialAmount{MOLAR}())
+    ,122 => (MaterialCompounds{MASS,FRACTION}(),MaterialAmount{MASS}())
+    ,210 => (MaterialCompounds{MOLAR,TOTAL_AMOUNT}(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
+    ,220 => (MaterialCompounds{MASS,TOTAL_AMOUNT}(),MaterialCompounds{MASS,TOTAL_AMOUNT}())
+    )
+
+    AMOUNT_CONST2 = Dict{Int64,Symbol}(
+        110 => :xn
+        ,111 => :xn
+        ,112 => :xn
+        ,120 => :xm
+        ,121 => :xm
+        ,122 => :xm
+        ,210 => :n
+        ,220 => :m
+    )
+
+#reduce-based mass transform, to check properties
+
+
+_reduce_check_mass(x::Spec) = 0
+_reduce_check_mass(x::Spec{MaterialCompounds{MOLAR,FRACTION}}) = 110
+_reduce_check_mass(x::Spec{MaterialCompounds{MASS,FRACTION}}) = 120
+_reduce_check_mass(x::Spec{MaterialCompounds{MOLAR,TOTAL_AMOUNT}}) = 210
+_reduce_check_mass(x::Spec{MaterialCompounds{MASS,TOTAL_AMOUNT}}) = 220
+_reduce_check_mass(x::Spec{MaterialAmount{MOLAR}}) = 1
+_reduce_check_mass(x::Spec{MaterialAmount{MASS}}) = 2
+
+#for symbols
+_reduce_check_mass(x::Symbol) = _reduce_check_mass(Val(x))
+_reduce_check_mass(::Val{:xn})=110
+_reduce_check_mass(::Val{:xm})=120
+_reduce_check_mass(::Val{:n})=210
+_reduce_check_mass(::Val{:m})=220
+_reduce_check_mass(::Val{:moles})=1
+_reduce_check_mass(::Val{:mass})=2
+_reduce_check_mass(::Val{:n})=210
+_reduce_check_mass(::Val{T} where T)=0
+
+#reduce-based phase transform, to check properties
+
+_reduce_check_phase(x::Spec) = 0
+_reduce_check_phase(x::Spec{TwoPhaseEquilibrium}) = 1
+_reduce_check_phase(x::Spec{VaporFraction}) = 1
+_reduce_check_phase(x::Spec{PhaseFractions}) = 10
+
+_reduce_check_phase(x::Symbol) = _reduce_check_phase(Val(x))
+_reduce_check_phase(::Val{:vle})=1
+_reduce_check_phase(::Val{:lle})=1
+_reduce_check_phase(::Val{:sat})=1
+_reduce_check_phase(::Val{:vfrac})=1
+_reduce_check_phase(::Val{:phase_fracs})=10
+_reduce_check_phase(::Val{T} where T)=0
+
+
+function _specs_components(kwargs::NamedTuple)::Int64
+    return mapreduce(_reduce_check_mass,+,keys(kwargs))
 end
 #gives the appropiate symbol to extract amount of matter
 
 
 #this needs future work to specify
-function _specs_phase_basis(kwargs::NamedTuple)::Symbol
-    vfrac = hasproperty(kwargs,:vfrac)
-    phase_fracs = hasproperty(kwargs,:phase_fracs)
-    sat = hasproperty(kwargs,:sat)
-    vle = hasproperty(kwargs,:vle)
-    lle = hasproperty(kwargs,:lle)
+function _specs_phase_basis(kwargs::NamedTuple)::Int64
+    return mapreduce(_reduce_check_phase,+,keys(kwargs))
+end
 
-    #(vfrac|sat|vle||lle|) & !(phase_fracs | phase)
-    if !(vfrac|sat|vle|lle|phase_fracs) #asume one phase
-        return :one_phase
-    elseif (vfrac|sat|vle|lle) & !(phase_fracs)
-        return :two_phase
-    elseif !(vfrac|sat|vle|lle) & (phase_fracs )
-        return :multi_phase
+function _specs_C(kwargs::NamedTuple,kw::Int64)::Int64
+    if kw < 10
+        return 1
     else
-        throw(ArgumentError("there are more than one phase specification"))
+        return length(getproperty(kwargs,AMOUNT_CONST2[kw]))
     end
 end
 
-function _specs_C(kwargs::NamedTuple,kw)::Int64
-    if kw == :single_component
-        return 1
-    else
-        return length(getproperty(kwargs,kw))
-    end
-end
 
-function _specs_P(kwargs::NamedTuple,kw::Symbol)::Int64
-    if (kw == :one_phase)
+#optional values not counted during degrees of freedom calc
+_reduce_check_opt(x::Spec) = 0
+_reduce_check_opt(x::Spec{PhaseTag}) = 1
+_reduce_check_opt(x::Spec{Options}) = 1
+
+_reduce_check_opt(x::Symbol) = _reduce_check_opt(Val(x))
+_reduce_check_opt(::Val{:phase})=1
+_reduce_check_opt(::Val{:options})=1
+_reduce_check_opt(::Val{T} where T)=0
+
+function _specs_P(kwargs::NamedTuple,kw::Int64)::Int64
+    if (kw == 0)
         return 1
-    elseif kw == :two_phase
+    elseif kw == 1
         return 2
     else
         return length(kwargs.phase_fracs)
     end
 end
 
-function _specs_F(kwargs::NamedTuple,component_basis::Symbol,amount_basis::Symbol,phase_basis::Symbol)::Int64
+
+
+function _specs_F(kwargs::NamedTuple,mass_basis::Int64,phase_basis::Int64)::Int64
     F = length(kwargs)
+    opt = mapreduce(_reduce_check_opt,+,keys(kwargs))
+    F = F - opt
     
-    phase = Int(hasproperty(kwargs,:phase))
-    options = Int(hasproperty(kwargs,:options))
-    F = F - phase - options
-    F = F - Int(component_basis != :single_component)
-    F = F - Int((amount_basis != :one_mol) &
-    (amount_basis != :n) &
-    (amount_basis != :m))
-    F = F - Int(phase_basis != :one_phase)
+    if mass_basis in (1,2,110,120,210,220) #one_specified
+        F = F -1
+    elseif mass_basis in (111,112,121,122) #two specified
+        F = F-2
+    elseif mass_basis == 0
+    else
+        throw(error("incorrect mass specification."))
+    end
+
+    if phase_basis == 0
+    elseif phase_basis in (1,10)
+    F = F - 1
+    else
+        throw(error("incorrect phase specification."))
+    end
     return F
 end
 
@@ -521,19 +569,18 @@ function specs(;check=true,normalize_units=true,kwargs...)
     f0 = k -> spec(KW_TO_SPEC[k],getproperty(kwargs.data,k),normalize_units)
     tup = map(f0,keys(kwargs.data))
     if check == true
-        component_basis,amount_basis = _specs_components(kwargs.data)
+        mass_basis = _specs_components(kwargs.data)
         phase_basis = _specs_phase_basis(kwargs.data)
-        mass_tup = (KW_TO_SPEC[component_basis],KW_TO_SPEC[amount_basis])
-        C = _specs_C(kwargs.data,component_basis)
+        C = _specs_C(kwargs.data,mass_basis)
         P = _specs_P(kwargs.data,phase_basis)
-        F = _specs_F(kwargs.data,component_basis,amount_basis,phase_basis)
+        F = _specs_F(kwargs.data,mass_basis,phase_basis)
         DF = C - P + 2 - F#behold, the gibbs phase rule!
         if DF<0
             throw(error("the variables are overspecified."))
         elseif DF>0
             throw(error("the variables are underspecified."))
         else
-            return Specs(mass_tup,tup,true)
+            return Specs(AMOUNT_CONST[mass_basis],tup,true)
         end
     else
         return Specs(nothing,tup,false)
@@ -549,5 +596,84 @@ function specs_grid(;check=true,normalize_units=true,kwargs...)
     return map(f0,Iterators.product(values(kwargs.data)...))
 end
 
-#function specs(args::Vararg{Spec};check=true,normalize_units=true)
-#end
+function _specs_components(tup::Tuple)::Int64
+  return mapreduce(_reduce_check_mass,+,tup)
+end
+
+function _specs_phase_basis(tup::Tuple)::Int64
+    return mapreduce(_reduce_check_phase,+,tup)
+end
+
+
+_reduce_mass_spec_c(x::Spec) = 0
+_reduce_mass_spec_c(x::Spec{MaterialCompounds}) = length(value(x))
+
+function _specs_C(tup::Tuple,kw::Int64)::Int64
+    if kw < 10
+        return 1
+    else
+        return mapreduce(_reduce_mass_spec_c,+,tup)
+    end
+end
+
+_reduce_mass_spec_p(x::Spec) = 0
+_reduce_mass_spec_p(x::Spec{PhaseFractions}) = length(value(x))
+
+function _specs_P(tup::Tuple,kw::Int64)::Int64
+    if (kw == 0)
+        return 1
+    elseif kw == 1
+        return 2
+    else
+        return mapreduce(_reduce_mass_spec_p,+,tup)
+    end
+end
+
+function _specs_F(tup::Tuple,mass_basis::Int64,phase_basis::Int64)::Int64
+    F = length(tup)
+    opt = mapreduce(_reduce_check_opt,+,tup)
+    F = F - opt
+
+    
+    if mass_basis in (1,2,110,120,210,220) #one_specified
+        F = F -1
+    elseif mass_basis in (111,112,121,122) #two specified
+        F = F-2
+    elseif mass_basis == 0
+    else
+        throw(error("incorrect mass specification."))
+    end
+
+    if phase_basis == 0
+    elseif phase_basis in (1,10)
+    F = F - 1
+    else
+        throw(error("incorrect phase specification."))
+    end
+    return F
+end
+
+function specs(args::Vararg{Spec};check=true)
+    
+    if check == true
+        all_unique = spec_tuple_unique(args) #this function is the main speed bottleneck
+        if !all_unique
+            throw(error("specifications are not unique."))
+        end
+        mass_basis = _specs_components(args)
+        phase_basis = _specs_phase_basis(args)
+        C = _specs_C(args,mass_basis)
+        P = _specs_P(args,phase_basis)
+        F = _specs_F(args,mass_basis,phase_basis)
+        DF = C - P + 2 - F#behold, the gibbs phase rule!
+        if DF<0
+            throw(error("the variables are overspecified."))
+        elseif DF>0
+            throw(error("the variables are underspecified."))
+        else
+            return Specs(AMOUNT_CONST[mass_basis],args,true)
+        end
+    else
+        return Specs(nothing,args,false)
+    end
+end

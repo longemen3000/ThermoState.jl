@@ -107,7 +107,7 @@ end
 
 function mol_entropy(model::FromSpecs,props::Specs,unit::T=u"J/(K*mol)",mw=nothing) where T <: MolEntropyUnits
     sval = throw_get_spec(Entropy,props)
-    val = to_spec(sval,props,mw,MOLAR())
+    val = to_spec(props,sval,mw,MOLAR())
     if unit !== u"J/(K*mol)"
         default_unit = _ups(one(val)*u"J/(K*mol)"/unit,true)
         return default_unit*val
@@ -118,7 +118,7 @@ end
 
 function mass_entropy(model::FromSpecs,props::Specs,unit::T=u"J/(K*kg)",mw=nothing) where T <: MassEntropyUnits
     sval = throw_get_spec(Entropy,props)
-    val = to_spec(sval,props,mw,MASS())
+    val = to_spec(props,sval,mw,MASS())
     if unit !== u"J/(K*kg)"
         default_unit = _ups(one(val)*u"J/(K*kg)"/unit,true)
         return default_unit*val
@@ -129,7 +129,7 @@ end
 
 function total_entropy(model::FromSpecs,props::Specs,unit::T=u"J/(K)",mw=nothing) where T <: EntropyUnits
     sval = throw_get_spec(Entropy,props)
-    val = to_spec(sval,props,mw,MASS())
+    val = to_spec(props,sval,mw,MASS())
     if unit !== u"J/K"
         default_unit = _ups(one(val)*u"J/(K)"/unit,true)
         return default_unit*val
@@ -140,7 +140,7 @@ end
 
 function total_volume(model::FromSpecs,props::Specs,unit::T=u"m^3",mw=nothing) where T <: Unitful.VolumeUnits
     sval = throw_get_spec(VolumeAmount,props)
-    val = to_spec(sval,props,mw,VolumeAmount{TOTAL,VOLUME}())
+    val = to_spec(props,sval,mw,VolumeAmount{TOTAL,VOLUME}())
     if unit !== u"m^3"
         default_unit = _ups(one(val)*u"m^3"/unit,true)
         return default_unit*val
@@ -151,7 +151,7 @@ end
 
 function mass_volume(model::FromSpecs,props::Specs,unit::T=u"(m^3)/kg",mw=nothing) where T <: MassVolumeUnits
     sval = throw_get_spec(VolumeAmount,props)
-    val = to_spec(sval,props,mw,VolumeAmount{MASS,VOLUME}())
+    val = to_spec(props,sval,mw,VolumeAmount{MASS,VOLUME}())
     if unit !== u"(m^3)/kg"
         default_unit = _ups(one(val)*u"(m^3)/kg"/unit,true)
         return default_unit*val
@@ -162,7 +162,7 @@ end
 
 function mol_volume(model::FromSpecs,props::Specs,unit::T=u"(m^3)/mol",mw=nothing) where T <: MolVolumeUnits
     sval = throw_get_spec(VolumeAmount,props)
-    val = to_spec(sval,props,mw,VolumeAmount{MOL,VOLUME}())
+    val = to_spec(props,sval,mw,VolumeAmount{MOL,VOLUME}())
     if unit !== u"(m^3)/mol"
         default_unit = _ups(one(val)*u"(m^3)/mol"/unit,true)
         return default_unit*val
@@ -173,7 +173,7 @@ end
 
 function mass_density(model::FromSpecs,props::Specs,unit::T=u"kg/m^3",mw=nothing) where T <: MassDensityUnits
     sval = throw_get_spec(VolumeAmount,props)
-    val = to_spec(sval,props,mw,VolumeAmount{MASS,DENSITY}())
+    val = to_spec(props,sval,mw,VolumeAmount{MASS,DENSITY}())
     if unit !== u"kg/m^3"
         default_unit = _ups(one(val)*u"kg/m^3"/unit,true)
         return default_unit*val
@@ -184,7 +184,7 @@ end
 
 function mol_density(model::FromSpecs,props::Specs,unit::T=u"mol/m^3",mw=nothing) where T <: MolDensityUnits
     sval = throw_get_spec(VolumeAmount,props)
-    val = to_spec(sval,props,mw,VolumeAmount{MOLAR,DENSITY}())
+    val = to_spec(props,sval,mw,VolumeAmount{MOLAR,DENSITY}())
     if unit !== u"mol/m^3"
         default_unit = _ups(one(val)*u"mol/m^3"/unit,true)
         return default_unit*val

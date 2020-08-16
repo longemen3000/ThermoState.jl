@@ -3,8 +3,8 @@ print_spec(t) = print(t) #fallback
 print_spec(x::Type{MOLAR}) = print("Molar ")
 print_spec(x::Type{MASS}) = print("Mass ")
 print_spec(x::Type{TOTAL}) = print("Total ")
-print_spec(x::Type{ONE_MOL}) = print("One mol ")
-print_spec(x::Type{SINGLE_COMPONENT}) = print("Single component ")
+print_spec(x::Type{OneMol}) = print("One mol ")
+print_spec(x::Type{SingleComponent}) = print("Single component ")
 
 
 
@@ -58,11 +58,11 @@ function print_spec(::Type{MaterialCompounds{MOLAR,FRACTION}})
     print("Molar fraction")
 end
 
-function print_spec(::Type{MaterialCompounds{MASS,TOTAL}})
+function print_spec(::Type{MaterialCompounds{MASS,TOTAL_AMOUNT}})
     print("Mass amounts")
 end
 
-function print_spec(::Type{MaterialCompounds{MOLAR,TOTAL}})
+function print_spec(::Type{MaterialCompounds{MOLAR,TOTAL_AMOUNT}})
     print("Molar amounts")
 end
 
