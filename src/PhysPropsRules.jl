@@ -6,6 +6,7 @@ import Unitful: @u_str
 
 include("utilities.jl")
 include("docs.jl")
+include("types.jl")
 include("spec.jl")
 include("units.jl")
 include("show.jl")

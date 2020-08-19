@@ -399,3 +399,102 @@ end
 function to_spec(sps,sp::Spec{SP1},mw,x::SP2) where {SP1<:VolumeAmount,SP2<:VolumeAmount}
     return to_spec_vol(sps,sp,mw,x)
 end
+
+
+#material compounds part
+
+#invariant
+function to_spec_mat(sps,sp::Spec{T},mw,::T) where {T<:MaterialCompounds}
+    return _ups(value(sp),true)
+end
+
+#fraction <-> total part, same base
+function to_spec_mat(sps,sp::Spec{MaterialCompounds{MOLAR,FRACTION}},mw,::MaterialCompounds{MOLAR,TOTAL_AMOUNT}) 
+    return moles2(sps,mw) .* _ups(value(sp),true)
+end
+
+function to_spec_mat(sps,sp::Spec{MaterialCompounds{MASS,FRACTION}},mw,::MaterialCompounds{MASS,TOTAL_AMOUNT}) 
+    return mass2(sps,mw) .* _ups(value(sp),true)
+end
+
+function to_spec_mat(sps,sp::Spec{MaterialCompounds{MOLAR,TOTAL_AMOUNT}},mw,::MaterialCompounds{MOLAR,FRACTION}) 
+    return _ups(value(sp),true) ./ moles2(sps,mw)
+end
+
+function to_spec_mat(sps,sp::Spec{MaterialCompounds{MASS,TOTAL_AMOUNT}},mw,::MaterialCompounds{MASS,FRACTION}) 
+    return _ups(value(sp),true) ./ mass2(sps,mw)
+end
+
+#molar total <-> mass total
+function to_spec_mat(sps,sp::Spec{MaterialCompounds{MOLAR,TOTAL_AMOUNT}},mw,::MaterialCompounds{MASS,TOTAL_AMOUNT}) 
+    return _ups(map(mw_mul,value(sp),mw),true)
+end
+
+function to_spec_mat(sps,sp::Spec{MaterialCompounds{MASS,TOTAL_AMOUNT}},mw,::MaterialCompounds{MOLAR,TOTAL_AMOUNT}) 
+    return  _ups(map(mw_div,value(sp),mw),true)
+end
+
+#molar fraction <-> mass fraction
+function to_spec_mat(sps,sp::Spec{MaterialCompounds{MOLAR,FRACTION}},mw,::MaterialCompounds{MASS,FRACTION}) 
+    n =  _ups(value(sp),true) .* moles2(sps,mw)
+    m = _ups(map(mw_mul,n,mw),true)
+    return m ./ sum(m)
+end
+
+function to_spec_mat(sps,sp::Spec{MaterialCompounds{MASS,FRACTION}},mw,::MaterialCompounds{MOLAR,FRACTION}) 
+    m =  _ups(value(sp),true) .* mass2(sps,mw)
+    n = _ups(map(mw_div,m,mw),true)
+    return n ./ sum(n)
+end
+
+#crossed properties:
+
+function to_spec_mat(sps,sp::Spec{MaterialCompounds{MOLAR,FRACTION}},mw,::MaterialCompounds{MASS,TOTAL_AMOUNT}) 
+    n =  _ups(value(sp),true) .* moles2(sps,mw)
+    m = _ups(map(mw_mul,n,mw),true)
+end
+
+function to_spec_mat(sps,sp::Spec{MaterialCompounds{MASS,FRACTION}},mw,::MaterialCompounds{MOLAR,TOTAL_AMOUNT}) 
+    m =  _ups(value(sp),true) .* mass2(sps,mw)
+    n = _ups(map(mw_div,m,mw),true)
+end
+
+function to_spec_mat(sps,sp::Spec{MaterialCompounds{MOLAR,TOTAL_AMOUNT}},mw,::MaterialCompounds{MASS,FRACTION}) 
+    m =  _map(mw_mul,value(sp),mw)
+   return _ups(m ./ sum(m),true)
+end
+
+function to_spec_mat(sps,sp::Spec{MaterialCompounds{MASS,TOTAL_AMOUNT}},mw,::MaterialCompounds{MOLAR,FRACTION}) 
+    n =  _map(mw_div,value(sp),mw)
+   return _ups(m ./ sum(m),true)
+end
+
+function to_spec_compounds(sps::Specs,mw,x::SP2) where {SP2<:MaterialCompounds}
+    return to_spec_compounds(amount_type(sps),sps,mw,x)
+end
+
+function to_spec_compounds(amount_type::Tuple{SingleComponent,T},sps,mw,x) where {T}
+    return single_component_to_spec(sps,mw,x)
+end
+
+function to_spec_compounds(amount_type::Tuple{T1,T2},sps,mw,x) where {T1<:MaterialCompounds,T2}
+    sp = get_spec(MaterialCompounds,sps)
+    return to_spec_mat(sp,sps,mw,x)
+end
+
+function single_component_to_spec(sps,mw,x::MaterialCompounds{MOLAR,FRACTION})
+    return [1.0]
+end
+
+function single_component_to_spec(sps,mw,x::MaterialCompounds{MASS,FRACTION})
+    return [1.0]
+end
+
+function single_component_to_spec(sps,mw,x::MaterialCompounds{MOLAR,TOTAL_AMOUNT})
+    return [moles2(sps,mw)]
+end
+
+function single_component_to_spec(sps,mw,x::MaterialCompounds{MASS,TOTAL_AMOUNT})
+    return [mass2(sps,mw)]
+end
+

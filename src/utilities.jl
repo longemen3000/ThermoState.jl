@@ -151,20 +151,3 @@ end
 #a_in_b(t1, t2) = all(in(t2), t1)
 #tuple_comparison(t1, t2) = ((length(t1) == length(t2)) && a_in_b(t1, t2) && a_in_b(t2, t1))
 
-function spec_equal(x1::Spec{T},x2::Spec{T})::Bool where {T}
-    return true
-end
-
-function spec_equal(x1::Spec{T1},x2::Spec{T2})::Bool where {T1,T2}
-    return false
-end
-function spec_tuple_unique(a)::Bool
-    @inbounds for i = 1:length(a)
-        for j = (i+1):length(a)
-            if spec_equal(a[i],a[j])
-                return false
-            end
-        end
-    end
-    return true
-end

@@ -16,6 +16,7 @@ const MassDensityUnits = Unitful.MolalityUnits
 const MassVolumeUnits = Unitful.Units{U,((Unitful.𝐋)^3)/(Unitful.𝐌),A} where A where U
 const MolVolumeUnits = Unitful.Units{U,((Unitful.𝐋)^3)/(Unitful.𝐍),A} where A where U
 
+const MolUnits = Unitful.Units{U,Unitful.𝐍,A} where A where U
 
 function pressure(model::FromSpecs,props::Specs,unit::T=u"Pa") where T <: Unitful.PressureUnits
     sval = throw_get_spec(Pressure(),props)
@@ -187,6 +188,40 @@ function mol_density(model::FromSpecs,props::Specs,unit::T=u"mol/m^3",mw=nothing
     val = to_spec(props,sval,mw,VolumeAmount{MOLAR,DENSITY}())
     if unit !== u"mol/m^3"
         default_unit = _ups(one(val)*u"mol/m^3"/unit,true)
+        return default_unit*val
+    else
+        return val
+    end
+end
+
+function mol_fraction(model::FromSpecs,props::Specs,unit,mw=nothing)
+    val = to_spec_compounds(props,mw,MaterialCompounds{MOLAR,FRACTION}())
+    return val
+    
+end
+
+
+function mass_fraction(model::FromSpecs,props::Specs,unit,mw=nothing)
+    val = to_spec_compounds(props,mw,MaterialCompounds{MASS,FRACTION}())
+    return val
+    
+end
+function mol_number(model::FromSpecs,props::Specs,unit::T,mw=nothing) where T <: MolUnits
+    val = to_spec_compounds(props,mw,MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
+    if unit !== u"mol"
+        default_unit = _ups(one(eltype(val))*u"mol"/unit,true)
+        return default_unit*val
+    else
+        return val
+    end
+    
+end
+
+
+function mass_number(model::FromSpecs,props::Specs,unit::T,mw=nothing) where T <: Unitful.MassUnits
+    val = to_spec_compounds(props,mw,MaterialCompounds{MASS,TOTAL_AMOUNT}())
+    if unit !== u"kg"
+        default_unit = _ups(one(eltype(val))*u"kg"/unit,true)
         return default_unit*val
     else
         return val

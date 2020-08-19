@@ -5,36 +5,30 @@ const R_IDEAL_GAS = Unitful.ustrip(Unitful.R)
 
 default_units(property::typeof(mol_helmholtz)) = u"J/mol"
 default_units(property::typeof(mass_helmholtz)) = u"J/kg"
-#default_units(property::typeof(total_helmholtz)) = u"J"
+default_units(property::typeof(total_helmholtz)) = u"J"
 
-#default_units(property::typeof(mol_gibbs)) = u"J/mol"
+default_units(property::typeof(mol_gibbs)) = u"J/mol"
 default_units(property::typeof(mass_gibbs)) = u"J/kg"
-#default_units(property::typeof(total_gibbs)) = u"J"
+default_units(property::typeof(total_gibbs)) = u"J"
 
 default_units(property::typeof(mol_internal_energy)) = u"J/mol"
 default_units(property::typeof(mass_internal_energy)) = u"J/kg"
-#default_units(property::typeof(total_internal_energy)) = u"J"
+default_units(property::typeof(total_internal_energy)) = u"J"
 
 default_units(property::typeof(mol_enthalpy)) = u"J/mol"
 default_units(property::typeof(mass_enthalpy)) = u"J/kg"
-#default_units(property::typeof(total_enthalpy)) = u"J"
+default_units(property::typeof(total_enthalpy)) = u"J"
 
 default_units(property::typeof(mol_entropy)) = u"J/(mol*K)"
 default_units(property::typeof(mass_entropy)) = u"J/(kg*K)"
-#default_units(property::typeof(total_entropy)) = u"J/(K)"
+default_units(property::typeof(total_entropy)) = u"J/(K)"
 
 default_units(property::typeof(mol_volume)) = u"(m^3)/mol"
 default_units(property::typeof(mass_volume)) = u"(m^3)/kg"
-#default_units(property::typeof(total_volume)) = u"(m^3)"
+default_units(property::typeof(total_volume)) = u"(m^3)"
 
 default_units(property::typeof(mol_density)) = u"mol/(m^3)"
 default_units(property::typeof(mass_density)) = u"kg/(m^3)"
-
-default_units(property::typeof(mol_isochoric_heat_capacity)) = u"J/(mol*K)"
-default_units(property::typeof(mass_isochoric_heat_capacity)) = u"J/(kg*K)"
-
-default_units(property::typeof(mol_isobaric_heat_capacity)) = u"J/(mol*K)"
-default_units(property::typeof(mass_isobaric_heat_capacity)) = u"J/(kg*K)"
 
 default_units(property::typeof(moles)) = u"mol"
 default_units(property::typeof(mass)) = u"kg"
@@ -46,23 +40,6 @@ default_units(property::typeof(mol_number)) = u"mol"
 default_units(property::typeof(mass_fraction)) = Unitful.NoUnits
 default_units(property::typeof(mass_number)) = u"kg"
 
-default_units(property::typeof(sound_speed)) = u"m/s"
-default_units(property::typeof(compressibility_factor)) = Unitful.NoUnits
-
-
-default_units(property::typeof(molecular_weight)) = u"g/mol"
-default_units(property::typeof(compounds_number)) = Unitful.NoUnits
-default_units(property::typeof(covolumes)) = u"(m^3)/mol"
-
-# the combinatorics of volume mass and moles
-default_units(property::typeof(critical_mol_volume)) = u"(m^3)/mol"
-default_units(property::typeof(critical_mass_volume)) = u"(m^3)/kg"
-default_units(property::typeof(critical_mol_density)) = u"mol/(m^3)"
-default_units(property::typeof(critical_mass_density)) = u"kg/(m^3)"
-default_units(property::typeof(critical_compressibility_factor)) = u"kg/(m^3)"
-default_units(property::typeof(critical_temperature)) = u"K"
-default_units(property::typeof(critical_pressure)) = u"Pa"
-default_units(property::typeof(acentric_factor)) = Unitful.NoUnits
 
 
 

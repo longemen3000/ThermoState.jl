@@ -1,331 +1,408 @@
-#functions for calculated properties, they require a model and a property (for example Cp(T))
+
 """
     mol_helmholtz(model,specs::Specs,unit,[options...])::Real
 
-Compute the molar helmholtz energy (J/mol).
-If you need unitful units, use the macro @to_units before the function call
+Keyword symbols: `:mol_a`, `:a`
+
+
+Compute the molar helmholtz energy (J/mol), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
 
 """
 function mol_helmholtz end
 
 """
-    residual_helmholtz(model,args...)::Real
-    residual_helmholtz(model,specs::Specs,unit::Unitful.Units)::Real
+    mass_helmholtz(model,specs::Specs,unit,[options...])::Real
 
-Compute the molar helmholtz energy evaluated in the arguments.
-It shall return a numeric value with units: J/mol.
-used in equilibria calculation
-"""
-function residual_helmholtz end   
-
-"""
-    mol_gibbs(model,specs::Specs,unit,[options...])::Real
-
-Compute the molar gibbs energy (J/mol), from or using the specifications as base.
-If you need unitful units, use the macro @to_units before the function call
-
-"""
-function mol_gibbs end
+Keyword symbols: `:mass_a`
 
 
-"""
-    pressure(model,specs::Specs,[options])::Real
-
-Compute the pressure of a model evaluated in the arguments.
-If the model  uses the pressure as an independent property, it return the pressure stored in the phase.
-It shall return a numeric value with units: Pa.
-
-"""
-
-function pressure  end
+Compute the specific (mass) helmholtz energy (J/kg), from or using the specifications as base.
 
 
-"""
-    compressibility_factor(model,specs::Specs,options)::Real
-
-Compute the  compressibility factor of a model evaluated in the arguments.
-It shall return a numeric value with no units.
-
-"""
-function compressibility_factor  end
-
-"""
-    mol_entropy(model,specs::Specs,options)::Real
-
-Compute the  molar entropy of a model evaluated in the arguments.
-It shall return a numeric value with units: J/(K mol).
-
-"""
-function mol_entropy end  
-
-"""
-    mol_enthalpy(model,args...)::Real
-    mol_enthalpy(model,specs::Specs,options)::Real
-
-Compute the molar enthalpy of a model evaluated in the arguments.
-It shall return a numeric value with units: J/mol.
-
-""" 
-function mol_enthalpy end   
-
-"""
-
-    mol_internal_energy(model,specs::Specs,options)::Real
-
-Compute the molar internal energy of a model evaluated in the arguments.
-It shall return a numeric value with units: J/mol
-.
-""" 
-function mol_internal_energy end  
-
-"""
-    mol_isochoric_heat_capacity(model,specs::Specs,options)::Real
-
-Compute the molar specific heat capacity at constant volume (Cv) of a model evaluated in the arguments.
-It shall return a numeric value with units: J/(K mol).
-it can also be called by `mol_cv`, but it must be defined in terms of `mol_isochoric_heat_capacity`
-
-""" 
-function mol_isochoric_heat_capacity end 
-const mol_cv = mol_isochoric_heat_capacity
-
-"""
-    mol_isobaric_heat_capacity(model,specs::Specs,options)::Real
-
-Compute the molar specific heat capacity at constant pressure (Cp) of a model evaluated in the arguments.
-It shall return a numeric value with units: J/(K mol).
-it can also be called by `mol_cp`, but it must be defined in terms of `mol_isobaric_heat_capacity`
-
-""" 
-function mol_isobaric_heat_capacity end   
-const mol_cp = mol_isobaric_heat_capacity
-
-"""
-    sound_speed(model,specs::Specs,options)::Real
-
-Compute the sound of speed of a model evaluated in the arguments.
-It shall return a numeric value with units: m/s.
-
-""" 
-function sound_speed end  
-
-"""
-    mol_fraction(spec)::AbstractVector{<:Real}
-
-Return the molar fraction stored in the phase.
-It shall return a vector of numeric values corresponding to the molar fractions.
-
-""" 
-function mol_fraction end   
-
-"""
-    mass_helmholtz(model,specs::Specs,options)::Real
-
-Compute the specific mass helmholtz energy. (ideal helmholtz + residual helmholtz), evaluated in the arguments.
-It shall return a numeric value with units: J/kg.
+If you need unitful units, use the macro `@to_units` before the function call
 
 """
 function mass_helmholtz end
 
 """
-    mass_gibbs(model,specs::Specs,options)::Real
+    total_helmholtz(model,specs::Specs,unit,[options...])::Real
 
-Compute the mass gibbs energy, evaluated in the arguments.
-It shall return a numeric value with units: J/kg.
+Keyword symbols: `:total_a`
+
+
+Compute the total helmholtz energy (J), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
+
+"""
+function total_helmholtz end
+
+
+#gibbs energy
+
+"""
+    mol_gibbs(model,specs::Specs,unit,[options...])::Real
+
+Keyword symbols: `:mol_g`, `:g`
+
+
+Compute the molar gibbs energy (J/mol), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
+
+"""
+function mol_gibbs end
+
+"""
+    mass_gibbs(model,specs::Specs,unit,[options...])::Real
+
+Keyword symbols: `:mass_g`
+
+
+Compute the specific (mass) gibbs energy (J/kg), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
 
 """
 function mass_gibbs end
 
 """
-    mass_entropy(model,specs::Specs,options)::Real
+    total_gibbs(model,specs::Specs,unit,[options...])::Real
 
-Compute the mass entropy, evaluated in the arguments.
-It shall return a numeric value with units: J/(K*kg).
+Keyword symbols: `:total_g`
+
+
+Compute the total gibbs energy (J), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
 
 """
-function mass_entropy end 
+function total_gibbs end
+
+#enthalpy
 
 """
-    mass_enthalpy(model,specs::Specs,options)::Real
+    mol_enthalpy(model,specs::Specs,unit,[options...])::Real
 
-Compute the mass gibbs energy, evaluated in the arguments.
-It shall return a numeric value with units: J/kg.
+Keyword symbols: `:mol_h`, `:h`
+
+
+Compute the molar enthalpy (J/mol), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
+
+"""
+function mol_enthalpy end
+
+"""
+    mass_enthalpy(model,specs::Specs,unit,[options...])::Real
+
+Keyword symbols: `:mass_h`
+
+
+Compute the specific (mass) enthalpy (J/kg), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
 
 """
 function mass_enthalpy end
 
 """
-    mass_internal_energy(model,specs::Specs,options)::Real
+    total_enthalpy(model,specs::Specs,unit,[options...])::Real
 
-Compute the mass internal energy, evaluated in the arguments.
-It shall return a numeric value with units: J/kg.
+
+Keyword symbols: `:total_h`
+
+
+Compute the total enthalpy (J), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
+
+"""
+function total_enthalpy end
+
+#internal energy
+
+
+"""
+    mol_internal_energy(model,specs::Specs,unit,[options...])::Real
+
+Keyword symbols: `:mol_u`, `:u`
+
+
+Compute the molar internal energy (J/mol), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
+
+"""
+function mol_internal_energy end
+
+"""
+    mass_internal_energy(model,specs::Specs,unit,[options...])::Real
+
+Keyword symbols: `:mass_u`
+
+
+Compute the specific (mass) internal energy (J/kg), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
 
 """
 function mass_internal_energy end
 
+"""
+    total_internal_energy(model,specs::Specs,unit,[options...])::Real
+
+Keyword symbols: `:total_u`
+
+
+Compute the total internal energy (J), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
 
 """
-    mass_isochoric_heat_capacity(model,specs::Specs,options)::Real
+function total_internal_energy end
 
-Compute the mass specific heat capacity at constant volume (Cv) of a model evaluated in the arguments.
-It shall return a numeric value with units: J/(K kg).
-it can also be called by `mass_cv`, calculated in terms of `mol_isochoric_heat_capacity`
 
-"""
-function mass_isochoric_heat_capacity end
-const mass_cv = mass_isochoric_heat_capacity
-
-"""
-    mass_isobaric_heat_capacity(model,specs::Specs,options)::Real
-
-Compute the mass specific heat capacity at constant pressure (Cp) of a model evaluated in the arguments.
-It shall return a numeric value with units: J/(K kg).
-it can also be called by `mass_cp`, calculated in terms of `mol_isobaric_heat_capacity`
-
-"""
-function mass_isobaric_heat_capacity end
-const mass_cp = mass_isobaric_heat_capacity
-
+#entropy
 
 
 """
-    mol_number(Spec)::AbstractVector{<:Real}
+    mol_entropy(model,specs::Specs,unit,[options...])::Real
 
-Return the moles of each compound stored in the phase.
-It shall return a vector of numeric values corresponding to the amount of moles of each compound.
+Keyword symbols: `:mol_s`, `:s`
 
-""" 
-function mol_number end   
 
-"""
-    mass_fraction(Spec)::AbstractVector{<:Real}
+Compute the molar entropy (J/(mol K)), from or using the specifications as base.
 
-Return the mass fraction stored in the phase.
-It shall return a vector of numeric values corresponding to the mass fractions.
 
-""" 
-
-function mass_fraction end
+If you need unitful units, use the macro `@to_units` before the function call
 
 """
-    mass_number(Spec)::AbstractVector{<:Real}
-
-Return the mass of each compound stored in the phase.
-It shall return a vector of numeric values corresponding to the mass of each compound.
-
-""" 
-function mass_number end 
+function mol_entropy end
 
 """
-    mol_density(model,args...)::Real
-    mol_density(model,specs::Specs,options)::Real
+    mass_entropy(model,specs::Specs,unit,[options...])::Real
 
-Return the molar density in the phase.
-If the model  uses a volume as an independent property, it return the molar density stored in the phase.
-It shall return a numeric value with units: mol/m3
+Keyword symbols: `:mass_s`
 
-""" 
-function mol_density end  
 
-"""
-    mass_volume(model,args...)::Real
-    mass_volume(model,specs::Specs,options)::Real
+Compute the specific (mass) entropy (J/(kg K)), from or using the specifications as base.
 
-Compute the mass volume of a model evaluated in the arguments.
-If the model uses a volume as an independent property, it return the mass volume stored in the phase.
-It shall return a numeric value with units: m3/kg
 
-"""  
-function mass_volume end   
+If you need unitful units, use the macro `@to_units` before the function call
 
 """
-    mass_density(model,args...)::Real
-    mass_density(model,specs::Specs,options)::Real
-
-Compute the mass density of a model evaluated in the arguments.
-If the model uses a volume as an independent property, it return the mass density stored in the phase.
-It shall return a numeric value with units: kg/m3
-
-"""  
-function mass_density end   
+function mass_entropy end
 
 """
-    mol_volume(model,args...)::Real
-    mol_volume(model,specs::Specs,options)::Real
+    total_entropy(model,specs::Specs,unit,[options...])::Real
 
-Return the molar density in the phase.
-If the model  uses a volume as an independent property, it return the molar density stored in the phase.
-It shall return a numeric value with units: m3/mol
+Keyword symbols: `:total_s`
+
+
+Compute the total entropy (J/K), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
+
+"""
+function total_entropy end
+
+#temperature an pressure
+"""
+    temperature(model,specs::Specs,unit,[options...])::Real
+
+Keyword symbols: `:t`, `:T`
+
+
+Compute the temperature (K), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
+
+"""
+function temperature end
+
+"""
+pressure(model,specs::Specs,unit,[options...])::Real
+
+    Keyword symbols: `:p`, `:P`
+
+
+Compute the pressure (Pa), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
+
+"""
+function pressure end
+
+#volume amounts
+
+"""
+    mol_volume(model,specs::Specs,unit,[options...])::Real
+
+Keyword symbols: `:mol_v`, `:v`
+
+
+Compute the molar volume (m³/mol), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
 
 """
 function mol_volume end
 
 """
-    moles(Spec)::Real
+    mass_volume(model,specs::Specs,unit,[options...])::Real
 
-Return the total amount of moles present in the phase.
-It shall return a numeric value with units: mol
+Keyword symbols: `:mass_v`
 
-""" 
-function moles end   
 
-"""
-    mass(Spec)::Real
+Compute the specific (mass) volume (m³/kg), from or using the specifications as base.
 
-Return the total mass present in the phase.
-It shall return a numeric value with units: kg
+
+If you need unitful units, use the macro `@to_units` before the function call
 
 """
-function mass end   
+function mass_volume end
 
 """
-    temperature(model,args...)::Real
-    temperature(model,specs::Specs,options)::Real
+    total_volume(model,specs::Specs,unit,[options...])::Real
 
-Compute the temperature of a model evaluated in the arguments.
-If the model uses a temperature as an independent property, it return the temperature stored in the phase.
-It shall return a numeric value with units: K
+Keyword symbols: `:total_v`, `:V`
 
-"""  
-function temperature end
+
+Compute the total volume (m³), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
+
+"""
+function total_volume end
+
+"""
+    mol_density(model,specs::Specs,unit,[options...])::Real
+
+Keyword symbols: `:mol_rho`, `:rho`, `:mol_ρ`, `:ρ`
+
+
+Compute the molar density (mol/m³), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
+
+"""
+function mol_density end
+
+"""
+    mass_density(model,specs::Specs,unit,[options...])::Real
+
+Keyword symbols: `:mass_rho`, `:mass_ρ`
+
+
+Compute the specific (mass) density (kg/m³), from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
+
+"""
+function mass_density end
 
 
 """
-    molecular_weight(model)::AbstractVector{<:Real}
+    mol_fraction(model,specs::Specs,unit,[options...])::AbstractVector
 
-Return the total molecular weight of the compounds present in the model.
-It shall return a vector of numeric values with units: g/mol
+Keyword symbols: `:xn`
+
+
+Compute the molar fraction of each present compound present in the provided system, from or using the specifications as base.
+
+
+The unit argument is not used here. but its present for consistency.
+"""
+function mol_fraction end
 
 """
-function molecular_weight end
+    mass_fraction(model,specs::Specs,unit,[options...])::AbstractVector
+
+Keyword symbols: `:xm`
+
+
+Compute the mass fraction of each present compound present in the provided system, from or using the specifications as base.
+
+
+The unit argument is not used here. but its present for consistency.
+"""
+function mass_fraction end
 
 """
-    compounds_number(model)::Int64
+    mol_number(model,specs::Specs,unit,[options...])::AbstractVector
 
-Return the number of the compounds present in the model.
+Keyword symbols: `:n`
 
 
-"""
-function compounds_number end
+Compute the amount of moles (in mol) of each present compound present in the provided system, from or using the specifications as base.
 
-"""
-    covolumes(model,args...)::AbstractVector{<:Real}
-    covolumes(model,phase)::AbstractVector{<:Real}
 
-Returns the minimum molar volume that the model can handle.
-It shall return a vector numeric value with units: m3/mol
+If you need unitful units, use the macro `@to_units` before the function call
 
 """
-function covolumes end
+function mol_number end
 
-#the combinatorics of volume mass and moles
+"""
+    mass_number(model,specs::Specs,unit,[options...])::AbstractVector
 
-function critical_mol_volume end
-function critical_mass_volume end
-function critical_mol_density end
-function critical_mass_density end
+Keyword symbols: `:m`
 
-function critical_compressibility_factor end
-function critical_temperature end
-function critical_pressure end
-function acentric_factor end
+
+Compute the amount of mass (in kg) of each present compound present in the provided system, from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
+
+"""
+function mass_number end
+
+"""
+    moles(model,specs::Specs,unit,[options...])::Real
+
+Keyword symbols: `:moles`
+
+
+Compute the total amount of moles (in mol) of the provided system, from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
+
+"""
+function moles end
+
+"""
+    mass(model,specs::Specs,unit,[options...])::Real
+
+Keyword symbols: `:mass`
+
+
+Compute the total amount of mass (in kg) of the provided system, from or using the specifications as base.
+
+
+If you need unitful units, use the macro `@to_units` before the function call
+
+"""
+function mass end
+

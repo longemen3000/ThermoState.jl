@@ -1,169 +1,4 @@
-module Types
-    abstract type AbstractSpec end
-    abstract type SpecModifier <: AbstractSpec  end
 
-    struct SingleComponent <: AbstractSpec end
-    struct OneMol <: AbstractSpec end
-
-    abstract type MassBasisModifier <: SpecModifier end
-    struct MOLAR <: MassBasisModifier end
-    struct MASS <: MassBasisModifier end
-    struct TOTAL <: MassBasisModifier end
-
-    abstract type CompoundModifier <: SpecModifier end
-    struct FRACTION <: CompoundModifier end
-    struct TOTAL_AMOUNT <: CompoundModifier end
-
-    abstract type VolumeModifier <: SpecModifier end
-    struct DENSITY <: VolumeModifier end
-    struct VOLUME <: VolumeModifier end
-
-    abstract type AbstractIntensiveSpec{T1<:MassBasisModifier} <: AbstractSpec  end
-    abstract type AbstractTotalSpec <: AbstractSpec  end
-    abstract type AbstractFractionSpec <: AbstractSpec  end
-    abstract type CategoricalSpec <: AbstractSpec  end
-
-
-
-
-    abstract type AbstractEnergySpec{T1} <: AbstractIntensiveSpec{T1} end
-
-    struct Enthalpy{T} <: AbstractEnergySpec{T} end
-    struct InternalEnergy{T} <: AbstractEnergySpec{T} end
-    struct Gibbs{T} <: AbstractEnergySpec{T} end
-    struct Helmholtz{T} <: AbstractEnergySpec{T} end
-
-    struct Entropy{T} <: AbstractIntensiveSpec{T} end
-
-    struct VolumeAmount{T1,T2<:VolumeModifier} <: AbstractIntensiveSpec{T1} end
-
-    struct Pressure <: AbstractSpec end
-    struct Temperature <: AbstractSpec end
-
-    struct Mass <: AbstractTotalSpec end
-    struct Moles <: AbstractTotalSpec end
-
-    # those are vectors, 
-
-    struct MaterialCompounds{T1<:MassBasisModifier,T2<:CompoundModifier} <: AbstractTotalSpec end
-
-    struct MaterialAmount{T1<:MassBasisModifier} <: AbstractTotalSpec end
-
-
-    struct PhaseFractions <: AbstractFractionSpec end
-    struct VaporFraction <: AbstractFractionSpec end
-
-    struct PhaseTag <: CategoricalSpec end
-    struct TwoPhaseEquilibrium <: CategoricalSpec end
-
-    struct Options <: CategoricalSpec end
-
-    #not defined for now
-    struct MolecularWeight <: AbstractSpec end
-
-    export AbstractSpec 
-    export SpecModifier 
-    export AbstractIntensiveSpec 
-    export AbstractTotalSpec 
-    export AbstractFractionSpec 
-    export CategoricalSpec 
-    export SingleComponent 
-    export OneMol  
-    export MOLAR  
-    export MASS  
-    export TOTAL  
-    export FRACTION 
-    export TOTAL_AMOUNT 
-    export DENSITY  
-    export VOLUME  
-    export AbstractEnergySpec  
-    export Enthalpy 
-    export InternalEnergy
-    export Gibbs  
-    export Helmholtz  
-    export Entropy  
-    export VolumeAmount 
-    export Pressure 
-    export Temperature 
-    export Mass 
-    export Moles 
-    export MaterialCompounds 
-    export MaterialAmount 
-    export PhaseFractions 
-    export VaporFraction 
-    export PhaseTag 
-    export TwoPhaseEquilibrium 
-    export Options 
-    export MolecularWeight
-
-end
-
-using .Types
-
-const KW_TO_SPEC = IdDict{Symbol,Any}(
-:h =>  Enthalpy{MOLAR}()
-,:g =>  Gibbs{MOLAR}()
-,:a =>  Helmholtz{MOLAR}()
-,:u =>  InternalEnergy{MOLAR}()
-
-,:mol_h =>  Enthalpy{MOLAR}()
-,:mol_g =>  Gibbs{MOLAR}()
-,:mol_a =>  Helmholtz{MOLAR}()
-,:mol_u =>  InternalEnergy{MOLAR}()
-
-,:mass_h =>  Enthalpy{MASS}()
-,:mass_g =>  Gibbs{MASS}()
-,:mass_a =>  Helmholtz{MASS}()
-,:mass_u =>  InternalEnergy{MASS}()
-
-,:total_h =>  Enthalpy{TOTAL}()
-,:total_g =>  Gibbs{TOTAL}()
-,:total_a =>  Helmholtz{TOTAL}()
-,:total_u =>  InternalEnergy{TOTAL}()
-
-,:s =>  Entropy{MOLAR}()
-,:mol_s =>  Entropy{MOLAR}()
-,:mass_s =>  Entropy{MASS}()
-,:total_s =>  Entropy{TOTAL}()
-
-,:p =>  Pressure()
-,:P =>  Pressure()
-,:t =>  Temperature()
-,:T => Temperature()
-
-,:v =>  VolumeAmount{MOLAR,VOLUME}()
-,:mol_v =>  VolumeAmount{MOLAR,VOLUME}()
-,:mass_v =>  VolumeAmount{MASS,VOLUME}()
-,:total_v =>  VolumeAmount{TOTAL,VOLUME}()
-
-,:rho =>  VolumeAmount{MOLAR,DENSITY}() 
-,:mol_rho =>  VolumeAmount{MOLAR,DENSITY}() 
-,:mass_rho =>  VolumeAmount{MASS,DENSITY}() 
-
-,:ρ =>  VolumeAmount{MOLAR,DENSITY}()
-,:mol_ρ =>  VolumeAmount{MOLAR,DENSITY}()
-,:mass_ρ =>  VolumeAmount{MASS,DENSITY}() 
-,:mass =>  MaterialAmount{MASS}()
-,:moles =>  MaterialAmount{MOLAR}()
-,:xn =>  MaterialCompounds{MOLAR,FRACTION}()
-,:xm =>   MaterialCompounds{MASS,FRACTION}()
-,:n =>  MaterialCompounds{MOLAR,TOTAL_AMOUNT}()
-,:m =>   MaterialCompounds{MASS,TOTAL_AMOUNT}()
-,:mw =>  MolecularWeight()
-
-,:vfrac =>  VaporFraction() #looking for better name
-,:phase_fracs =>  PhaseFractions() #looking for better name
-
-,:phase =>PhaseTag()
-
-,:sat => TwoPhaseEquilibrium()
-,:vle => TwoPhaseEquilibrium()
-,:lle => TwoPhaseEquilibrium()
-
-,:single_component => SingleComponent()
-,:one_mol => OneMol()
-,:options => Options()
-)
 
 
 """
@@ -295,6 +130,10 @@ end
 
 function spec(sp::Union{Pressure,Temperature}, val,normalize_units::Bool=true)
     val = check_and_norm(sp,val,normalize_units)
+    return Spec(sp,val)
+end
+
+function spec(sp::Pressure, val::Nothing,normalize_units::Bool=true)
     return Spec(sp,val)
 end
 
@@ -473,7 +312,6 @@ _reduce_check_mass(x::Spec{MaterialCompounds{MASS,TOTAL_AMOUNT}}) = 220
 _reduce_check_mass(x::Spec{MaterialAmount{MOLAR}}) = 1
 _reduce_check_mass(x::Spec{MaterialAmount{MASS}}) = 2
 
-#for symbols
 _reduce_check_mass(x::Symbol) = _reduce_check_mass(Val(x))
 _reduce_check_mass(::Val{:xn})=110
 _reduce_check_mass(::Val{:xm})=120
@@ -481,8 +319,8 @@ _reduce_check_mass(::Val{:n})=210
 _reduce_check_mass(::Val{:m})=220
 _reduce_check_mass(::Val{:moles})=1
 _reduce_check_mass(::Val{:mass})=2
-_reduce_check_mass(::Val{:n})=210
 _reduce_check_mass(::Val{T} where T)=0
+
 
 #reduce-based phase transform, to check properties
 
@@ -652,6 +490,24 @@ function _specs_F(tup::Tuple,mass_basis::Int64,phase_basis::Int64)::Int64
     end
     return F
 end
+function spec_equal(x1::Spec{T},x2::Spec{T})::Bool where {T}
+    return true
+end
+
+function spec_equal(x1::Spec{T1},x2::Spec{T2})::Bool where {T1,T2}
+    return false
+end
+function spec_tuple_unique(a)::Bool
+    @inbounds for i = 1:length(a)
+        for j = (i+1):length(a)
+            if spec_equal(a[i],a[j])
+                return false
+            end
+        end
+    end
+    return true
+end
+
 
 function specs(args::Vararg{Spec};check=true)
     
@@ -677,3 +533,6 @@ function specs(args::Vararg{Spec};check=true)
         return Specs(nothing,args,false)
     end
 end
+
+p0specs(;kwargs...) = specs(;p=nothing,kwargs...)
+p0specs(args::Vararg{Spec};check=true) = specs(Spec(Pressure(),nothing),args...;check=true)
