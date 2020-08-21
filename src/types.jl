@@ -61,6 +61,8 @@ module Types
 
     #not defined for now
     struct MolecularWeight <: AbstractSpec end
+    struct VariableSpec <: AbstractSpec end
+
 
     export AbstractSpec 
     export SpecModifier 
@@ -96,6 +98,7 @@ module Types
     export TwoPhaseEquilibrium 
     export Options 
     export MolecularWeight
+    export VariableSpec
 end
 
 using .Types

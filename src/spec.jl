@@ -92,6 +92,9 @@ function _ups(x::AbstractVector,normalize_units=true)
     end
 end
 
+#alias for _ups
+normalize_units(x) = _ups(x,true)
+
 #check units and normalizes
 function check_and_norm(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:Unitful.Quantity}
     if dimension(default_units(SP)) == dimension(val)
@@ -109,26 +112,34 @@ function check_and_norm_vec(::SP,val::U,normalize_units::Bool=true) where {SP<:A
 end
 
 
-function check_and_norm_vec(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:Real}
+function check_and_norm_vec(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:Number}
     throw(ArgumentError("invalid material compounds specification, provide a vector."))
 end
 
-function check_and_norm_vec(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:AbstractVector{<:Real}}
+function check_and_norm_vec(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:AbstractVector{<:Number}}
     return _ups(val,normalize_units)
 end
 
-function check_and_norm(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:Real}
+function check_and_norm(::SP, val::Number,normalize_units::Bool=true) where {SP<:AbstractSpec}
     return _ups(val,normalize_units)
 
 end
 
+#special cases, VariableSpec and Misssing
+function spec(sp::AbstractSpec, val::VariableSpec,normalize_units::Bool=true)
+    return Spec(sp,val)
+end
 
-function spec(sp::AbstractIntensiveSpec, val,normalize_units::Bool=true)
+function spec(sp::AbstractSpec, val::Missing,normalize_units::Bool=true)
+    return Spec(sp,missing)
+end
+
+function spec(sp::AbstractIntensiveSpec,  val::Number,normalize_units::Bool=true)
     val = check_and_norm(sp,val,normalize_units)
     return Spec(sp,val)
 end
 
-function spec(sp::Union{Pressure,Temperature}, val,normalize_units::Bool=true)
+function spec(sp::Union{Pressure,Temperature},  val::Number,normalize_units::Bool=true)
     val = check_and_norm(sp,val,normalize_units)
     return Spec(sp,val)
 end
@@ -137,7 +148,7 @@ function spec(sp::Pressure, val::Nothing,normalize_units::Bool=true)
     return Spec(sp,val)
 end
 
-function spec(sp::MaterialAmount, val,normalize_units::Bool=true)
+function spec(sp::MaterialAmount, val::Number,normalize_units::Bool=true)
     val = check_and_norm(sp,val,normalize_units)
     return Spec(sp,val)
 end
@@ -206,11 +217,14 @@ function spec(;kwargs...)
     end
 end
 
-struct Specs{T1,T2}
-    amount_type::T1
-    specs::T2
-    checked::Bool
+
+
+struct Specs{M,T,S}
+    amount_type::M
+    callables::T
+    specs::S
 end
+
 
 Base.values(s::Specs) = s.specs
 
@@ -338,16 +352,25 @@ _reduce_check_phase(::Val{:phase_fracs})=10
 _reduce_check_phase(::Val{T} where T)=0
 
 
-function _specs_components(kwargs::NamedTuple)::Int64
-    return mapreduce(_reduce_check_mass,+,keys(kwargs))
+#function to correctly dispatch on the function terms
+keys_or_tuple(x::Tuple) = x
+keys_or_tuple(x::NamedTuple) = keys(x)
+
+function _specs_components(args)::Int64
+    return mapreduce(_reduce_check_mass,+,keys_or_tuple(args))
 end
 #gives the appropiate symbol to extract amount of matter
 
 
+
 #this needs future work to specify
-function _specs_phase_basis(kwargs::NamedTuple)::Int64
-    return mapreduce(_reduce_check_phase,+,keys(kwargs))
+function _specs_phase_basis(args)::Int64
+    return mapreduce(_reduce_check_phase,+,keys_or_tuple(args))
 end
+
+_reduce_mass_spec_c(x::Spec) = 0
+_reduce_mass_spec_c(x::Spec{MaterialCompounds}) = length(value(x))
+
 
 function _specs_C(kwargs::NamedTuple,kw::Int64)::Int64
     if kw < 10
@@ -357,16 +380,17 @@ function _specs_C(kwargs::NamedTuple,kw::Int64)::Int64
     end
 end
 
+function _specs_C(tup::Tuple,kw::Int64)::Int64
+    if kw < 10
+        return 1
+    else
+        return mapreduce(_reduce_mass_spec_c,+,tup)
+    end
+end
 
-#optional values not counted during degrees of freedom calc
-_reduce_check_opt(x::Spec) = 0
-_reduce_check_opt(x::Spec{PhaseTag}) = 1
-_reduce_check_opt(x::Spec{Options}) = 1
 
-_reduce_check_opt(x::Symbol) = _reduce_check_opt(Val(x))
-_reduce_check_opt(::Val{:phase})=1
-_reduce_check_opt(::Val{:options})=1
-_reduce_check_opt(::Val{T} where T)=0
+_reduce_mass_spec_p(x::Spec) = 0
+_reduce_mass_spec_p(x::Spec{PhaseFractions}) = length(value(x))
 
 function _specs_P(kwargs::NamedTuple,kw::Int64)::Int64
     if (kw == 0)
@@ -378,85 +402,6 @@ function _specs_P(kwargs::NamedTuple,kw::Int64)::Int64
     end
 end
 
-
-
-function _specs_F(kwargs::NamedTuple,mass_basis::Int64,phase_basis::Int64)::Int64
-    F = length(kwargs)
-    opt = mapreduce(_reduce_check_opt,+,keys(kwargs))
-    F = F - opt
-    
-    if mass_basis in (1,2,110,120,210,220) #one_specified
-        F = F -1
-    elseif mass_basis in (111,112,121,122) #two specified
-        F = F-2
-    elseif mass_basis == 0
-    else
-        throw(error("incorrect mass specification."))
-    end
-
-    if phase_basis == 0
-    elseif phase_basis in (1,10)
-    F = F - 1
-    else
-        throw(error("incorrect phase specification."))
-    end
-    return F
-end
-
-function specs(;check=true,normalize_units=true,kwargs...)
-    f0 = k -> spec(KW_TO_SPEC[k],getproperty(kwargs.data,k),normalize_units)
-    tup = map(f0,keys(kwargs.data))
-    if check == true
-        mass_basis = _specs_components(kwargs.data)
-        phase_basis = _specs_phase_basis(kwargs.data)
-        C = _specs_C(kwargs.data,mass_basis)
-        P = _specs_P(kwargs.data,phase_basis)
-        F = _specs_F(kwargs.data,mass_basis,phase_basis)
-        DF = C - P + 2 - F#behold, the gibbs phase rule!
-        if DF<0
-            throw(error("the variables are overspecified."))
-        elseif DF>0
-            throw(error("the variables are underspecified."))
-        else
-            return Specs(AMOUNT_CONST[mass_basis],tup,true)
-        end
-    else
-        return Specs(nothing,tup,false)
-    end
-end
-
-function specs_grid(;check=true,normalize_units=true,kwargs...)
-    kw = NamedTuple{keys(kwargs.data)}
-    function f0(v)
-        _kwargs = kw(v)
-        specs(;check=check,normalize_units=normalize_units,_kwargs...)
-    end
-    return map(f0,Iterators.product(values(kwargs.data)...))
-end
-
-function _specs_components(tup::Tuple)::Int64
-  return mapreduce(_reduce_check_mass,+,tup)
-end
-
-function _specs_phase_basis(tup::Tuple)::Int64
-    return mapreduce(_reduce_check_phase,+,tup)
-end
-
-
-_reduce_mass_spec_c(x::Spec) = 0
-_reduce_mass_spec_c(x::Spec{MaterialCompounds}) = length(value(x))
-
-function _specs_C(tup::Tuple,kw::Int64)::Int64
-    if kw < 10
-        return 1
-    else
-        return mapreduce(_reduce_mass_spec_c,+,tup)
-    end
-end
-
-_reduce_mass_spec_p(x::Spec) = 0
-_reduce_mass_spec_p(x::Spec{PhaseFractions}) = length(value(x))
-
 function _specs_P(tup::Tuple,kw::Int64)::Int64
     if (kw == 0)
         return 1
@@ -467,11 +412,22 @@ function _specs_P(tup::Tuple,kw::Int64)::Int64
     end
 end
 
-function _specs_F(tup::Tuple,mass_basis::Int64,phase_basis::Int64)::Int64
-    F = length(tup)
-    opt = mapreduce(_reduce_check_opt,+,tup)
-    F = F - opt
 
+#optional values not counted during degrees of freedom calc
+
+_reduce_check_opt(x::Spec) = 0
+_reduce_check_opt(x::Spec{PhaseTag}) = 1
+_reduce_check_opt(x::Spec{Options}) = 1
+
+_reduce_check_opt(x::Symbol) = _reduce_check_opt(Val(x))
+_reduce_check_opt(::Val{:phase})=1
+_reduce_check_opt(::Val{:options})=1
+_reduce_check_opt(::Val{T} where T)=0
+
+function _specs_F(args,mass_basis::Int64,phase_basis::Int64)::Int64
+    F = length(args)
+    opt = mapreduce(_reduce_check_opt,+,keys_or_tuple(args))
+    F = F - opt
     
     if mass_basis in (1,2,110,120,210,220) #one_specified
         F = F -1
@@ -490,6 +446,11 @@ function _specs_F(tup::Tuple,mass_basis::Int64,phase_basis::Int64)::Int64
     end
     return F
 end
+
+
+
+
+
 function spec_equal(x1::Spec{T},x2::Spec{T})::Bool where {T}
     return true
 end
@@ -508,31 +469,101 @@ function spec_tuple_unique(a)::Bool
     return true
 end
 
+function check_spec(args)
+    mass_basis = _specs_components(args)
+    phase_basis = _specs_phase_basis(args)
+    C = _specs_C(args,mass_basis)
+    P = _specs_P(args,phase_basis)
+    F = _specs_F(args,mass_basis,phase_basis)
+    DF = C - P + 2 - F#behold, the gibbs phase rule!
+    if DF<0
+        throw(error("the variables are overspecified by " * string(abs(DF)) * " degrees of freedom."))
+    elseif DF>0
+        throw(error("the variables are underspecified by"* string(abs(DF)) * " degrees of freedom."))
+    else
+        return mass_basis
+    end
+end
+_is_variable_spec(x) = false
+_is_variable_spec(x::VariableSpec) = true
+_is_variable_spec(x::Spec{T,VariableSpec} where T) =true
 
-function specs(args::Vararg{Spec};check=true)
-    
-    if check == true
+function specs(;check=true,normalize_units=true,kwargs...)
+    if !any(_is_variable_spec,values(kwargs.data))
+        f0 = k -> spec(KW_TO_SPEC[k],getproperty(kwargs.data,k),normalize_units)
+        tup = map(f0,keys(kwargs.data))
+        callables = ()
+    else
+        tup = ((spec(KW_TO_SPEC[k],v) for (k, v) in kwargs if !_is_variable_spec(v))...,)
+        callables = ((KW_TO_SPEC[k] for (k,v) in kwargs if _is_variable_spec(v))...,)
+    end
+    if check
+        mass_basis = check_spec(kwargs.data)
+        return Specs(AMOUNT_CONST[mass_basis],callables,tup)
+    else
+        return Specs(nothing,callables,tup)
+    end
+end
+
+#==
+function specs_grid(;check=true,normalize_units=true,kwargs...)
+    kw = NamedTuple{keys(kwargs.data)}
+    function f0(v)
+        _kwargs = kw(v)
+        specs(;check=check,normalize_units=normalize_units,_kwargs...)
+    end
+    return map(f0,Iterators.product(values(kwargs.data)...))
+end
+==#
+function specs(args::Vararg{Spec};check=true) 
+    if !any(_is_variable_spec,args)
+        callables = ()
+        tup = args
+    else
+        tup = ((arg for arg in args if !_is_variable_spec(arg))...,)
+        callables  = ((arg.type for arg in args if _is_variable_spec(arg))...,)
+    end
+    if check
         all_unique = spec_tuple_unique(args) #this function is the main speed bottleneck
         if !all_unique
             throw(error("specifications are not unique."))
         end
-        mass_basis = _specs_components(args)
-        phase_basis = _specs_phase_basis(args)
-        C = _specs_C(args,mass_basis)
-        P = _specs_P(args,phase_basis)
-        F = _specs_F(args,mass_basis,phase_basis)
-        DF = C - P + 2 - F#behold, the gibbs phase rule!
-        if DF<0
-            throw(error("the variables are overspecified."))
-        elseif DF>0
-            throw(error("the variables are underspecified."))
-        else
-            return Specs(AMOUNT_CONST[mass_basis],args,true)
-        end
+        mass_basis = check_spec(args)
+        
+        return Specs(AMOUNT_CONST[mass_basis],callables,tup)
     else
-        return Specs(nothing,args,false)
+        return Specs(nothing,callables,tup)
     end
 end
 
-p0specs(;kwargs...) = specs(;p=nothing,kwargs...)
-p0specs(args::Vararg{Spec};check=true) = specs(Spec(Pressure(),nothing),args...;check=true)
+
+
+
+
+
+function (f::Specs{S,Tuple{S1}})(x1::T1) where {S,S1,T1}
+    return Specs(f.amount_type,
+    (),
+    (Spec{S1,T1}(only(f.callables),x1),
+    f.specs...))
+end
+
+function (f::Specs{S,Tuple{S1,S2}})(x1::T1,x2::T2) where {S,S1,S2,T1,T2}
+    return Specs(f.amount_type,
+    (),
+    (Spec{S1,T1}(first(f.callables),x1),
+    Spec{S2,T2}(last(f.callables),x2),
+    f.specs...))
+end
+
+function (f::Specs{S,Tuple{S1,S2,S3}})(x1::T1,x2::T2,x3::T3) where {S,S1,S2,S3,T1,T2,T3}
+    return Specs(f.amount_type,
+    (),
+    (Spec{S1,T1}(first(f.callables),x1),
+    Spec{S2,T2}(f.callables[2],x2),
+    Spec{S3,T3}(last(f.callables),x3),
+    f.specs...),())
+end
+
+
+

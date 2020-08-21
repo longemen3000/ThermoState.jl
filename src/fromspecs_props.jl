@@ -163,7 +163,7 @@ end
 
 function mol_volume(model::FromSpecs,props::Specs,unit::T=u"(m^3)/mol",mw=nothing) where T <: MolVolumeUnits
     sval = throw_get_spec(VolumeAmount,props)
-    val = to_spec(props,sval,mw,VolumeAmount{MOL,VOLUME}())
+    val = to_spec(props,sval,mw,VolumeAmount{MOLAR,VOLUME}())
     if unit !== u"(m^3)/mol"
         default_unit = _ups(one(val)*u"(m^3)/mol"/unit,true)
         return default_unit*val

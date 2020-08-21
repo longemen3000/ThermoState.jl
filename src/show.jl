@@ -119,13 +119,46 @@ end
 
 
 function Base.show(io::IO, sp::Specs)
-    println(length(sp.specs)," Property Specifications:")
-    for (i,spec) in enumerate(sp.specs)
+    len1 = length(sp.specs)
+    if len1 > 0
+        if len1 == 1
+            p1 = " Constant Property Specification:"
+        else
+            p1 = " Constant Property Specifications:"
+        end
+        println(len1,p1)
+        
+        for (i,spec) in enumerate(sp.specs)
+            if i !=1
+                println()
+            end
+            print(" ")
+            show(io,spec)
+        end 
+        
+    end
+    
+    len2 = length(sp.callables)
+    if len2 > 0
+        if len1 > 0
+        println()
+        println()
+        end
+    if len2 == 1
+        p2 = " Variable Property Specification:"
+    else
+        p2 = " Variable Property Specifications:"
+    end
+    
+    println(len2,p2)
+    
+    for (i,spec) in enumerate(sp.callables)
         if i !=1
             println()
         end
         print(" ")
-        show(io,spec)
+        print_spec(typeof(spec))
     end 
+end
     
 end
