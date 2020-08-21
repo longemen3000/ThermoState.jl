@@ -209,7 +209,7 @@ p = pressure(model,tx(30u"°C"))
 p_list = map(t-> pressure(model,tx(t)),273.0:373.0)
 ```
 
-#State of this package
+## State of this package
 
 At the moment of writing this, this package is a  experimental state and many features could (and will) change, please write any sugerences on the issues!, pull requests are very appreciated!
 
