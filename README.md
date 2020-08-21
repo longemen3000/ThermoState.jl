@@ -169,6 +169,16 @@ v = mass_volume(FromSpecs(),a,u"cm^3/g",50)
 ```
 The `mw` argument can be, depending of the situation, a number of vector of number. if not units are provided, a default units of `g/mol` are assumed. this conversion can be done on any unit that accepts molar, total and mass specifications, mass and moles themselves, molar and mass fractions,and molar and mass numbers.
 
+## Variable `Specs`
+
+sometimes is needed a more direct approach to evaluation of properties.For example, you may want to create a function that accepts only temperature to pass it to an ODE system or an optimization system. for this purpose, the Singleton `VariableSpec` is provided. if you pass it to a `Spec` and create a `Specs` object (or assign via keywords) the resulting spec will be callable:
+
+```julia-repl
+a_t = specs(t=VariableSpec(),ρ=5.0u"mol/L")
+a_t(303)
+```
+
+
 ## Implementing a model using the `PhysPropsRules` interface
 
 using this package, we can implement a basic ideal gas model that only calculates the pressure, given a temperature and molar volume, using the relation `Pv=RT`:
@@ -179,15 +189,28 @@ using PhysPropsRules, Unitful
 struct MyIdealGas
     mw::Float64
 end
-
 function pressure(model::MyIdealGas,props::Specs,unit=u"Pa")
     v = mol_volume(FromSpecs(),props,u"m^3/mol",model.mw)
-    t = temperature(FromSpecs(),props) #K as default, doesnt require mw
+    t = temperature(FromSpecs(),props) #Kelvin as default, doesnt require mw
     p =  (8.314*t/v)u"Pa"
     return Unitful.ustrip(Unitful.uconvert(unit,p))
 end
+
+a = specs(mass = 3u"kg",total_v = 30u"m^3",t=30u"°C")
+model = MyIdealGas(18.01)
+p = pressure(model,a)
+
+```
+Using variable specs:
+
+```julia
+tx = specs(mass = 3u"kg",total_v = 30u"m^3",t=var) #one free variable
+p = pressure(model,tx(30u"°C"))
+p_list = map(t-> pressure(model,tx(t)),273.0:373.0)
 ```
 
-This package is experimental and many features could (and will) change, please write any sugerences on the issues!
+#State of this package
+
+At the moment of writing this, this package is a  experimental state and many features could (and will) change, please write any sugerences on the issues!, pull requests are very appreciated!
 
 

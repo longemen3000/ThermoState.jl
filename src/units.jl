@@ -48,36 +48,30 @@ function to_spec end
 
 to_spec(property::typeof(mol_helmholtz)) = Helmholtz{MOLAR}()
 to_spec(property::typeof(mass_helmholtz)) = Helmholtz{MASS}()
-#to_spec(property::typeof(total_helmholtz)) = Helmholtz{TOTAL}()
+to_spec(property::typeof(total_helmholtz)) = Helmholtz{TOTAL}()
 
 to_spec(property::typeof(mol_gibbs)) = Gibbs{MOLAR}()
 to_spec(property::typeof(mass_gibbs)) =Gibbs{MASS}()
-#to_spec(property::typeof(total_gibbs)) = Gibbs{TOTAL}()
+to_spec(property::typeof(total_gibbs)) = Gibbs{TOTAL}()
 
 to_spec(property::typeof(mol_internal_energy)) =InternalEnergy{MOLAR}()
 to_spec(property::typeof(mass_internal_energy)) = InternalEnergy{MASS}()
-#to_spec(property::typeof(total_internal_energy)) = InternalEnergy{TOTAL}()
+to_spec(property::typeof(total_internal_energy)) = InternalEnergy{TOTAL}()
 
 to_spec(property::typeof(mol_enthalpy)) = Enthalpy{MOLAR}()
 to_spec(property::typeof(mass_enthalpy)) = Enthalpy{MASS}()
-#to_spec(property::typeof(total_enthalpy)) = Enthalpy{TOTAL}()
+to_spec(property::typeof(total_enthalpy)) = Enthalpy{TOTAL}()
 
 to_spec(property::typeof(mol_entropy)) = Entropy{MOLAR}()
 to_spec(property::typeof(mass_entropy)) = Entropy{MASS}()
-#to_spec(property::typeof(total_entropy)) = Entropy{TOTAL}()
+to_spec(property::typeof(total_entropy)) = Entropy{TOTAL}()
 
 to_spec(property::typeof(mol_volume)) = VolumeAmount{MOLAR,VOLUME}()
 to_spec(property::typeof(mass_volume)) = VolumeAmount{MASS,VOLUME}()
-#to_spec(property::typeof(total_volume)) = VolumeAmount{TOTAL,VOLUME}()
+to_spec(property::typeof(total_volume)) = VolumeAmount{TOTAL,VOLUME}()
 
 to_spec(property::typeof(mol_density)) = VolumeAmount{MOLAR,VOLUME}()
 to_spec(property::typeof(mass_density)) = VolumeAmount{MASS,DENSITY}()
-
-#to_spec(property::typeof(mol_isochoric_heat_capacity)) = u"J/(mol*K)"
-#to_spec(property::typeof(mass_isochoric_heat_capacity)) = u"J/(kg*K)"
-
-#to_spec(property::typeof(mol_isobaric_heat_capacity)) = u"J/(mol*K)"
-#to_spec(property::typeof(mass_isobaric_heat_capacity)) = u"J/(kg*K)"
 
 
 to_spec(property::typeof(moles)) = MaterialAmount{MOLAR}()

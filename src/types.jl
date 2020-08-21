@@ -61,7 +61,9 @@ module Types
 
     #not defined for now
     struct MolecularWeight <: AbstractSpec end
-    struct VariableSpec <: AbstractSpec end
+
+    #variable spec, signal to make a variable specs
+    struct VariableSpec  end
 
 
     export AbstractSpec 
