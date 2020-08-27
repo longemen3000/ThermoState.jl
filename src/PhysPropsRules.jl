@@ -20,7 +20,7 @@ include("fromspecs_props.jl")
 export Spec,Specs
 
 #spec functions
-export spec,specs,specs_grid
+export spec,specs
 
 #spec utilities
 export value,specification,values,get_spec,normalize_units
@@ -28,7 +28,7 @@ export VariableSpec
 #FromSpecs Model
 export FromSpecs
 
-#functions
+#property functions
 export pressure,temperature,mass,moles
 export mass_volume, mol_volume, total_volume
 export mass_enthalpy, mol_entalphy

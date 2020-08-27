@@ -536,11 +536,6 @@ function specs(args::Vararg{Spec};check=true)
     end
 end
 
-
-
-
-
-
 function (f::Specs{S,Tuple{S1}})(x1::T1) where {S,S1,T1}
     return Specs(f.amount_type,
     (),
@@ -564,6 +559,9 @@ function (f::Specs{S,Tuple{S1,S2,S3}})(x1::T1,x2::T2,x3::T3) where {S,S1,S2,S3,T
     Spec{S3,T3}(last(f.callables),x3),
     f.specs...),())
 end
+
+
+
 
 
 
