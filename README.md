@@ -34,7 +34,7 @@ At this moment, the following properties are defined:
 For defining property specifications, the package defines the `AbstractSpec` type and the `Spec` container. an individual specification can be defined by:
 
 ```julia
-using Unitful, PhysPropsRules
+using Unitful, ThermoState
 h0 = spec(mol_h="kg/mol")
 ```
 You can create various specifications with the `state` function:
@@ -80,7 +80,7 @@ julia> t0 = spec(T = 30.0u"°C")
 Temperature : 303.15 K
 
 julia> typeof(t0)
-Spec{PhysPropsRules.Types.Temperature,Float64}
+Spec{ThermoState.Types.Temperature,Float64}
 
 julia> val_t0 = value(t0) #extracting value
 303.15
@@ -97,14 +97,14 @@ julia> specification(h0)
 ::Molar enthalpy
 
 julia> typeof(h0)
-Spec{PhysPropsRules.Types.Enthalpy{PhysPropsRules.Types.MOLAR},Float64} ##?
+Spec{ThermoState.Types.Enthalpy{ThermoState.Types.MOLAR},Float64} ##?
 ```
 In this case, the specification type is a parametric singleton struct: `Enthalpy{MOLAR}`. the `MOLAR` parameter is known as a _spec modifier_ , and is used for dispatch in unit transformations and conversions (from molar to mass units, for example).
 
 There are two special cases with two parameters: volume amounts (molar, total and specific volume, mass and molar density) and material compound proportions (mass numbers, mol numbers, mass fractions and mol fractions). volume amounts are tagged with the specification `VolumeAmount{<:SpecModifier,<:SpecModifier}` and material compounds tagged with the specification `MaterialCompounds{<:SpecModifier,<:SpecModifier}`. lets see some examples:
 
 ```julia-repl
-julia> using PhysPropsRules.Types #importing the spec types for better printing
+julia> using ThermoState.Types #importing the spec types for better printing
 
 
 julia> typeof(specification(spec(mol_v = 0.005)))
