@@ -118,7 +118,7 @@ end
 
 
 
-function Base.show(io::IO, sp::Specs)
+function Base.show(io::IO, sp::ThermodynamicState)
     len1 = length(sp.specs)
     if len1 > 0
         if len1 == 1

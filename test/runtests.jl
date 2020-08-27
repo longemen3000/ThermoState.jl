@@ -1,5 +1,5 @@
 using Test
-using PhysPropsRules
+using ThermoState
 using Unitful
 @testset "spec" begin
     @test value(spec(t=42))==42

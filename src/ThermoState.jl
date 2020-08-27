@@ -1,4 +1,4 @@
-module PhysPropsRules
+module ThermoState
 
 
 using Unitful
@@ -17,16 +17,15 @@ include("fromspecs_props.jl")
 
 #Spec Dispatch Types
 #Spec types
-export Spec,Specs
+export Spec,ThermodynamicState
 
 #spec functions
-export spec,specs
+export spec,state
 
 #spec utilities
 export value,specification,values,get_spec,normalize_units
-export VariableSpec
 #FromSpecs Model
-export FromSpecs
+export FromState
 
 #property functions
 export pressure,temperature,mass,moles

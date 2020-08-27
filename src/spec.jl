@@ -219,14 +219,14 @@ end
 
 
 
-struct Specs{M,T,S}
+struct ThermodynamicState{M,T,S}
     amount_type::M
     callables::T
     specs::S
 end
 
 
-Base.values(s::Specs) = s.specs
+Base.values(s::ThermodynamicState) = s.specs
 
 function get_spec(val,specs::Tuple)
     for spec in specs
@@ -246,9 +246,9 @@ function get_spec(val::Type{T},specs::Tuple) where T<: AbstractSpec
     return nothing
 end
 
-get_spec(val,spec::Specs) = get_spec(val,spec.specs)
+get_spec(val,spec::ThermodynamicState) = get_spec(val,spec.specs)
  
-function throw_get_spec(val,specs::Specs)
+function throw_get_spec(val,specs::ThermodynamicState)
     res = get_spec(val,specs)
     if res !== nothing
         return res
@@ -257,12 +257,12 @@ function throw_get_spec(val,specs::Specs)
     end
 end
 
-@inline function Base.getindex(specs::Specs,val::Int)
+@inline function Base.getindex(specs::ThermodynamicState,val::Int)
     return specs.specs[val]
 end
 
 #linear search on values
-@inline function Base.getindex(specs::Specs,val::AbstractSpec)
+@inline function Base.getindex(specs::ThermodynamicState,val::AbstractSpec)
     return throw_get_spec(val,specs)
 end
 
@@ -284,7 +284,7 @@ function has_spec(val::Type{T},tup::Tuple) where T<: AbstractSpec
     return false
 end
 
-has_spec(val,sp::Specs) = has_spec(val,sp.specs)
+has_spec(val,sp::ThermodynamicState) = has_spec(val,sp.specs)
 
 #returns the specification symbol in multicomponent
 #returns :singlecomponent if there are no specifications
@@ -488,7 +488,7 @@ _is_variable_spec(x) = false
 _is_variable_spec(x::VariableSpec) = true
 _is_variable_spec(x::Spec{T,VariableSpec} where T) =true
 
-function specs(;check=true,normalize_units=true,kwargs...)
+function state(;check=true,normalize_units=true,kwargs...)
     if !any(_is_variable_spec,values(kwargs.data))
         f0 = k -> spec(KW_TO_SPEC[k],getproperty(kwargs.data,k),normalize_units)
         tup = map(f0,keys(kwargs.data))
@@ -499,23 +499,23 @@ function specs(;check=true,normalize_units=true,kwargs...)
     end
     if check
         mass_basis = check_spec(kwargs.data)
-        return Specs(AMOUNT_CONST[mass_basis],callables,tup)
+        return ThermodynamicState(AMOUNT_CONST[mass_basis],callables,tup)
     else
-        return Specs(nothing,callables,tup)
+        return ThermodynamicState(nothing,callables,tup)
     end
 end
 
 #==
-function specs_grid(;check=true,normalize_units=true,kwargs...)
+function state_grid(;check=true,normalize_units=true,kwargs...)
     kw = NamedTuple{keys(kwargs.data)}
     function f0(v)
         _kwargs = kw(v)
-        specs(;check=check,normalize_units=normalize_units,_kwargs...)
+        state(;check=check,normalize_units=normalize_units,_kwargs...)
     end
     return map(f0,Iterators.product(values(kwargs.data)...))
 end
 ==#
-function specs(args::Vararg{Spec};check=true) 
+function state(args::Vararg{Spec};check=true) 
     if !any(_is_variable_spec,args)
         callables = ()
         tup = args
@@ -530,29 +530,29 @@ function specs(args::Vararg{Spec};check=true)
         end
         mass_basis = check_spec(args)
         
-        return Specs(AMOUNT_CONST[mass_basis],callables,tup)
+        return ThermodynamicState(AMOUNT_CONST[mass_basis],callables,tup)
     else
-        return Specs(nothing,callables,tup)
+        return ThermodynamicState(nothing,callables,tup)
     end
 end
 
-function (f::Specs{S,Tuple{S1}})(x1::T1) where {S,S1,T1}
-    return Specs(f.amount_type,
+function (f::ThermodynamicState{S,Tuple{S1}})(x1::T1) where {S,S1,T1}
+    return ThermodynamicState(f.amount_type,
     (),
     (Spec{S1,T1}(only(f.callables),x1),
     f.specs...))
 end
 
-function (f::Specs{S,Tuple{S1,S2}})(x1::T1,x2::T2) where {S,S1,S2,T1,T2}
-    return Specs(f.amount_type,
+function (f::ThermodynamicState{S,Tuple{S1,S2}})(x1::T1,x2::T2) where {S,S1,S2,T1,T2}
+    return ThermodynamicState(f.amount_type,
     (),
     (Spec{S1,T1}(first(f.callables),x1),
     Spec{S2,T2}(last(f.callables),x2),
     f.specs...))
 end
 
-function (f::Specs{S,Tuple{S1,S2,S3}})(x1::T1,x2::T2,x3::T3) where {S,S1,S2,S3,T1,T2,T3}
-    return Specs(f.amount_type,
+function (f::ThermodynamicState{S,Tuple{S1,S2,S3}})(x1::T1,x2::T2,x3::T3) where {S,S1,S2,S3,T1,T2,T3}
+    return ThermodynamicState(f.amount_type,
     (),
     (Spec{S1,T1}(first(f.callables),x1),
     Spec{S2,T2}(f.callables[2],x2),

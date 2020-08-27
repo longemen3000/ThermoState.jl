@@ -1,6 +1,5 @@
-struct FromSpecs end
-const UnitReal = Union{Real,Unitful.Quantity}
-const URVec = AbstractVector{T} where T<:UnitReal
+struct FromState end
+const URVec = AbstractVector{T} where T<:Number
 
 #upreferred, but the standard unit with just numbers is transformed to kg/mol
 function mw_mul(x,mw::Unitful.Quantity)
@@ -23,40 +22,40 @@ function amount_type(specs::Tuple)
     return AMOUNT_CONST[_specs_components(specs)]
 end
 
-function amount_type(specs::Specs{Nothing}) 
+function amount_type(specs::ThermodynamicState{Nothing}) 
     return amount_type(specs.specs)
 end
 
-function amount_type(specs::Specs{T}) where T<:Tuple
+function amount_type(specs::ThermodynamicState{T}) where T<:Tuple
     amount,compounds = specs.amount_type
     return amount,compounds
 end
 
-moles2(a::Specs,mw) = moles3(amount_type(a),a,mw)
-mass2(a::Specs,mw) =  mass3(amount_type(a),a,mw)
-kg_per_mol2(a::Specs,mw) =  kg_per_mol3(amount_type(a),a,mw)
+moles2(a::ThermodynamicState,mw) = moles3(amount_type(a),a,mw)
+mass2(a::ThermodynamicState,mw) =  mass3(amount_type(a),a,mw)
+kg_per_mol2(a::ThermodynamicState,mw) =  kg_per_mol3(amount_type(a),a,mw)
 
 ##one mol cases
 
 #those cases should rarely be called
-function moles3(::Tuple{T,OneMol},specs::Specs,mw::Nothing) where T
+function moles3(::Tuple{T,OneMol},specs,mw::Nothing) where T
     return 1.0
 end
 
-function moles3(::Tuple{T,OneMol},specs::Specs,mw::T2) where T where T2 <:UnitReal
+function moles3(::Tuple{T,OneMol},specs,mw::T2) where T where T2 <:Number
     return one(T2)
 end
 
 #error?
-function moles3(::Tuple{T,OneMol},specs::Specs,mw::T2) where T where T2<:AbstractVector{T3} where T3 <: UnitReal
+function moles3(::Tuple{T,OneMol},specs,mw::T2) where T where T2<:AbstractVector{T3} where T3 <: Number
     return one(T3)
 end
 
-function moles3(::Tuple{SingleComponent,MaterialAmount{MOLAR}},specs::Specs,mw::T) where T <:UnitReal
+function moles3(::Tuple{SingleComponent,MaterialAmount{MOLAR}},specs,mw::T) where T <:Number
     return normalize_units(value(get_spec(MaterialAmount{MOLAR}(),specs)))
 end
 
-function moles3(::Tuple{SingleComponent,MaterialAmount{MASS}},specs::Specs,mw::T) where T <:UnitReal
+function moles3(::Tuple{SingleComponent,MaterialAmount{MASS}},specs,mw::T) where T <:Number
     # g/(g/mol) = mol 
     x = mw_div(value(get_spec(MaterialAmount{MASS}(),specs)),mw)
     return normalize_units(x)
@@ -64,11 +63,11 @@ end
 
 
 ## total ammounts:
-function moles3(::Tuple{T,T},specs::Specs,mw) where T<:MaterialCompounds{MOLAR,TOTAL_AMOUNT}
+function moles3(::Tuple{T,T},specs,mw) where T<:MaterialCompounds{MOLAR,TOTAL_AMOUNT}
     return normalize_units(sum(value(get_spec(T(),specs))))
 end
 
-function moles3(::Tuple{T,T},specs::Specs,mw::T2) where T<:MaterialCompounds{MASS,TOTAL_AMOUNT} where T2<: URVec
+function moles3(::Tuple{T,T},specs,mw::T2) where T<:MaterialCompounds{MASS,TOTAL_AMOUNT} where T2<: URVec
     ###### needs mol
     ### exists mass numbers
     #mw_i * xmi = gc* (molc/gc)= molc, molmix = sum(molc)
@@ -77,12 +76,12 @@ function moles3(::Tuple{T,T},specs::Specs,mw::T2) where T<:MaterialCompounds{MAS
     return normalize_units(sum_n_mw)  
 end
 
-function moles3(::Tuple{T,MaterialAmount{MOLAR}},specs::Specs,mw) where T
+function moles3(::Tuple{T,MaterialAmount{MOLAR}},specs,mw) where T
     return normalize_units(value(get_spec(MaterialAmount{MOLAR}(),specs)))
 end
 
 #inverse operations with fractions
-function moles3(::Tuple{MaterialCompounds{MOLAR,FRACTION},MaterialAmount{MASS}},specs::Specs,mw::T) where T<:URVec
+function moles3(::Tuple{MaterialCompounds{MOLAR,FRACTION},MaterialAmount{MASS}},specs,mw::T) where T<:URVec
     #mol fraction and mass
     #xni * mwi = mc/mmix * (gc/molc)= gc/molmix (sum)-> gmix/molmix
     #molmix = gmix / (gmix/molmix)
@@ -92,7 +91,7 @@ function moles3(::Tuple{MaterialCompounds{MOLAR,FRACTION},MaterialAmount{MASS}},
     return normalize_units(value(amount)/sum_x_mw)  
 end
 
-function moles3(::Tuple{MaterialCompounds{MASS,FRACTION},MaterialAmount{MASS}},specs::Specs,mw::T) where T<:URVec
+function moles3(::Tuple{MaterialCompounds{MASS,FRACTION},MaterialAmount{MASS}},specs,mw::T) where T<:URVec
     #mass fractions and mass
     #mw_i * xmi = gc/gmix / (molc/gc)= molc/gmix (sum)-> molmix/gmix
     # molmix = molmix/gmix * (gmix)
@@ -102,21 +101,21 @@ function moles3(::Tuple{MaterialCompounds{MASS,FRACTION},MaterialAmount{MASS}},s
     return normalize_units(value(amount)*sum_x_mw)  
 end
 
-function mass3(::Tuple{SingleComponent,OneMol},specs::Specs,mw::T2) where T2 <:UnitReal
+function mass3(::Tuple{SingleComponent,OneMol},specs,mw::T2) where T2 <:Number
     return normalize_units(mw_mul(one(T2),mw))
 end
 
 #mass defined
-function mass3(::Tuple{T,MaterialAmount{MASS}},specs::Specs,mw) where T
+function mass3(::Tuple{T,MaterialAmount{MASS}},specs,mw) where T
     return normalize_units(value(get_spec(MaterialAmount{MASS}(),specs)))
 end
 
 ## total ammounts:
-function mass3(::Tuple{T,T},specs::Specs,mw) where T<:MaterialCompounds{MASS,TOTAL_AMOUNT}
+function mass3(::Tuple{T,T},specs,mw) where T<:MaterialCompounds{MASS,TOTAL_AMOUNT}
     return normalize_units(sum(value(get_spec(T(),specs))))
 end
 
-function mass3(::Tuple{T,T},specs::Specs,mw::T2) where T<:MaterialCompounds{MOLAR,TOTAL_AMOUNT} where T2<:URVec
+function mass3(::Tuple{T,T},specs,mw::T2) where T<:MaterialCompounds{MOLAR,TOTAL_AMOUNT} where T2<:URVec
     ###### needs mass
     ### exists mol numbers
     #mw_i * ni = (gc/molc) * molc = gc, sum(gc) = gmix
@@ -126,7 +125,7 @@ function mass3(::Tuple{T,T},specs::Specs,mw::T2) where T<:MaterialCompounds{MOLA
 end
 
 #inverse operations with fractions
-function mass3(::Tuple{MaterialCompounds{MOLAR,FRACTION},MaterialAmount{MOLAR}},specs::Specs,mw::T2) where T2<:URVec
+function mass3(::Tuple{MaterialCompounds{MOLAR,FRACTION},MaterialAmount{MOLAR}},specs,mw::T2) where T2<:URVec
     #moles, mol fractions
     #mw_i * xi = (gc/molc) * molc/molmix = gc/molmix (*molmix)
     amount = get_spec(MaterialAmount{MOLAR}(),specs)
@@ -135,7 +134,7 @@ function mass3(::Tuple{MaterialCompounds{MOLAR,FRACTION},MaterialAmount{MOLAR}},
     return normalize_units(value(amount)*sum_x_mw)
 end
 
-function mass3(::Tuple{MaterialCompounds{MASS,FRACTION},MaterialAmount{MOLAR}},specs::Specs,mw::T2) where T2<:URVec
+function mass3(::Tuple{MaterialCompounds{MASS,FRACTION},MaterialAmount{MOLAR}},specs,mw::T2) where T2<:URVec
     #mass fractions and mass
     #mw_i * xmi = gc/gmix / (molc/gc)= molc/gmix (sum)-> molmix/gmix
     # molmix = molmix/gmix * (gmix)
@@ -146,16 +145,16 @@ function mass3(::Tuple{MaterialCompounds{MASS,FRACTION},MaterialAmount{MOLAR}},s
 end
 
 #single component cases, all the same
-function kg_per_mol3(::Tuple{SingleComponent,OneMol},specs::Specs,mw::T2) where T2 <:UnitReal
+function kg_per_mol3(::Tuple{SingleComponent,OneMol},specs,mw::T2) where T2 <:Number
     return normalize_units(mw_mul(one(T2),mw))
 end
 
-function kg_per_mol3(::Tuple{SingleComponent,MaterialAmount},specs::Specs,mw::T2) where {T2 <:UnitReal}
+function kg_per_mol3(::Tuple{SingleComponent,MaterialAmount},specs,mw::T2) where {T2 <:Number}
     return normalize_units(mw_mul(one(T2),mw))
 end
 
 #total amounts:
-function kg_per_mol3(::Tuple{T,T},specs::Specs,mw) where T<:MaterialCompounds{MASS,TOTAL_AMOUNT}
+function kg_per_mol3(::Tuple{T,T},specs,mw) where T<:MaterialCompounds{MASS,TOTAL_AMOUNT}
     #mw from mass numbers
     #gc / (gc/molc) = molc sum-> molmix
     compounds = get_spec(T(),specs)
@@ -164,7 +163,7 @@ function kg_per_mol3(::Tuple{T,T},specs::Specs,mw) where T<:MaterialCompounds{MA
     return normalize_units(gmix/molmix)  
 end
 
-function kg_per_mol3(::Tuple{T,T},specs::Specs,mw) where T<:MaterialCompounds{MOLAR,TOTAL_AMOUNT}   
+function kg_per_mol3(::Tuple{T,T},specs,mw) where T<:MaterialCompounds{MOLAR,TOTAL_AMOUNT}   
     #mw from mol numbers
     #molc * gc/molc = gc sum-> gmix
     compounds = get_spec(T(),specs)
@@ -174,7 +173,7 @@ function kg_per_mol3(::Tuple{T,T},specs::Specs,mw) where T<:MaterialCompounds{MO
 end
 
 #fraction amounts
-function kg_per_mol3(::Tuple{MaterialCompounds{MOLAR,FRACTION},MaterialAmount{T}},specs::Specs,mw) where T
+function kg_per_mol3(::Tuple{MaterialCompounds{MOLAR,FRACTION},MaterialAmount{T}},specs,mw) where T
     #mol fraction and mass
     #xni * mwi = mc/mmix * (gc/molc)= gc/molmix (sum)-> gmix/molmix
     compounds = get_spec(MaterialCompounds{MOLAR,FRACTION}(),specs)
@@ -182,7 +181,7 @@ function kg_per_mol3(::Tuple{MaterialCompounds{MOLAR,FRACTION},MaterialAmount{T}
     return normalize_units(one(sum_x_mw)/sum_x_mw)
 end
 
-function kg_per_mol3(::Tuple{MaterialCompounds{MASS,FRACTION},MaterialAmount{T}},specs::Specs,mw) where T
+function kg_per_mol3(::Tuple{MaterialCompounds{MASS,FRACTION},MaterialAmount{T}},specs,mw) where T
     #mass fractions and mass
     compounds = get_spec(MaterialCompounds{MASS,FRACTION}(),specs)
     #xmi * mwi = gc/gmix / gc/molc = molc/gmix (sum)-> molmix/gmix
@@ -453,7 +452,7 @@ function to_spec_mat(sps,sp::Spec{MaterialCompounds{MASS,TOTAL_AMOUNT}},mw,::Mat
    return normalize_units(m ./ sum(m))
 end
 
-function to_spec_compounds(sps::Specs,mw,x::SP2) where {SP2<:MaterialCompounds}
+function to_spec_compounds(sps,mw,x::SP2) where {SP2<:MaterialCompounds}
     return to_spec_compounds(amount_type(sps),sps,mw,x)
 end
 

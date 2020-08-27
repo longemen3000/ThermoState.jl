@@ -18,7 +18,7 @@ const MolVolumeUnits = Unitful.Units{U,((Unitful.𝐋)^3)/(Unitful.𝐍),A} wher
 
 const MolUnits = Unitful.Units{U,Unitful.𝐍,A} where A where U
 
-function pressure(model::FromSpecs,props::Specs,unit::T=u"Pa") where T <: Unitful.PressureUnits
+function pressure(model::FromState,props::ThermodynamicState,unit::T=u"Pa") where T <: Unitful.PressureUnits
     sval = throw_get_spec(Pressure(),props)
     val = to_spec(props,sval,nothing,Pressure())
     if unit !== u"Pa"
@@ -30,7 +30,7 @@ function pressure(model::FromSpecs,props::Specs,unit::T=u"Pa") where T <: Unitfu
 end
 
 #special treatment because of affine units
-function temperature(model::FromSpecs,props::Specs,unit::T=u"K") where T <: Unitful.TemperatureUnits
+function temperature(model::FromState,props::ThermodynamicState,unit::T=u"K") where T <: Unitful.TemperatureUnits
     sval = throw_get_spec(Temperature(),props)
     val = to_spec(props,sval,nothing,Temperature())*u"K"
     return Unitful.ustrip(Unitful.uconvert(unit,val))
@@ -38,7 +38,7 @@ end
 
 
 
-function mass(model::FromSpecs,props::Specs,unit::T=u"kg",mw=nothing) where T <: Unitful.MassUnits
+function mass(model::FromState,props::ThermodynamicState,unit::T=u"kg",mw=nothing) where T <: Unitful.MassUnits
     m = mass2(props,mw)
     if unit !== u"kg"
         default_unit = _ups(one(m)*u"kg"/unit,true)
@@ -50,7 +50,7 @@ end
 
 
 
-function moles(model::FromSpecs,props::Specs,unit::T=u"mol",mw=nothing) where T <: MolUnits
+function moles(model::FromState,props::ThermodynamicState,unit::T=u"mol",mw=nothing) where T <: MolUnits
     m = moles2(props,mw)
     if unit !== u"mol"
         default_unit = _ups(one(m)*u"mol"/unit,true)
@@ -63,7 +63,7 @@ end
 
 for (op,sp) in zip((:mol_helmoltz, :mol_gibbs, :mol_internal_energy, :mol_enthalpy),INTENSIVE_ENERGY_UNITS)
     @eval begin 
-        function $op(model::FromSpecs,props::Specs,unit::T=u"J/mol",mw=nothing) where T <: MolarEnergyUnits
+        function $op(model::FromState,props::ThermodynamicState,unit::T=u"J/mol",mw=nothing) where T <: MolarEnergyUnits
             sval = throw_get_spec($sp,props)
             val = to_spec(props,sval,nothing,MOLAR())
             if unit !== u"J/mol"
@@ -78,7 +78,7 @@ end
 
 for (op,sp) in zip((:mass_helmoltz, :mass_gibbs, :mass_internal_energy, :mass_enthalpy),INTENSIVE_ENERGY_UNITS)
     @eval begin 
-        function $op(model::FromSpecs,props::Specs,unit::T=u"J/kg",mw=nothing) where T <: MassEnergyUnits
+        function $op(model::FromState,props::ThermodynamicState,unit::T=u"J/kg",mw=nothing) where T <: MassEnergyUnits
             sval = throw_get_spec($sp,props)
             val = to_spec(props,sval,nothing,MASS())
             if unit !== u"J/kg"
@@ -93,7 +93,7 @@ end
 
 for (op,sp) in zip((:total_helmoltz, :total_gibbs, :total_internal_energy, :total_enthalpy),INTENSIVE_ENERGY_UNITS)
     @eval begin 
-            function $op(model::FromSpecs,props::Specs,unit::T=u"J",mw=nothing) where T <: Unitful.EnergyUnits
+            function $op(model::FromState,props::ThermodynamicState,unit::T=u"J",mw=nothing) where T <: Unitful.EnergyUnits
                 sval = throw_get_spec($sp,props)
                 val = to_spec(props,sval,nothing,TOTAL())
                 if unit !== u"J"
@@ -106,7 +106,7 @@ for (op,sp) in zip((:total_helmoltz, :total_gibbs, :total_internal_energy, :tota
     end
 end
 
-function mol_entropy(model::FromSpecs,props::Specs,unit::T=u"J/(K*mol)",mw=nothing) where T <: MolEntropyUnits
+function mol_entropy(model::FromState,props::ThermodynamicState,unit::T=u"J/(K*mol)",mw=nothing) where T <: MolEntropyUnits
     sval = throw_get_spec(Entropy,props)
     val = to_spec(props,sval,mw,MOLAR())
     if unit !== u"J/(K*mol)"
@@ -117,7 +117,7 @@ function mol_entropy(model::FromSpecs,props::Specs,unit::T=u"J/(K*mol)",mw=nothi
     end
 end
 
-function mass_entropy(model::FromSpecs,props::Specs,unit::T=u"J/(K*kg)",mw=nothing) where T <: MassEntropyUnits
+function mass_entropy(model::FromState,props::ThermodynamicState,unit::T=u"J/(K*kg)",mw=nothing) where T <: MassEntropyUnits
     sval = throw_get_spec(Entropy,props)
     val = to_spec(props,sval,mw,MASS())
     if unit !== u"J/(K*kg)"
@@ -128,7 +128,7 @@ function mass_entropy(model::FromSpecs,props::Specs,unit::T=u"J/(K*kg)",mw=nothi
     end
 end
 
-function total_entropy(model::FromSpecs,props::Specs,unit::T=u"J/(K)",mw=nothing) where T <: EntropyUnits
+function total_entropy(model::FromState,props::ThermodynamicState,unit::T=u"J/(K)",mw=nothing) where T <: EntropyUnits
     sval = throw_get_spec(Entropy,props)
     val = to_spec(props,sval,mw,MASS())
     if unit !== u"J/K"
@@ -139,7 +139,7 @@ function total_entropy(model::FromSpecs,props::Specs,unit::T=u"J/(K)",mw=nothing
     end
 end
 
-function total_volume(model::FromSpecs,props::Specs,unit::T=u"m^3",mw=nothing) where T <: Unitful.VolumeUnits
+function total_volume(model::FromState,props::ThermodynamicState,unit::T=u"m^3",mw=nothing) where T <: Unitful.VolumeUnits
     sval = throw_get_spec(VolumeAmount,props)
     val = to_spec(props,sval,mw,VolumeAmount{TOTAL,VOLUME}())
     if unit !== u"m^3"
@@ -150,7 +150,7 @@ function total_volume(model::FromSpecs,props::Specs,unit::T=u"m^3",mw=nothing) w
     end
 end
 
-function mass_volume(model::FromSpecs,props::Specs,unit::T=u"(m^3)/kg",mw=nothing) where T <: MassVolumeUnits
+function mass_volume(model::FromState,props::ThermodynamicState,unit::T=u"(m^3)/kg",mw=nothing) where T <: MassVolumeUnits
     sval = throw_get_spec(VolumeAmount,props)
     val = to_spec(props,sval,mw,VolumeAmount{MASS,VOLUME}())
     if unit !== u"(m^3)/kg"
@@ -161,7 +161,7 @@ function mass_volume(model::FromSpecs,props::Specs,unit::T=u"(m^3)/kg",mw=nothin
     end
 end
 
-function mol_volume(model::FromSpecs,props::Specs,unit::T=u"(m^3)/mol",mw=nothing) where T <: MolVolumeUnits
+function mol_volume(model::FromState,props::ThermodynamicState,unit::T=u"(m^3)/mol",mw=nothing) where T <: MolVolumeUnits
     sval = throw_get_spec(VolumeAmount,props)
     val = to_spec(props,sval,mw,VolumeAmount{MOLAR,VOLUME}())
     if unit !== u"(m^3)/mol"
@@ -172,7 +172,7 @@ function mol_volume(model::FromSpecs,props::Specs,unit::T=u"(m^3)/mol",mw=nothin
     end
 end
 
-function mass_density(model::FromSpecs,props::Specs,unit::T=u"kg/m^3",mw=nothing) where T <: MassDensityUnits
+function mass_density(model::FromState,props::ThermodynamicState,unit::T=u"kg/m^3",mw=nothing) where T <: MassDensityUnits
     sval = throw_get_spec(VolumeAmount,props)
     val = to_spec(props,sval,mw,VolumeAmount{MASS,DENSITY}())
     if unit !== u"kg/m^3"
@@ -183,7 +183,7 @@ function mass_density(model::FromSpecs,props::Specs,unit::T=u"kg/m^3",mw=nothing
     end
 end
 
-function mol_density(model::FromSpecs,props::Specs,unit::T=u"mol/m^3",mw=nothing) where T <: MolDensityUnits
+function mol_density(model::FromState,props::ThermodynamicState,unit::T=u"mol/m^3",mw=nothing) where T <: MolDensityUnits
     sval = throw_get_spec(VolumeAmount,props)
     val = to_spec(props,sval,mw,VolumeAmount{MOLAR,DENSITY}())
     if unit !== u"mol/m^3"
@@ -194,19 +194,19 @@ function mol_density(model::FromSpecs,props::Specs,unit::T=u"mol/m^3",mw=nothing
     end
 end
 
-function mol_fraction(model::FromSpecs,props::Specs,unit,mw=nothing)
+function mol_fraction(model::FromState,props::ThermodynamicState,unit,mw=nothing)
     val = to_spec_compounds(props,mw,MaterialCompounds{MOLAR,FRACTION}())
     return val
     
 end
 
 
-function mass_fraction(model::FromSpecs,props::Specs,unit,mw=nothing)
+function mass_fraction(model::FromState,props::ThermodynamicState,unit,mw=nothing)
     val = to_spec_compounds(props,mw,MaterialCompounds{MASS,FRACTION}())
     return val
     
 end
-function mol_number(model::FromSpecs,props::Specs,unit::T,mw=nothing) where T <: MolUnits
+function mol_number(model::FromState,props::ThermodynamicState,unit::T,mw=nothing) where T <: MolUnits
     val = to_spec_compounds(props,mw,MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
     if unit !== u"mol"
         default_unit = _ups(one(eltype(val))*u"mol"/unit,true)
@@ -218,7 +218,7 @@ function mol_number(model::FromSpecs,props::Specs,unit::T,mw=nothing) where T <:
 end
 
 
-function mass_number(model::FromSpecs,props::Specs,unit::T,mw=nothing) where T <: Unitful.MassUnits
+function mass_number(model::FromState,props::ThermodynamicState,unit::T,mw=nothing) where T <: Unitful.MassUnits
     val = to_spec_compounds(props,mw,MaterialCompounds{MASS,TOTAL_AMOUNT}())
     if unit !== u"kg"
         default_unit = _ups(one(eltype(val))*u"kg"/unit,true)
