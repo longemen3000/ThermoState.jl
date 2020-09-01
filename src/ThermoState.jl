@@ -17,7 +17,7 @@ include("fromspecs_props.jl")
 
 #Spec Dispatch Types
 #Spec types
-export Spec,ThermodynamicState
+export Spec,ThermodynamicState,VariableSpec
 
 #spec functions
 export spec,state

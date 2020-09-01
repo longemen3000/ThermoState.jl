@@ -130,6 +130,8 @@ function spec(sp::AbstractSpec, val::VariableSpec,normalize_units::Bool=true)
     return Spec(sp,val)
 end
 
+
+
 function spec(sp::AbstractSpec, val::Missing,normalize_units::Bool=true)
     return Spec(sp,missing)
 end

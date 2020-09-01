@@ -40,12 +40,12 @@ h0 = spec(mol_h="kg/mol")
 You can create various specifications with the `state` function:
 
 ```julia
-props = state(v=990u"m^3/mol",T=350u"K",mass=3u"mg")
+st = state(v=990u"m^3/mol",T=350u"K",mass=3u"mg")
 ```
 And extract values for the use of property models:
 
 ```julia
-mass_rho0=mass_density(FromState(),state,"kg/L",18.0u"g/mol")
+mass_rho0=mass_density(FromState(),st,"kg/L",18.0u"g/mol")
 ```
 So, instead of defining multiple functions for each combination of specifications, you just dispatch your new model on:
 ```julia
@@ -141,7 +141,7 @@ Another way to build a `ThermodynamicState` struct is by directly passing `Spec`
  julia>
  h0 = spec(mol_h = 3000.0)
  t0 = spec(t=401.0)
- props = state(h0,t0)
+ st = state(h0,t0)
  2 Property Specifications:
  Molar enthalpy : 3000.0 J mol^-1
  Temperature : 401.0 K
@@ -190,8 +190,8 @@ struct MyIdealGas
     mw::Float64
 end
 function pressure(model::MyIdealGas,state::ThermodynamicState,unit=u"Pa")
-    v = mol_volume(FromSpecs(),props,u"m^3/mol",model.mw)
-    t = temperature(FromSpecs(),props) #Kelvin as default, doesnt require mw
+    v = mol_volume(FromSpecs(),state,u"m^3/mol",model.mw)
+    t = temperature(FromSpecs(),state) #Kelvin as default, doesnt require mw
     p =  (8.314*t/v)u"Pa"
     return Unitful.ustrip(Unitful.uconvert(unit,p))
 end
