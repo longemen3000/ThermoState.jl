@@ -108,10 +108,11 @@ function Base.show(io::IO, sp::Spec{Options})
 
 end
 
-function Base.show(::IO, sp::T) where T <:AbstractSpec
+#==function Base.show(::IO, sp::T) where T <:AbstractSpec
     print("::" )
     print_spec(T)
 end
+==#
 
 
 

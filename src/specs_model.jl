@@ -110,6 +110,11 @@ function mass3(::Tuple{T,MaterialAmount{MASS}},specs,mw) where T
     return normalize_units(value(get_spec(MaterialAmount{MASS}(),specs)))
 end
 
+function mass3(::Tuple{SingleComponent,MaterialAmount{MOLAR}},specs,mw) where T
+    mol = value(get_spec(MaterialAmount{MOLAR}(),specs))
+    return normalize_units(mw_mul(mol,mw))
+end
+
 ## total ammounts:
 function mass3(::Tuple{T,T},specs,mw) where T<:MaterialCompounds{MASS,TOTAL_AMOUNT}
     return normalize_units(sum(value(get_spec(T(),specs))))
@@ -135,13 +140,15 @@ function mass3(::Tuple{MaterialCompounds{MOLAR,FRACTION},MaterialAmount{MOLAR}},
 end
 
 function mass3(::Tuple{MaterialCompounds{MASS,FRACTION},MaterialAmount{MOLAR}},specs,mw::T2) where T2<:URVec
-    #mass fractions and mass
-    #mw_i * xmi = gc/gmix / (molc/gc)= molc/gmix (sum)-> molmix/gmix
+    #mass fractions and moles
+    #sum_x_mw = xmi/mwi = mc/mmix / mc/molc = mc/mmix * molc/mc = molc/mmix -> sum -> molmix/mmix
+    #a = molmix/mmix
+    #inv(a) = mmix/molmix
     # molmix = molmix/gmix * (gmix)
     compounds = get_spec(MaterialCompounds{MASS,FRACTION}(),specs)
-    amount = get_spec(MaterialAmount{MASS}(),specs)
+    amount = get_spec(MaterialAmount{MOLAR}(),specs)
     sum_x_mw = mapreduce(mw_div,+,value(compounds),mw)
-    return normalize_units(value(amount)*sum_x_mw)  
+    return normalize_units(value(amount)/sum_x_mw)  
 end
 
 #single component cases, all the same
@@ -218,6 +225,7 @@ function to_spec(sps,sp::Spec{SP},mw,::MASS) where {SP<:AbstractIntensiveSpec{TO
     return normalize_units(value(sp))/mass2(sps,mw)
 end
 
+
 #to mol
 function to_spec(sps,sp::Spec{SP},mw,::MOLAR) where {SP<:AbstractIntensiveSpec{MASS}}
     return normalize_units(value(sp))*kg_per_mol2(sps,mw)
@@ -227,6 +235,14 @@ function to_spec(sps,sp::Spec{SP},mw,::MOLAR) where {SP<:AbstractIntensiveSpec{T
     return normalize_units(value(sp))/moles2(sps,mw)
 end
 
+#to total
+function to_spec(sps,sp::Spec{SP},mw,::TOTAL) where {SP<:AbstractIntensiveSpec{MOLAR}}
+    return normalize_units(value(sp))*moles2(sps,mw)
+end
+
+function to_spec(sps,sp::Spec{SP},mw,::TOTAL) where {SP<:AbstractIntensiveSpec{MASS}}
+    return normalize_units(value(sp))*mass2(sps,mw)
+end
 
 
 #volume and density 
@@ -250,12 +266,12 @@ end
 #same type, volume
 function to_spec_vol(sps,sp::Spec{VolumeAmount{MOLAR,VOLUME}},mw,::VolumeAmount{MASS,VOLUME})
     val = value(sp)
-    return normalize_units(val*kg_per_mol2(sps,mw))
+    return normalize_units(val/kg_per_mol2(sps,mw))
 end
 
 function to_spec_vol(sps,sp::Spec{VolumeAmount{MASS,VOLUME}},mw,::VolumeAmount{MOLAR,VOLUME})
     val = value(sp)
-    return normalize_units(val/kg_per_mol2(sps,mw))
+    return normalize_units(val*kg_per_mol2(sps,mw))
 end
 
 function to_spec_vol(sps,sp::Spec{VolumeAmount{MOLAR,VOLUME}},mw,::VolumeAmount{TOTAL,VOLUME})
@@ -281,12 +297,12 @@ end
 #same type, density
 function to_spec_vol(sps,sp::Spec{VolumeAmount{MOLAR,DENSITY}},mw,::VolumeAmount{MASS,DENSITY})
     val = value(sp)
-    return normalize_units(val/kg_per_mol2(sps,mw))
+    return normalize_units(val*kg_per_mol2(sps,mw))
 end
 
 function to_spec_vol(sps,sp::Spec{VolumeAmount{MASS,DENSITY}},mw,::VolumeAmount{MOLAR,DENSITY})
     val = value(sp)
-    return normalize_units(val*kg_per_mol2(sps,mw))
+    return normalize_units(val/kg_per_mol2(sps,mw))
 end
 
 function to_spec_vol(sps,sp::Spec{VolumeAmount{MOLAR,DENSITY}},mw,::VolumeAmount{TOTAL,DENSITY})
@@ -319,7 +335,7 @@ function to_spec_vol(sps,sp::Spec{VolumeAmount{MOLAR,VOLUME }},mw,::VolumeAmount
   
 function to_spec_vol(sps,sp::Spec{VolumeAmount{MOLAR,VOLUME }},mw,::VolumeAmount{MASS, DENSITY})
     val = value(sp)
-    val2 = val*kg_per_mol2(sps,mw)
+    val2 = val/kg_per_mol2(sps,mw)
     return normalize_units(one(val2)/val2)
 end
 
@@ -336,7 +352,7 @@ end
 
 function to_spec_vol(sps,sp::Spec{VolumeAmount{MASS, VOLUME }},mw,::VolumeAmount{MOLAR, DENSITY})
     val = value(sp)
-    val2 = val/kg_per_mol2(sps,mw)
+    val2 = val*kg_per_mol2(sps,mw)
     return normalize_units(one(val2)/val2)
 end
 function to_spec_vol(sps,sp::Spec{VolumeAmount{MASS, VOLUME }},mw,::VolumeAmount{TOTAL, DENSITY})
@@ -386,10 +402,6 @@ end
 
 #material compounds part
 
-#invariant
-function to_spec_mat(sps,sp::Spec{T},mw,::T) where {T<:MaterialCompounds}
-    return normalize_units(value(sp))
-end
 
 #fraction <-> total part, same base
 function to_spec_mat(sps,sp::Spec{MaterialCompounds{MOLAR,FRACTION}},mw,::MaterialCompounds{MOLAR,TOTAL_AMOUNT}) 
@@ -443,13 +455,13 @@ function to_spec_mat(sps,sp::Spec{MaterialCompounds{MASS,FRACTION}},mw,::Materia
 end
 
 function to_spec_mat(sps,sp::Spec{MaterialCompounds{MOLAR,TOTAL_AMOUNT}},mw,::MaterialCompounds{MASS,FRACTION}) 
-    m =  _map(mw_mul,value(sp),mw)
+    m =  map(mw_mul,value(sp),mw)
    return normalize_units(m ./ sum(m))
 end
 
 function to_spec_mat(sps,sp::Spec{MaterialCompounds{MASS,TOTAL_AMOUNT}},mw,::MaterialCompounds{MOLAR,FRACTION}) 
-    n =  _map(mw_div,value(sp),mw)
-   return normalize_units(m ./ sum(m))
+    n =  map(mw_div,value(sp),mw)
+   return normalize_units(n ./ sum(n))
 end
 
 function to_spec_compounds(sps,mw,x::SP2) where {SP2<:MaterialCompounds}
@@ -460,9 +472,15 @@ function to_spec_compounds(amount_type::Tuple{SingleComponent,T},sps,mw,x) where
     return single_component_to_spec(sps,mw,x)
 end
 
+
+function to_spec_compounds(amount_type::Tuple{T1,T2},sps,mw,x::T1) where {T1<:MaterialCompounds,T2}
+    sp = get_spec(MaterialCompounds,sps)
+    return normalize_units(value(sp))
+end
+
 function to_spec_compounds(amount_type::Tuple{T1,T2},sps,mw,x) where {T1<:MaterialCompounds,T2}
     sp = get_spec(MaterialCompounds,sps)
-    return to_spec_mat(sp,sps,mw,x)
+    return to_spec_mat(sps,sp,mw,x)
 end
 
 function single_component_to_spec(sps,mw,x::MaterialCompounds{MOLAR,FRACTION})

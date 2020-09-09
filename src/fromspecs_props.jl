@@ -11,8 +11,8 @@ const MassEntropyUnits = Unitful.Units{U,(Unitful.𝚯^-1)*Unitful.𝐋^2/Unitfu
 const MolEntropyUnits = Unitful.Units{U,(Unitful.𝐍^-1)*(Unitful.𝚯^-1)*Unitful.𝐌*Unitful.𝐋^2/Unitful.𝐓^2,A} where A where U
 
 #volume and density units
-const MolDensityUnits = Unitful.MolarityUnits
-const MassDensityUnits = Unitful.MolalityUnits
+const MolDensityUnits = Unitful.Units{U,((Unitful.𝐋)^-3)*(Unitful.𝐍),A} where A where U
+const MassDensityUnits = Unitful.Units{U,((Unitful.𝐋)^-3)*(Unitful.𝐌),A} where A where U
 const MassVolumeUnits = Unitful.Units{U,((Unitful.𝐋)^3)/(Unitful.𝐌),A} where A where U
 const MolVolumeUnits = Unitful.Units{U,((Unitful.𝐋)^3)/(Unitful.𝐍),A} where A where U
 
@@ -65,7 +65,7 @@ for (op,sp) in zip((:mol_helmoltz, :mol_gibbs, :mol_internal_energy, :mol_enthal
     @eval begin 
         function $op(model::FromState,props::ThermodynamicState,unit::T=u"J/mol",mw=nothing) where T <: MolarEnergyUnits
             sval = throw_get_spec($sp,props)
-            val = to_spec(props,sval,nothing,MOLAR())
+            val = to_spec(props,sval,mw,MOLAR())
             if unit !== u"J/mol"
                 default_unit = _ups(one(val)*u"J/mol"/unit,true)
                 return default_unit*val 
@@ -80,7 +80,7 @@ for (op,sp) in zip((:mass_helmoltz, :mass_gibbs, :mass_internal_energy, :mass_en
     @eval begin 
         function $op(model::FromState,props::ThermodynamicState,unit::T=u"J/kg",mw=nothing) where T <: MassEnergyUnits
             sval = throw_get_spec($sp,props)
-            val = to_spec(props,sval,nothing,MASS())
+            val = to_spec(props,sval,mw,MASS())
             if unit !== u"J/kg"
                 default_unit = _ups(one(val)*u"J/kg"/unit,true)
                 return default_unit*val 
@@ -95,7 +95,7 @@ for (op,sp) in zip((:total_helmoltz, :total_gibbs, :total_internal_energy, :tota
     @eval begin 
             function $op(model::FromState,props::ThermodynamicState,unit::T=u"J",mw=nothing) where T <: Unitful.EnergyUnits
                 sval = throw_get_spec($sp,props)
-                val = to_spec(props,sval,nothing,TOTAL())
+                val = to_spec(props,sval,mw,TOTAL())
                 if unit !== u"J"
                     default_unit = _ups(one(val)*u"J"/unit,true)
                     return default_unit*val 
@@ -130,7 +130,7 @@ end
 
 function total_entropy(model::FromState,props::ThermodynamicState,unit::T=u"J/(K)",mw=nothing) where T <: EntropyUnits
     sval = throw_get_spec(Entropy,props)
-    val = to_spec(props,sval,mw,MASS())
+    val = to_spec(props,sval,mw,TOTAL())
     if unit !== u"J/K"
         default_unit = _ups(one(val)*u"J/(K)"/unit,true)
         return default_unit*val

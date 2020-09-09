@@ -474,14 +474,14 @@ end
 function check_spec(args)
     mass_basis = _specs_components(args)
     phase_basis = _specs_phase_basis(args)
-    C = _specs_C(args,mass_basis)
-    P = _specs_P(args,phase_basis)
+    C = 0 #_specs_C(args,mass_basis)
+    P = 0# _specs_P(args,phase_basis)
     F = _specs_F(args,mass_basis,phase_basis)
     DF = C - P + 2 - F#behold, the gibbs phase rule!
     if DF<0
         throw(error("the variables are overspecified by " * string(abs(DF)) * " degrees of freedom."))
     elseif DF>0
-        throw(error("the variables are underspecified by"* string(abs(DF)) * " degrees of freedom."))
+        throw(error("the variables are underspecified by "* string(abs(DF)) * " degrees of freedom."))
     else
         return mass_basis
     end

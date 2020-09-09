@@ -40,9 +40,6 @@ module Types
     struct Pressure <: AbstractSpec end
     struct Temperature <: AbstractSpec end
 
-    struct Mass <: AbstractTotalSpec end
-    struct Moles <: AbstractTotalSpec end
-
     # those are vectors, 
 
     struct MaterialCompounds{T1<:MassBasisModifier,T2<:CompoundModifier} <: AbstractTotalSpec end
@@ -90,8 +87,6 @@ module Types
     export VolumeAmount 
     export Pressure 
     export Temperature 
-    export Mass 
-    export Moles 
     export MaterialCompounds 
     export MaterialAmount 
     export PhaseFractions 

@@ -12,6 +12,7 @@ include("units.jl")
 include("show.jl")
 include("specs_model.jl")
 include("fromspecs_props.jl")
+include("state_type.jl")
 
 
 
@@ -30,7 +31,8 @@ export FromState
 #property functions
 export pressure,temperature,mass,moles
 export mass_volume, mol_volume, total_volume
-export mass_enthalpy, mol_entalphy
+export mass_density, mol_density
+export mass_enthalpy, mol_enthalpy,total_enthalpy
 export mass_gibbs, mol_gibbs, total_gibbs
 export mass_helmholtz, mol_helmholtz, total_helmholtz
 export mass_internal_energy, mol_internal_energy, total_internal_energy
@@ -39,6 +41,6 @@ export mass_fraction, mol_fraction
 export mass_number, mol_number
 
 export @to_units
-
+export state_type,amount_type
 
 end # module
