@@ -16,7 +16,6 @@ const MassDensityUnits = Unitful.Units{U,((Unitful.𝐋)^-3)*(Unitful.𝐌),A} w
 const MassVolumeUnits = Unitful.Units{U,((Unitful.𝐋)^3)/(Unitful.𝐌),A} where A where U
 const MolVolumeUnits = Unitful.Units{U,((Unitful.𝐋)^3)/(Unitful.𝐍),A} where A where U
 
-const MolUnits = Unitful.Units{U,Unitful.𝐍,A} where A where U
 
 function pressure(model::FromState,props::ThermodynamicState,unit::T=u"Pa") where T <: Unitful.PressureUnits
     sval = throw_get_spec(Pressure(),props)
