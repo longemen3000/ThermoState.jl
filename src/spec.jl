@@ -101,6 +101,8 @@ For normal numbers, this is the identity function.
 
 """
 normalize_units(x) =  Unitful.ustrip(Unitful.upreferred(x))
+normalize_units(x::AbstractVector) =  Unitful.ustrip.(Unitful.upreferred.(x))
+
 
 #check units and normalizes
 function check_and_norm(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:Unitful.Quantity}
