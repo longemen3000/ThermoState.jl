@@ -4,7 +4,7 @@ module ThermoState
 using Unitful
 import Unitful: @u_str
 
-include("utilities.jl")
+#include("utilities.jl")
 include("docs.jl")
 include("types.jl")
 include("spec.jl")
@@ -39,8 +39,11 @@ export mass_internal_energy, mol_internal_energy, total_internal_energy
 export mass_entropy, mol_entropy, total_entropy
 export mass_fraction, mol_fraction
 export mass_number, mol_number
+export options, phase, quality
 
 export @to_units
-export state_type,amount_type
+export state_type
+
+export SinglePT,MultiPT
 
 end # module

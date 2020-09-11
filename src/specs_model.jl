@@ -1,3 +1,10 @@
+
+
+"""
+    FromState
+
+a basic singleton type, used to extract thermodynamic specifications from a state without using a Equation of State.
+"""
 struct FromState end
 const URVec = AbstractVector{T} where T<:Number
 

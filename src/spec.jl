@@ -93,7 +93,14 @@ function _ups(x::AbstractVector,normalize_units=true)
 end
 
 #alias for _ups
-normalize_units(x) = _ups(x,true)
+"""
+    normalize_units(x)
+
+For normal numbers, this is the identity function.
+ For `Unitful` quantities, it converts to SI units and strips the `Unitful` type.
+
+"""
+normalize_units(x) =  Unitful.ustrip(Unitful.upreferred(x))
 
 #check units and normalizes
 function check_and_norm(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:Unitful.Quantity}
@@ -374,21 +381,11 @@ _reduce_mass_spec_c(x::Spec) = 0
 _reduce_mass_spec_c(x::Spec{MaterialCompounds}) = length(value(x))
 
 
-function _specs_C(kwargs::NamedTuple,kw::Int64)::Int64
-    if kw < 10
-        return 1
-    else
-        return length(getproperty(kwargs,AMOUNT_CONST2[kw]))
-    end
-end
+_specs_C(kwargs::NamedTuple,kw::Int64) = 1
 
-function _specs_C(tup::Tuple,kw::Int64)::Int64
-    if kw < 10
-        return 1
-    else
-        return mapreduce(_reduce_mass_spec_c,+,tup)
-    end
-end
+
+_specs_C(tup::Tuple,kw::Int64)::Int64 = 1
+
 
 
 _reduce_mass_spec_p(x::Spec) = 0
@@ -400,7 +397,7 @@ function _specs_P(kwargs::NamedTuple,kw::Int64)::Int64
     elseif kw == 1
         return 2
     else
-        return length(kwargs.phase_fracs)
+        return 0
     end
 end
 
@@ -410,7 +407,7 @@ function _specs_P(tup::Tuple,kw::Int64)::Int64
     elseif kw == 1
         return 2
     else
-        return mapreduce(_reduce_mass_spec_p,+,tup)
+        return 0
     end
 end
 
@@ -474,8 +471,8 @@ end
 function check_spec(args)
     mass_basis = _specs_components(args)
     phase_basis = _specs_phase_basis(args)
-    C = 0 #_specs_C(args,mass_basis)
-    P = 0# _specs_P(args,phase_basis)
+    C = _specs_C(args,mass_basis)
+    P = _specs_P(args,phase_basis)
     F = _specs_F(args,mass_basis,phase_basis)
     DF = C - P + 2 - F#behold, the gibbs phase rule!
     if DF<0
@@ -490,6 +487,21 @@ _is_variable_spec(x) = false
 _is_variable_spec(x::VariableSpec) = true
 _is_variable_spec(x::Spec{T,VariableSpec} where T) =true
 
+
+"""
+    state(;normalize_units=true,check=true,kwargs...)
+
+Creates a `ThermodynamicState` from the arguments passed.
+If one or more of the arguments is the value `VariableSpec()`, the state created will be a callable,
+ returning a complete state when evaluated.
+
+`Unitful` quantities are normalized to SI units and unit-stripped.
+ This can be disabled with `normalize_units=false`
+
+When creating a thermodynamic state, the input arguments are checked for consistency with the gibbs rule.
+ This check can be skipped with `check=false`
+
+"""
 function state(;check=true,normalize_units=true,kwargs...)
     if !any(_is_variable_spec,values(kwargs.data))
         f0 = k -> spec(KW_TO_SPEC[k],getproperty(kwargs.data,k),normalize_units)
@@ -517,6 +529,8 @@ function state_grid(;check=true,normalize_units=true,kwargs...)
     return map(f0,Iterators.product(values(kwargs.data)...))
 end
 ==#
+
+
 function state(args::Vararg{Spec};check=true) 
     if !any(_is_variable_spec,args)
         callables = ()

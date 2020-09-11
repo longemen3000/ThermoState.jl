@@ -228,6 +228,32 @@ function mass_number(model::FromState,props::ThermodynamicState,unit::T,mw=nothi
     end
 end
 
+function options(model::FromState,props::ThermodynamicState)
+    hasval = has_spec(Options(),props)
+    if !hasval
+        return (;)
+    else
+        return value(get_spec(Options(),props))
+    end
+end
+
+function phase(model::FromState,props::ThermodynamicState)::Symbol
+    hasval = has_spec(PhaseTag(),props)
+    if !hasval
+        return :unspecified
+    else
+        return value(get_spec(PhaseTag(),props))
+    end
+end
+
+function quality(model::FromState,props::ThermodynamicState)
+    hasval = has_spec(VaporFraction(),props)
+    if !hasval
+        return NaN
+    else
+        return value(get_spec(VaporFraction(),props))
+    end
+end
 
 
 

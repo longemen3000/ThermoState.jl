@@ -1,6 +1,6 @@
 
 """
-    mol_helmholtz(model,specs::Specs,unit,[options...])::Real
+    mol_helmholtz(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:mol_a`, `:a`
 
@@ -14,7 +14,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function mol_helmholtz end
 
 """
-    mass_helmholtz(model,specs::Specs,unit,[options...])::Real
+    mass_helmholtz(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:mass_a`
 
@@ -28,7 +28,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function mass_helmholtz end
 
 """
-    total_helmholtz(model,specs::Specs,unit,[options...])::Real
+    total_helmholtz(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:total_a`
 
@@ -45,7 +45,7 @@ function total_helmholtz end
 #gibbs energy
 
 """
-    mol_gibbs(model,specs::Specs,unit,[options...])::Real
+    mol_gibbs(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:mol_g`, `:g`
 
@@ -59,7 +59,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function mol_gibbs end
 
 """
-    mass_gibbs(model,specs::Specs,unit,[options...])::Real
+    mass_gibbs(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:mass_g`
 
@@ -73,7 +73,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function mass_gibbs end
 
 """
-    total_gibbs(model,specs::Specs,unit,[options...])::Real
+    total_gibbs(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:total_g`
 
@@ -89,7 +89,7 @@ function total_gibbs end
 #enthalpy
 
 """
-    mol_enthalpy(model,specs::Specs,unit,[options...])::Real
+    mol_enthalpy(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:mol_h`, `:h`
 
@@ -103,7 +103,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function mol_enthalpy end
 
 """
-    mass_enthalpy(model,specs::Specs,unit,[options...])::Real
+    mass_enthalpy(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:mass_h`
 
@@ -117,7 +117,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function mass_enthalpy end
 
 """
-    total_enthalpy(model,specs::Specs,unit,[options...])::Real
+    total_enthalpy(model,state::ThermodynamicState,unit,[options...])::Real
 
 
 Keyword symbols: `:total_h`
@@ -135,7 +135,7 @@ function total_enthalpy end
 
 
 """
-    mol_internal_energy(model,specs::Specs,unit,[options...])::Real
+    mol_internal_energy(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:mol_u`, `:u`
 
@@ -149,7 +149,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function mol_internal_energy end
 
 """
-    mass_internal_energy(model,specs::Specs,unit,[options...])::Real
+    mass_internal_energy(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:mass_u`
 
@@ -163,7 +163,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function mass_internal_energy end
 
 """
-    total_internal_energy(model,specs::Specs,unit,[options...])::Real
+    total_internal_energy(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:total_u`
 
@@ -181,7 +181,7 @@ function total_internal_energy end
 
 
 """
-    mol_entropy(model,specs::Specs,unit,[options...])::Real
+    mol_entropy(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:mol_s`, `:s`
 
@@ -195,7 +195,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function mol_entropy end
 
 """
-    mass_entropy(model,specs::Specs,unit,[options...])::Real
+    mass_entropy(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:mass_s`
 
@@ -209,7 +209,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function mass_entropy end
 
 """
-    total_entropy(model,specs::Specs,unit,[options...])::Real
+    total_entropy(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:total_s`
 
@@ -224,7 +224,7 @@ function total_entropy end
 
 #temperature an pressure
 """
-    temperature(model,specs::Specs,unit,[options...])::Real
+    temperature(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:t`, `:T`
 
@@ -238,7 +238,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function temperature end
 
 """
-pressure(model,specs::Specs,unit,[options...])::Real
+pressure(model,state::ThermodynamicState,unit,[options...])::Real
 
     Keyword symbols: `:p`, `:P`
 
@@ -254,7 +254,7 @@ function pressure end
 #volume amounts
 
 """
-    mol_volume(model,specs::Specs,unit,[options...])::Real
+    mol_volume(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:mol_v`, `:v`
 
@@ -268,7 +268,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function mol_volume end
 
 """
-    mass_volume(model,specs::Specs,unit,[options...])::Real
+    mass_volume(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:mass_v`
 
@@ -282,7 +282,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function mass_volume end
 
 """
-    total_volume(model,specs::Specs,unit,[options...])::Real
+    total_volume(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:total_v`, `:V`
 
@@ -296,7 +296,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function total_volume end
 
 """
-    mol_density(model,specs::Specs,unit,[options...])::Real
+    mol_density(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:mol_rho`, `:rho`, `:mol_ρ`, `:ρ`
 
@@ -310,7 +310,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function mol_density end
 
 """
-    mass_density(model,specs::Specs,unit,[options...])::Real
+    mass_density(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:mass_rho`, `:mass_ρ`
 
@@ -325,7 +325,7 @@ function mass_density end
 
 
 """
-    mol_fraction(model,specs::Specs,unit,[options...])::AbstractVector
+    mol_fraction(model,state::ThermodynamicState,unit,[options...])::AbstractVector
 
 Keyword symbols: `:xn`
 
@@ -338,7 +338,7 @@ The unit argument is not used here. but its present for consistency.
 function mol_fraction end
 
 """
-    mass_fraction(model,specs::Specs,unit,[options...])::AbstractVector
+    mass_fraction(model,state::ThermodynamicState,unit,[options...])::AbstractVector
 
 Keyword symbols: `:xm`
 
@@ -351,7 +351,7 @@ The unit argument is not used here. but its present for consistency.
 function mass_fraction end
 
 """
-    mol_number(model,specs::Specs,unit,[options...])::AbstractVector
+    mol_number(model,state::ThermodynamicState,unit,[options...])::AbstractVector
 
 Keyword symbols: `:n`
 
@@ -365,7 +365,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function mol_number end
 
 """
-    mass_number(model,specs::Specs,unit,[options...])::AbstractVector
+    mass_number(model,state::ThermodynamicState,unit,[options...])::AbstractVector
 
 Keyword symbols: `:m`
 
@@ -379,7 +379,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function mass_number end
 
 """
-    moles(model,specs::Specs,unit,[options...])::Real
+    moles(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:moles`
 
@@ -393,7 +393,7 @@ If you need unitful units, use the macro `@to_units` before the function call
 function moles end
 
 """
-    mass(model,specs::Specs,unit,[options...])::Real
+    mass(model,state::ThermodynamicState,unit,[options...])::Real
 
 Keyword symbols: `:mass`
 
@@ -405,4 +405,44 @@ If you need unitful units, use the macro `@to_units` before the function call
 
 """
 function mass end
+
+
+"""
+    options(model,state::ThermodynamicState)::NamedTuple
+
+Keyword symbols: `:options`
+
+
+Returns any options related to the model, stored in the state or the model.
+
+Returns an empty named tuple otherwise.
+
+"""
+function options end
+
+"""
+    phase(model,state::ThermodynamicState)::NamedTuple
+
+Keyword symbols: `:phase`
+
+
+Returns a symbol indicating the phase specified in the state or the model.
+
+Returns `:unspecified` otherwise.
+
+"""
+function phase end
+
+"""
+    quality(model,state::ThermodynamicState)::NamedTuple
+
+Keyword symbols: `:vfrac`
+
+
+Returns the vapor quality stored in the state
+
+Returns NaN otherwise.
+
+"""
+function phase end
 
