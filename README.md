@@ -1,6 +1,8 @@
 # ThermoState
 
 [![Build Status](https://travis-ci.com/longemen3000/ThermoState.jl.svg?branch=master)](https://travis-ci.com/longemen3000/ThermoState.jl)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://longemen3000.github.io/ThermoState.jl/stable)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://longemen3000.github.io/ThermoState.jl/dev)
 
 Basic block for interfacing with thermodynamic models.
 The idea is to have a common interface of the form:

@@ -1,6 +1,3 @@
-
-
-
 """
     default_units(::Union{Type{AbstractSpec},Type{property_function}})    
 
@@ -17,20 +14,15 @@ J/mol
 """
 function default_units end
 
-
-
-
 # total units, function necessary to defining a new spec
 default_units(x::AbstractSpec) = default_units(typeof(x))
 default_units(::Type{MOLAR}) = u"mol"
 default_units(::Type{MASS}) = u"kg"
 default_units(::Type{TOTAL}) = Unitful.NoUnits
 
-
 function default_units(::Type{T1}) where T1 <: AbstractEnergySpec{T2} where T2
     return u"J"/default_units(T2)
 end
-
 
 function default_units(::Type{Entropy{T}}) where T
     return u"J/K"/default_units(T)
@@ -38,7 +30,6 @@ end
 
 default_units(::Type{Pressure}) = u"Pa" 
 default_units(::Type{Temperature}) = u"K" 
-
 
 function default_units(::Type{VolumeAmount{T,VOLUME}}) where T
     return u"m^3"/default_units(T)
@@ -60,8 +51,6 @@ function default_units(x::Type{MaterialCompounds{T,TOTAL_AMOUNT}}) where T
     return default_units(T)
 end
 
-
-
 default_units(x::Type{PhaseFractions}) = Unitful.NoUnits
 default_units(x::Type{VaporFraction}) = Unitful.NoUnits
 
@@ -72,8 +61,6 @@ end
 
 value(s::Spec) = s.val
 specification(s::Spec) = s.type
-
-
 
 #preferred stripped
 function _ups(x,normalize_units=true)
@@ -112,6 +99,7 @@ function check_and_norm(::SP,val::U,normalize_units::Bool=true) where {SP<:Abstr
         throw(ArgumentError("the input value is not a type of " * string(SP)))
     end
 end
+
 function check_and_norm_vec(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:AbstractVector{<: Unitful.Quantity}}
     if dimension(default_units(SP)) == dimension(eltype(val))
     return _ups(val,normalize_units)
@@ -119,7 +107,6 @@ function check_and_norm_vec(::SP,val::U,normalize_units::Bool=true) where {SP<:A
         throw(ArgumentError("the input value is not a type of " * string(SP)))
     end
 end
-
 
 function check_and_norm_vec(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:Number}
     throw(ArgumentError("invalid material compounds specification, provide a vector."))
@@ -138,8 +125,6 @@ end
 function spec(sp::AbstractSpec, val::VariableSpec,normalize_units::Bool=true)
     return Spec(sp,val)
 end
-
-
 
 function spec(sp::AbstractSpec, val::Missing,normalize_units::Bool=true)
     return Spec(sp,missing)
@@ -169,7 +154,6 @@ function spec(sp::MaterialCompounds{T1,TOTAL_AMOUNT}, val::V,normalize_units::Bo
     return Spec(sp,val)
 end
 
-
 _is_frac(x::Real) = (zero(x) <= x <= one(x))
 function _is_frac_vec(u::T1) where T1<:AbstractVector{<:Real}
     return all(x -> x ≥ zero(x), u) && isapprox(sum(u), one(eltype(u)))
@@ -182,7 +166,6 @@ function spec(sp::MaterialCompounds{T1,FRACTION}, val::V,normalize_units::Bool=t
         throw(ArgumentError("the the vector of values is not a valid fraction"))
     end
 end
-
 
 function spec(t::AbstractFractionSpec, u::AbstractVector{Real},normalize_units::Bool=true)
     if _is_frac_vec(u)
@@ -205,7 +188,6 @@ function spec(t::T, u,normalize_units::Bool=true) where T<:CategoricalSpec
     return Spec(t,u)
 end
 
-
 function spec(;kwargs...)   
     if hasproperty(kwargs.data,:normalize_units)
         norm_units = getproperty(kwargs.data,:normalize_units)
@@ -227,8 +209,6 @@ function spec(;kwargs...)
         end
     end
 end
-
-
 
 struct ThermodynamicState{M,T,S}
     amount_type::M
@@ -328,7 +308,6 @@ const AMOUNT_CONST =Dict{Int,Any}(
 
 #reduce-based mass transform, to check properties
 
-
 _reduce_check_mass(x::Spec) = 0
 _reduce_check_mass(x::Spec{MaterialCompounds{MOLAR,FRACTION}}) = 110
 _reduce_check_mass(x::Spec{MaterialCompounds{MASS,FRACTION}}) = 120
@@ -346,7 +325,6 @@ _reduce_check_mass(::Val{:moles})=1
 _reduce_check_mass(::Val{:mass})=2
 _reduce_check_mass(::Val{T} where T)=0
 
-
 #reduce-based phase transform, to check properties
 
 _reduce_check_phase(x::Spec) = 0
@@ -362,7 +340,6 @@ _reduce_check_phase(::Val{:vfrac})=1
 _reduce_check_phase(::Val{:phase_fracs})=10
 _reduce_check_phase(::Val{T} where T)=0
 
-
 #function to correctly dispatch on the function terms
 keys_or_tuple(x::Tuple) = x
 keys_or_tuple(x::NamedTuple) = keys(x)
@@ -370,9 +347,6 @@ keys_or_tuple(x::NamedTuple) = keys(x)
 function _specs_components(args)::Int64
     return mapreduce(_reduce_check_mass,+,keys_or_tuple(args))
 end
-#gives the appropiate symbol to extract amount of matter
-
-
 
 #this needs future work to specify
 function _specs_phase_basis(args)::Int64
@@ -382,13 +356,8 @@ end
 _reduce_mass_spec_c(x::Spec) = 0
 _reduce_mass_spec_c(x::Spec{MaterialCompounds}) = length(value(x))
 
-
 _specs_C(kwargs::NamedTuple,kw::Int64) = 1
-
-
 _specs_C(tup::Tuple,kw::Int64)::Int64 = 1
-
-
 
 _reduce_mass_spec_p(x::Spec) = 0
 _reduce_mass_spec_p(x::Spec{PhaseFractions}) = length(value(x))
@@ -412,7 +381,6 @@ function _specs_P(tup::Tuple,kw::Int64)::Int64
         return 0
     end
 end
-
 
 #optional values not counted during degrees of freedom calc
 
@@ -447,9 +415,6 @@ function _specs_F(args,mass_basis::Int64,phase_basis::Int64)::Int64
     end
     return F
 end
-
-
-
 
 
 function spec_equal(x1::Spec{T},x2::Spec{T})::Bool where {T}
@@ -521,18 +486,6 @@ function state(;check=true,normalize_units=true,kwargs...)
     end
 end
 
-#==
-function state_grid(;check=true,normalize_units=true,kwargs...)
-    kw = NamedTuple{keys(kwargs.data)}
-    function f0(v)
-        _kwargs = kw(v)
-        state(;check=check,normalize_units=normalize_units,_kwargs...)
-    end
-    return map(f0,Iterators.product(values(kwargs.data)...))
-end
-==#
-
-
 function state(args::Vararg{Spec};check=true) 
     if !any(_is_variable_spec,args)
         callables = ()
@@ -577,9 +530,3 @@ function (f::ThermodynamicState{S,Tuple{S1,S2,S3}})(x1::T1,x2::T2,x3::T3) where 
     Spec{S3,T3}(last(f.callables),x3),
     f.specs...),())
 end
-
-
-
-
-
-

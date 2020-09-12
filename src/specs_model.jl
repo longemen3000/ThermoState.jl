@@ -68,7 +68,6 @@ function moles3(::Tuple{SingleComponent,MaterialAmount{MASS}},specs,mw::T) where
     return normalize_units(x)
 end
 
-
 ## total ammounts:
 function moles3(::Tuple{T,T},specs,mw) where T<:MaterialCompounds{MOLAR,TOTAL_AMOUNT}
     return normalize_units(sum(value(get_spec(T(),specs))))

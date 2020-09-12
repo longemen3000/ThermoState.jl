@@ -35,8 +35,6 @@ function temperature(model::FromState,props::ThermodynamicState,unit::T=u"K") wh
     return Unitful.ustrip(Unitful.uconvert(unit,val))
 end
 
-
-
 function mass(model::FromState,props::ThermodynamicState,unit::T=u"kg",mw=nothing) where T <: Unitful.MassUnits
     m = mass2(props,mw)
     if unit !== u"kg"
@@ -47,8 +45,6 @@ function mass(model::FromState,props::ThermodynamicState,unit::T=u"kg",mw=nothin
     end
 end
 
-
-
 function moles(model::FromState,props::ThermodynamicState,unit::T=u"mol",mw=nothing) where T <: MolUnits
     m = moles2(props,mw)
     if unit !== u"mol"
@@ -58,7 +54,6 @@ function moles(model::FromState,props::ThermodynamicState,unit::T=u"mol",mw=noth
         return m
     end
 end
-
 
 for (op,sp) in zip((:mol_helmoltz, :mol_gibbs, :mol_internal_energy, :mol_enthalpy),INTENSIVE_ENERGY_UNITS)
     @eval begin 
@@ -196,15 +191,13 @@ end
 function mol_fraction(model::FromState,props::ThermodynamicState,unit,mw=nothing)
     val = to_spec_compounds(props,mw,MaterialCompounds{MOLAR,FRACTION}())
     return val
-    
 end
-
 
 function mass_fraction(model::FromState,props::ThermodynamicState,unit,mw=nothing)
     val = to_spec_compounds(props,mw,MaterialCompounds{MASS,FRACTION}())
-    return val
-    
+    return val   
 end
+
 function mol_number(model::FromState,props::ThermodynamicState,unit::T,mw=nothing) where T <: MolUnits
     val = to_spec_compounds(props,mw,MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
     if unit !== u"mol"
@@ -212,10 +205,8 @@ function mol_number(model::FromState,props::ThermodynamicState,unit::T,mw=nothin
         return default_unit*val
     else
         return val
-    end
-    
+    end  
 end
-
 
 function mass_number(model::FromState,props::ThermodynamicState,unit::T,mw=nothing) where T <: Unitful.MassUnits
     val = to_spec_compounds(props,mw,MaterialCompounds{MASS,TOTAL_AMOUNT}())
