@@ -45,5 +45,10 @@ export @to_units
 export state_type
 
 export SinglePT,MultiPT
+export SingleVT,MultiVT
+export SinglePS,MultiPS
+export SinglePH,MultiPH
+
+
 
 end # module

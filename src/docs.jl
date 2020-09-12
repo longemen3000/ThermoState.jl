@@ -444,5 +444,5 @@ Returns the vapor quality stored in the state
 Returns NaN otherwise.
 
 """
-function phase end
+function quality end
 
