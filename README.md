@@ -1,14 +1,13 @@
-# ThermoState
+# ThermoState.jl
 
 [![Build Status](https://travis-ci.com/longemen3000/ThermoState.jl.svg?branch=master)](https://travis-ci.com/longemen3000/ThermoState.jl)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://longemen3000.github.io/ThermoState.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://longemen3000.github.io/ThermoState.jl/dev)
 
-Basic block for interfacing with thermodynamic models.
-The idea is to have a common interface of the form:
+ThermoState.jl is a basic block for interfacing and specifying thermodynamic models. this package proposes and provides tools to create a common property interface of the form: 
 
 ```julia
-property(model,state,unit,options)
+property(model,state,unit)
 ```
 
 ## Basics
@@ -206,7 +205,7 @@ Some abstract tuple types are saved on `ThermoState.QuickStates`. the tuple type
 - `SingleΦP,MultiΦP`
 
 
-## exported utilities
+## Exported utilities
 
 ### `normalize_units(val)`
 
@@ -261,7 +260,7 @@ end
 
 function pressure(mt::SingleVT,model::MyIdealGas,st::ThermodynamicState,unit=u"Pa")
     v = mol_volume(FromState(),st,u"m^3/mol",mw)
-    t = temperature(FromState(),st)
+    t = temperature(FromState(),st,u"K") 
     val = pressure_impl(mt,model,v,t)
     return ThermoState.convert_unit(u"Pa",unit,val)
 end
@@ -284,5 +283,7 @@ p_list = map(t-> pressure(model,tx(t)),273.0:373.0)
 ## State of this package
 
 At the moment of writing this, this package is a  experimental state and many features could (and will) change, please write any sugerences on the issues!, pull requests are very appreciated!
+
+
 
 
