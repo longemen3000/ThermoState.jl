@@ -106,7 +106,7 @@ In this case, the specification type is a parametric singleton struct: `Enthalpy
 There are two special cases with two parameters: volume amounts (molar, total and specific volume, mass and molar density) and material compound proportions (mass numbers, mol numbers, mass fractions and mol fractions). volume amounts are tagged with the specification `VolumeAmount{<:SpecModifier,<:SpecModifier}` and material compounds tagged with the specification `MaterialCompounds{<:SpecModifier,<:SpecModifier}`. lets see some examples:
 
 ```julia-repl
-julia> using ThermoState.Types #importing the spec types for better printing
+julia> using ThermoState.Types #importing the spec types for shorter printing
 
 
 julia> typeof(specification(spec(mol_v = 0.005)))
@@ -165,8 +165,9 @@ By default, the units of the number returned correspond to SI units, you can obt
 the `FromState` model, given a corresponding molecular weight `mw` argument, can calculate derived properties, for example:
 
 ```julia-repl
+mw = 50
 a = state(t=300.0,ρ=5.0u"mol/L")
-v = mass_volume(FromSpecs(),a,u"cm^3/g",50)
+v = mass_volume(FromSpecs(),a,u"cm^3/g",mw)
 4.0
 ```
 The `mw` argument can be, depending of the situation, a number of vector of number. if not units are provided, a default units of `g/mol` are assumed. this conversion can be done on any unit that accepts molar, total and mass specifications, mass and moles themselves, molar and mass fractions,and molar and mass numbers.
@@ -179,7 +180,63 @@ sometimes is needed a more direct approach to evaluation of properties.For examp
 a_t = state(t=VariableSpec(),ρ=5.0u"mol/L")
 a_t(303)
 ```
+## Dispatching on the state type with `state_type`
 
+Good. we now have a struct designed to store thermodynamic properties. now we can create functions that dispatch on a specific combination of thermodynamic specifications, using the function `state_type(st::ThermodynamicState)`:
+
+```julia-repl
+julia> st = state(t=373.15,ρ=5.0u"mol/L");state_type(st)
+(VolumeAmount{MOLAR,DENSITY}(), Temperature(), SingleComponent())        
+```
+This tuple of thermodynamic specifications are an ordered representation of the specifications contained:
+```julia-repl
+st1 = state(t=373.15,ρ=5.0u"mol/L")
+st2 = state(ρ=5.0u"mol/m^3",t=373.15,normalize_units=false)
+state_type(s1) === state_type(s2) #true
+```
+Some abstract tuple types are saved on `ThermoState.QuickStates`. the tuple types exported are:
+
+- `SinglePT,MultiPT`
+- `SingleVT,MultiVT`
+- `SinglePS,MultiPS`
+- `SinglePH,MultiPH`
+- `SingleSatT,MultiSatT` (Two phase equilibrium)
+- `SingleΦT,MultiΦT` (vapor fraction)
+- `SingleSatP,MultiSatP`
+- `SingleΦP,MultiΦP`
+
+
+## exported utilities
+
+### `normalize_units(val)`
+
+on normal numbers, it is the identity, but on numbers or vectors of `Unitful.Quantity`,it converts the unit to an equivalent SI unit and strips the unit information.
+
+```julia
+x = 0.0u"°C"
+normalize_units(x) #373.15
+```
+
+### `convert_unit(from,to,val)`
+
+converts an unit from the unit stored in `from` to the unit stored in `to`. when both units are equal, it justs returns `val`. if `val` itself is an `unit`, then it convert the from the unit in `val` to the unit in `to`. 
+
+```julia
+convert_unit(u"Pa",u"kPa",1000.0) #1.0
+convert_unit(u"Pa",u"kPa",1u"atm") #101.325
+```
+
+###  `default_units(val)`
+
+returns the SI unit of a thermodynamic specification type or a function name corresponding to those types:
+
+```julia
+#from a function
+default_units(mol_density) #u"mol/m^3"
+
+#from a thermodynamic specification type
+default_units(Pressure()) #u"Pa"
+```
 
 ## Implementing a model using the `ThermoState` interface
 
@@ -187,16 +244,29 @@ using this package, we can implement a basic ideal gas model that only calculate
 
 
 ```julia
-using ThermoState, Unitful
+using ThermoState, Unitful, ThermoState.QuickStates
 struct MyIdealGas
     mw::Float64
 end
-function pressure(model::MyIdealGas,state::ThermodynamicState,unit=u"Pa")
-    v = mol_volume(FromSpecs(),state,u"m^3/mol",model.mw)
-    t = temperature(FromSpecs(),state) #Kelvin as default, doesnt require mw
-    p =  (8.314*t/v)u"Pa"
-    return Unitful.ustrip(Unitful.uconvert(unit,p))
+
+molecular_weight(model::MyIdealGas) = model.mw
+
+function pressure_impl(mt::SingleVT,model::MyIdealGas,v,t)
+    return 8.314*t/v
 end
+
+function pressure(model::MyIdealGas,st::ThermodynamicState,unit=u"Pa")
+return pressure(state_type(st),model,st,unit)
+end
+
+function pressure(mt::SingleVT,model::MyIdealGas,st::ThermodynamicState,unit=u"Pa")
+    v = mol_volume(FromState(),st,u"m^3/mol",mw)
+    t = temperature(FromState(),st)
+    val = pressure_impl(mt,model,v,t)
+    return ThermoState.convert_unit(u"Pa",unit,val)
+end
+
+
 
 a = state(mass = 3u"kg",total_v = 30u"m^3",t=30u"°C")
 model = MyIdealGas(18.01)

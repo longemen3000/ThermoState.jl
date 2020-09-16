@@ -1,10 +1,10 @@
 
  
 
-_stateorder(x::Pressure) = 1
-_stateorder(x::PhaseFractions) = 2
-_stateorder(x::TwoPhaseEquilibrium) = 3
-_stateorder(x::VaporFraction) = 4
+_stateorder(x::PhaseFractions) = 1
+_stateorder(x::TwoPhaseEquilibrium) = 2
+_stateorder(x::VaporFraction) = 3
+_stateorder(x::Pressure) = 4
 _stateorder(x::Helmholtz) = 5
 _stateorder(x::Gibbs) = 6
 _stateorder(x::InternalEnergy) = 7

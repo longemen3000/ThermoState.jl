@@ -1,8 +1,5 @@
 # ideal gas constant, from unitful
-const R_IDEAL_GAS = Unitful.ustrip(Unitful.R) 
-
-
-
+default_units(property::typeof(molar_mass)) = u"kg/mol"
 default_units(property::typeof(mol_helmholtz)) = u"J/mol"
 default_units(property::typeof(mass_helmholtz)) = u"J/kg"
 default_units(property::typeof(total_helmholtz)) = u"J"
@@ -79,10 +76,10 @@ to_spec(property::typeof(mass)) = MaterialAmount{MASS}()
 to_spec(property::typeof(temperature)) = Temperature()
 to_spec(property::typeof(pressure)) = Pressure()
 
-to_spec(property::typeof(mol_fraction)) = MaterialCompounds{MOL,FRACTION}()
-to_spec(property::typeof(mol_number)) = MaterialCompounds{MOL,TOTAL}()
+to_spec(property::typeof(mol_fraction)) = MaterialCompounds{MOLAR,FRACTION}()
+to_spec(property::typeof(mol_number)) = MaterialCompounds{MOLAR,TOTAL_AMOUNT}()
 to_spec(property::typeof(mass_fraction)) = MaterialCompounds{MASS,FRACTION}()
-to_spec(property::typeof(mass_number)) = MaterialCompounds{MASS,TOTAL}()
+to_spec(property::typeof(mass_number)) = MaterialCompounds{MASS,TOTAL_AMOUNT}()
 
 #to_spec(property::typeof(sound_speed)) = u"m/s"
 #to_spec(property::typeof(compressibility_factor)) = Unitful.NoUnits
@@ -170,3 +167,60 @@ function spec(f::F,val,normalize_units=true) where F<:Function
     return spec(to_spec(f)val,normalize_units)
 end
 
+#directly calling from constructed specs:
+
+(x::Helmholtz{MOLAR})(args...)=mol_helmholtz(args...)
+(x::Helmholtz{MASS})(args...)=mass_helmholtz(args...)
+(x::Helmholtz{TOTAL})(args...)=total_helmholtz(args...)
+
+(x::Gibbs{MOLAR})(args...)=mol_helmholtz(args...)
+(x::Gibbs{MASS})(args...)=mass_helmholtz(args...)
+(x::Gibbs{TOTAL})(args...)=total_helmholtz(args...)
+
+(x::InternalEnergy{MOLAR})(args...)=mol_internal_energy(args...)
+(x::InternalEnergy{MASS})(args...)=mass_internal_energy(args...)
+(x::InternalEnergy{TOTAL})(args...)=total_internal_energy(args...)
+
+(x::Enthalpy{MOLAR})(args...)=mol_enthalpy(args...)
+(x::Enthalpy{MASS})(args...)=mass_enthalpy(args...)
+(x::Enthalpy{TOTAL})(args...)=total_enthalpy(args...)
+
+(x::Entropy{MOLAR})(args...)=mol_entropy(args...)
+(x::Entropy{MASS})(args...)=mol_entropy(args...)
+(x::Entropy{TOTAL})(args...)=mol_entropy(args...)
+
+
+(x::VolumeAmount{MOLAR,VOLUME})(args...)=mol_volume(args...)
+(x::VolumeAmount{MASS,VOLUME})(args...)=mass_volume(args...)
+(x::VolumeAmount{TOTAL,VOLUME})(args...)=total_volume(args...)
+
+(x::VolumeAmount{MOLAR,DENSITY})(args...)=mol_density(args...)
+(x::VolumeAmount{MASS,DENSITY})(args...)=mass_density(args...)
+
+(x::Temperature)(args...)=temperature(args...)
+(x::Pressure)(args...)=pressure(args...)
+
+(x::MaterialAmount{MOLAR})(args...)=moles(args...)
+(x::MaterialAmount{MASS})(args...)=mass(args...)
+
+
+(x::MaterialCompounds{MOLAR,FRACTION})(args...)=mol_fraction(args...)
+(x::MaterialCompounds{MOLAR,TOTAL_AMOUNT})(args...)=mol_number(args...)
+(x::MaterialCompounds{MASS,FRACTION})(args...)=mass_fraction(args...)
+(x::MaterialCompounds{MASS,TOTAL_AMOUNT})(args...)=mass_number(args...)
+(x::SingleComponent)(args...) = nothing
+
+
+_units_tuple(st) = (default_units(typeof(st[1])),
+default_units(typeof(st[2])),
+default_units(typeof(st[3])))
+
+function properties(st::T,
+        	state::ThermodynamicState,
+            mw = nothing,
+            units=_units_tuple(st)) where T <: Tuple{AbstractSpec,AbstractSpec,AbstractSpec}
+        
+    f(val,unit) = val(FromState(),state,unit,mw)
+    
+    return (f(st[1],units[1]),f(st[2],units[2]),f(st[3],units[3]))
+end

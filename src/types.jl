@@ -170,3 +170,81 @@ const KW_TO_SPEC = IdDict{Symbol,Any}(
 
 )
 
+module QuickStates
+using ..Types
+const SinglePT = Tuple{Pressure,Temperature,SingleComponent}
+const MultiPT = Tuple{Pressure,Temperature,MaterialCompounds}
+
+pt() = (Pressure(),Temperature(),SingleComponent())
+ptx() = (Pressure(),Temperature(),MaterialCompounds{MOLAR,FRACTION}())
+ptn() = (Pressure(),Temperature(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
+
+const SingleVT = Tuple{VolumeAmount,Temperature,SingleComponent}
+const MultiVT = Tuple{VolumeAmount,Temperature,MaterialCompounds}
+
+vt() = (VolumeAmount{MOLAR,VOLUME}(),Temperature(),SingleComponent())
+vtx() = (VolumeAmount{MOLAR,VOLUME}(),Temperature(),MaterialCompounds{MOLAR,FRACTION}())
+vtn() = (VolumeAmount{MOLAR,VOLUME}(),Temperature(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
+
+ρt() = (VolumeAmount{MOLAR,DENSITY}(),Temperature(),SingleComponent())
+ρtx() = (VolumeAmount{MOLAR,DENSITY}(),Temperature(),MaterialCompounds{MOLAR,FRACTION}())
+ρtn() = (VolumeAmount{MOLAR,VOLUME}(),Temperature(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
+
+const SinglePS = Tuple{Pressure,Entropy,SingleComponent}
+const MultiPS = Tuple{Pressure,Entropy,MaterialCompounds}
+
+st() = (Pressure(),Entropy{MOLAR}(),SingleComponent())
+stx() = (Pressure(),Entropy{MOLAR}(),MaterialCompounds{MOLAR,FRACTION}())
+stn() = (Pressure(),Entropy{MOLAR}(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
+
+
+const SinglePH = Tuple{Pressure,Enthalpy,SingleComponent}
+const MultiPH = Tuple{Pressure,Enthalpy,MaterialCompounds}
+
+pht() = (Pressure(),Enthalpy{MOLAR}(),SingleComponent())
+phx() = (Pressure(),Enthalpy{MOLAR}(),MaterialCompounds{MOLAR,FRACTION}())
+phn() = (Pressure(),Enthalpy{MOLAR}(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
+
+const SingleSatT = Tuple{TwoPhaseEquilibrium,Temperature,SingleComponent}
+const MultiSatT = Tuple{TwoPhaseEquilibrium,Temperature,MaterialCompounds}
+
+sat_t() = (TwoPhaseEquilibrium(),Temperature(),SingleComponent())
+sat_tx() = (TwoPhaseEquilibrium(),Temperature(),MaterialCompounds{MOLAR,FRACTION}())
+sat_tn() = (TwoPhaseEquilibrium(),Temperature(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
+
+const SingleΦT = Tuple{VaporFraction,Temperature,SingleComponent}
+const MultiΦT = Tuple{VaporFraction,Temperature,MaterialCompounds}
+
+ϕt() = (VaporFraction(),Temperature(),SingleComponent())
+ϕtx() = (VaporFraction(),Temperature(),MaterialCompounds{MOLAR,FRACTION}())
+ϕtn() = (VaporFraction(),Temperature(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
+
+const SingleSatP = Tuple{TwoPhaseEquilibrium,Pressure,SingleComponent}
+const MultiSatP = Tuple{TwoPhaseEquilibrium,Pressure,MaterialCompounds}
+
+sat_t() = (TwoPhaseEquilibrium(),Pressure(),SingleComponent())
+sat_tx() = (TwoPhaseEquilibrium(),Pressure(),MaterialCompounds{MOLAR,FRACTION}())
+sat_tn() = (TwoPhaseEquilibrium(),Pressure(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
+
+const SingleΦP = Tuple{VaporFraction,Pressure,SingleComponent}
+const MultiΦP = Tuple{VaporFraction,Pressure,MaterialCompounds}
+
+ϕp() = (VaporFraction(),Pressure(),SingleComponent())
+ϕpx() = (VaporFraction(),Pressure(),MaterialCompounds{MOLAR,FRACTION}())
+ϕpn() = (VaporFraction(),Pressure(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
+
+export SinglePT,MultiPT
+export SingleVT,MultiVT
+export SinglePS,MultiPS
+export SinglePH,MultiPH
+export SingleSatT,MultiSatT
+export SingleΦT,MultiΦT
+
+
+end
+
+
+
+
+
+

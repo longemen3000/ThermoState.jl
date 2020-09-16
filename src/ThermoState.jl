@@ -24,12 +24,15 @@ export Spec,ThermodynamicState,VariableSpec
 export spec,state
 
 #spec utilities
-export value,specification,values,get_spec,normalize_units
-#FromSpecs Model
+export value,specification,values,get_spec
+#FromState Model
 export FromState
 
+#unitful utilities
+export normalize_units,default_units,convert_unit
+
 #property functions
-export pressure,temperature,mass,moles
+export pressure,temperature,mass,moles,molar_mass
 export mass_volume, mol_volume, total_volume
 export mass_density, mol_density
 export mass_enthalpy, mol_enthalpy,total_enthalpy
@@ -43,12 +46,6 @@ export options, phase, quality
 
 export @to_units
 export state_type
-
-export SinglePT,MultiPT
-export SingleVT,MultiVT
-export SinglePS,MultiPS
-export SinglePH,MultiPH
-
-
+export Types,QuickStates
 
 end # module

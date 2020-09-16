@@ -43,6 +43,10 @@ function default_units(::Type{MaterialAmount{T1}}) where T1
     return default_units(T1)
 end
 
+function default_units(::Type{SingleComponent}) 
+    return Unitful.NoUnits
+end
+
 function default_units(::Type{MaterialCompounds{T,FRACTION}}) where T
     return Unitful.NoUnits
 end
@@ -219,9 +223,9 @@ end
 
 Base.values(s::ThermodynamicState) = s.specs
 
-function get_spec(val,specs::Tuple)
+function get_spec(val::T,specs::Tuple) where T<:AbstractSpec
     for spec in specs
-        if typeof(specification(spec)) <: typeof(val) 
+        if specification(spec) isa T
             return spec
         end
     end
@@ -230,7 +234,7 @@ end
 
 function get_spec(val::Type{T},specs::Tuple) where T<: AbstractSpec
     for spec in specs
-        if typeof(specification(spec)) <: T
+        if specification(spec) isa T
             return spec
         end
     end
@@ -257,9 +261,9 @@ end
     return throw_get_spec(val,specs)
 end
 
-function has_spec(val,tup::Tuple)::Bool
-    @inbounds for i in 1:length(tup)
-        if typeof(specification(tup[i])) <: typeof(val) 
+function has_spec(val::T,tup::Tuple)::Bool where T<:AbstractSpec
+    for sp in tup
+        if specification(sp) isa T
             return true
         end
     end
@@ -267,8 +271,8 @@ function has_spec(val,tup::Tuple)::Bool
 end
 
 function has_spec(val::Type{T},tup::Tuple) where T<: AbstractSpec
-    @inbounds for i in 1:length(tup)
-        if typeof(specification(tup[i])) <: T 
+    for sp in tup
+        if specification(sp) isa T
             return true
         end
     end
