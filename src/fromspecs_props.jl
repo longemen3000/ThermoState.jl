@@ -28,38 +28,38 @@ function convert_unit(from::T1,to::T2,val::N) where {T1,T2,N<:Unitful.Quantity}
     return Unitful.ustrip(Unitful.uconvert(to,val))
 end
 
-function pressure(model::FromState,props::ThermodynamicState,unit::T=u"Pa",mw=nothing) where T <: Unitful.PressureUnits
-    sval = throw_get_spec(Pressure(),props)
-    val = to_spec(props,sval,nothing,Pressure())
+function pressure(model::FromState,st::ThermodynamicState,unit::T=u"Pa",mw=nothing) where T <: Unitful.PressureUnits
+    sval = throw_get_spec(Pressure,st)
+    val = to_spec(st,sval,nothing,Pressure())
     return convert_unit(u"Pa",unit,val)
 end
 
-function temperature(model::FromState,props::ThermodynamicState,unit::T=u"K",mw=nothing) where T <: Unitful.TemperatureUnits
-    sval = throw_get_spec(Temperature(),props)
-    val = to_spec(props,sval,nothing,Temperature())
+function temperature(model::FromState,st::ThermodynamicState,unit::T=u"K",mw=nothing) where T <: Unitful.TemperatureUnits
+    sval = throw_get_spec(Temperature,st)
+    val = to_spec(st,sval,nothing,Temperature())
     return convert_unit(u"K",unit,val)
 end
 
-function mass(model::FromState,props::ThermodynamicState,unit::T=u"kg",mw=nothing) where T <: Unitful.MassUnits
-    val = mass2(props,mw)
+function mass(model::FromState,st::ThermodynamicState,unit::T=u"kg",mw=nothing) where T <: Unitful.MassUnits
+    val = mass2(st,mw)
     return convert_unit(u"kg",unit,val)
 end
 
-function moles(model::FromState,props::ThermodynamicState,unit::T=u"mol",mw=nothing) where T <: MolUnits
-    val = moles2(props,mw)
+function moles(model::FromState,st::ThermodynamicState,unit::T=u"mol",mw=nothing) where T <: MolUnits
+    val = moles2(st,mw)
     return convert_unit(u"mol",unit,val)
 end
 
-function molar_mass(model::FromState,props::ThermodynamicState,unit=u"kg/mol",mw=nothing)
-    val = kg_per_mol2(props,mw)
+function molar_mass(model::FromState,st::ThermodynamicState,unit=u"kg/mol",mw=nothing)
+    val = kg_per_mol2(st,mw)
     return convert_unit(u"kg/mol",unit,val)
 end
 
 for (op,sp) in zip((:mol_helmholtz, :mol_gibbs, :mol_internal_energy, :mol_enthalpy),INTENSIVE_ENERGY_UNITS)
     @eval begin 
-        function $op(model::FromState,props::ThermodynamicState,unit::T=u"J/mol",mw=nothing) where T <: MolarEnergyUnits
-            sval = throw_get_spec($sp,props)
-            val = to_spec(props,sval,mw,MOLAR())
+        function $op(model::FromState,st::ThermodynamicState,unit::T=u"J/mol",mw=nothing) where T <: MolarEnergyUnits
+            sval = throw_get_spec($sp,st)
+            val = to_spec(st,sval,mw,MOLAR())
             return convert_unit(u"J/mol",unit,val)
         end
     end
@@ -67,9 +67,9 @@ end
 
 for (op,sp) in zip((:mass_helmholtz, :mass_gibbs, :mass_internal_energy, :mass_enthalpy),INTENSIVE_ENERGY_UNITS)
     @eval begin 
-        function $op(model::FromState,props::ThermodynamicState,unit::T=u"J/kg",mw=nothing) where T <: MassEnergyUnits
-            sval = throw_get_spec($sp,props)
-            val = to_spec(props,sval,mw,MASS())
+        function $op(model::FromState,st::ThermodynamicState,unit::T=u"J/kg",mw=nothing) where T <: MassEnergyUnits
+            sval = throw_get_spec($sp,st)
+            val = to_spec(st,sval,mw,MASS())
             return convert_unit(u"J/kg",unit,val)
         end    
     end
@@ -77,110 +77,110 @@ end
 
 for (op,sp) in zip((:total_helmholtz, :total_gibbs, :total_internal_energy, :total_enthalpy),INTENSIVE_ENERGY_UNITS)
     @eval begin 
-            function $op(model::FromState,props::ThermodynamicState,unit::T=u"J",mw=nothing) where T <: Unitful.EnergyUnits
-                sval = throw_get_spec($sp,props)
-                val = to_spec(props,sval,mw,TOTAL())
+            function $op(model::FromState,st::ThermodynamicState,unit::T=u"J",mw=nothing) where T <: Unitful.EnergyUnits
+                sval = throw_get_spec($sp,st)
+                val = to_spec(st,sval,mw,TOTAL())
                 return convert_unit(u"J",unit,val)
             end
     end
 end
 
-function mol_entropy(model::FromState,props::ThermodynamicState,unit::T=u"J/(K*mol)",mw=nothing) where T <: MolEntropyUnits
-    sval = throw_get_spec(Entropy,props)
-    val = to_spec(props,sval,mw,MOLAR())
+function mol_entropy(model::FromState,st::ThermodynamicState,unit::T=u"J/(K*mol)",mw=nothing) where T <: MolEntropyUnits
+    sval = throw_get_spec(Entropy,st)
+    val = to_spec(st,sval,mw,MOLAR())
     return convert_unit(u"J/(mol*K)",unit,val)
 end
 
-function mass_entropy(model::FromState,props::ThermodynamicState,unit::T=u"J/(K*kg)",mw=nothing) where T <: MassEntropyUnits
-    sval = throw_get_spec(Entropy,props)
-    val = to_spec(props,sval,mw,MASS())
+function mass_entropy(model::FromState,st::ThermodynamicState,unit::T=u"J/(K*kg)",mw=nothing) where T <: MassEntropyUnits
+    sval = throw_get_spec(Entropy,st)
+    val = to_spec(st,sval,mw,MASS())
     return convert_unit(u"J/(kg*K)",unit,val)
 end
 
-function total_entropy(model::FromState,props::ThermodynamicState,unit::T=u"J/(K)",mw=nothing) where T <: EntropyUnits
-    sval = throw_get_spec(Entropy,props)
-    val = to_spec(props,sval,mw,TOTAL())
+function total_entropy(model::FromState,st::ThermodynamicState,unit::T=u"J/(K)",mw=nothing) where T <: EntropyUnits
+    sval = throw_get_spec(Entropy,st)
+    val = to_spec(st,sval,mw,TOTAL())
     return convert_unit(u"J/(K)",unit,val)
 end
 
-function total_volume(model::FromState,props::ThermodynamicState,unit::T=u"m^3",mw=nothing) where T <: Unitful.VolumeUnits
-    sval = throw_get_spec(VolumeAmount,props)
-    val = to_spec(props,sval,mw,VolumeAmount{TOTAL,VOLUME}())
+function total_volume(model::FromState,st::ThermodynamicState,unit::T=u"m^3",mw=nothing) where T <: Unitful.VolumeUnits
+    sval = throw_get_spec(VolumeAmount,st)
+    val = to_spec(st,sval,mw,VolumeAmount{TOTAL,VOLUME}())
     return convert_unit(u"m^3",unit,val)
 
 end
 
-function mass_volume(model::FromState,props::ThermodynamicState,unit::T=u"(m^3)/kg",mw=nothing) where T <: MassVolumeUnits
-    sval = throw_get_spec(VolumeAmount,props)
-    val = to_spec(props,sval,mw,VolumeAmount{MASS,VOLUME}())
+function mass_volume(model::FromState,st::ThermodynamicState,unit::T=u"(m^3)/kg",mw=nothing) where T <: MassVolumeUnits
+    sval = throw_get_spec(VolumeAmount,st)
+    val = to_spec(st,sval,mw,VolumeAmount{MASS,VOLUME}())
     return convert_unit(u"m^3/kg",unit,val)
 end
 
-function mol_volume(model::FromState,props::ThermodynamicState,unit::T=u"(m^3)/mol",mw=nothing) where T <: MolVolumeUnits
-    sval = throw_get_spec(VolumeAmount,props)
-    val = to_spec(props,sval,mw,VolumeAmount{MOLAR,VOLUME}())
+function mol_volume(model::FromState,st::ThermodynamicState,unit::T=u"(m^3)/mol",mw=nothing) where T <: MolVolumeUnits
+    sval = throw_get_spec(VolumeAmount,st)
+    val = to_spec(st,sval,mw,VolumeAmount{MOLAR,VOLUME}())
     return convert_unit(u"m^3/mol",unit,val)
 
 end
 
-function mass_density(model::FromState,props::ThermodynamicState,unit::T=u"kg/m^3",mw=nothing) where T <: MassDensityUnits
-    sval = throw_get_spec(VolumeAmount,props)
-    val = to_spec(props,sval,mw,VolumeAmount{MASS,DENSITY}())
+function mass_density(model::FromState,st::ThermodynamicState,unit::T=u"kg/m^3",mw=nothing) where T <: MassDensityUnits
+    sval = throw_get_spec(VolumeAmount,st)
+    val = to_spec(st,sval,mw,VolumeAmount{MASS,DENSITY}())
     return convert_unit(u"kg/m^3",unit,val)
 end
 
-function mol_density(model::FromState,props::ThermodynamicState,unit::T=u"mol/m^3",mw=nothing) where T <: MolDensityUnits
-    sval = throw_get_spec(VolumeAmount,props)
-    val = to_spec(props,sval,mw,VolumeAmount{MOLAR,DENSITY}())
+function mol_density(model::FromState,st::ThermodynamicState,unit::T=u"mol/m^3",mw=nothing) where T <: MolDensityUnits
+    sval = throw_get_spec(VolumeAmount,st)
+    val = to_spec(st,sval,mw,VolumeAmount{MOLAR,DENSITY}())
     return convert_unit(u"mol/m^3",unit,val)
 
 end
 
-function mol_fraction(model::FromState,props::ThermodynamicState,unit,mw=nothing)
-    val = to_spec_compounds(props,mw,MaterialCompounds{MOLAR,FRACTION}())
+function mol_fraction(model::FromState,st::ThermodynamicState,unit,mw=nothing)
+    val = to_spec_compounds(st,mw,MaterialCompounds{MOLAR,FRACTION}())
     return val
 end
 
-function mass_fraction(model::FromState,props::ThermodynamicState,unit,mw=nothing)
-    val = to_spec_compounds(props,mw,MaterialCompounds{MASS,FRACTION}())
+function mass_fraction(model::FromState,st::ThermodynamicState,unit,mw=nothing)
+    val = to_spec_compounds(st,mw,MaterialCompounds{MASS,FRACTION}())
     return val   
 end
 
-function mol_number(model::FromState,props::ThermodynamicState,unit::T,mw=nothing) where T <: MolUnits
-    val = to_spec_compounds(props,mw,MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
+function mol_number(model::FromState,st::ThermodynamicState,unit::T,mw=nothing) where T <: MolUnits
+    val = to_spec_compounds(st,mw,MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
     return convert_unit.(u"mol",unit,val)
 
 end
 
-function mass_number(model::FromState,props::ThermodynamicState,unit::T,mw=nothing) where T <: Unitful.MassUnits
-    val = to_spec_compounds(props,mw,MaterialCompounds{MASS,TOTAL_AMOUNT}())
+function mass_number(model::FromState,st::ThermodynamicState,unit::T,mw=nothing) where T <: Unitful.MassUnits
+    val = to_spec_compounds(st,mw,MaterialCompounds{MASS,TOTAL_AMOUNT}())
     return convert_unit.(u"kg",unit,val)
 end
 
-function options(model::FromState,props::ThermodynamicState)
-    hasval = has_spec(Options(),props)
+function options(model::FromState,st::ThermodynamicState)
+    hasval = has_spec(Options,st)
     if !hasval
         return (;)
     else
-        return value(get_spec(Options(),props))
+        return value(get_spec(Options,st))
     end
 end
 
-function phase(model::FromState,props::ThermodynamicState)::Symbol
-    hasval = has_spec(PhaseTag(),props)
+function phase(model::FromState,st::ThermodynamicState)::Symbol
+    hasval = has_spec(PhaseTag,st)
     if !hasval
         return :unspecified
     else
-        return value(get_spec(PhaseTag(),props))
+        return value(get_spec(PhaseTag,st))
     end
 end
 
-function quality(model::FromState,props::ThermodynamicState)
-    hasval = has_spec(VaporFraction(),props)
+function quality(model::FromState,st::ThermodynamicState)
+    hasval = has_spec(VaporFraction,st)
     if !hasval
         return NaN
     else
-        return value(get_spec(VaporFraction(),props))
+        return value(get_spec(VaporFraction,st))
     end
 end
 

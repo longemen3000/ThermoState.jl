@@ -222,9 +222,9 @@ const MultiΦT = Tuple{VaporFraction,Temperature,MaterialCompounds}
 const SingleSatP = Tuple{TwoPhaseEquilibrium,Pressure,SingleComponent}
 const MultiSatP = Tuple{TwoPhaseEquilibrium,Pressure,MaterialCompounds}
 
-sat_t() = (TwoPhaseEquilibrium(),Pressure(),SingleComponent())
-sat_tx() = (TwoPhaseEquilibrium(),Pressure(),MaterialCompounds{MOLAR,FRACTION}())
-sat_tn() = (TwoPhaseEquilibrium(),Pressure(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
+sat_p() = (TwoPhaseEquilibrium(),Pressure(),SingleComponent())
+sat_px() = (TwoPhaseEquilibrium(),Pressure(),MaterialCompounds{MOLAR,FRACTION}())
+sat_pn() = (TwoPhaseEquilibrium(),Pressure(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
 
 const SingleΦP = Tuple{VaporFraction,Pressure,SingleComponent}
 const MultiΦP = Tuple{VaporFraction,Pressure,MaterialCompounds}
@@ -239,6 +239,8 @@ export SinglePS,MultiPS
 export SinglePH,MultiPH
 export SingleSatT,MultiSatT
 export SingleΦT,MultiΦT
+export SingleSatP,MultiSatP
+export SingleΦP,MultiΦP
 
 
 end

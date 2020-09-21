@@ -8,11 +8,11 @@ import Unitful: @u_str
 include("docs.jl")
 include("types.jl")
 include("spec.jl")
+include("state_type.jl")
 include("units.jl")
 include("show.jl")
 include("specs_model.jl")
 include("fromspecs_props.jl")
-include("state_type.jl")
 
 
 

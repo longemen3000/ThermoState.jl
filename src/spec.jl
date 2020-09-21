@@ -214,72 +214,14 @@ function spec(;kwargs...)
     end
 end
 
-struct ThermodynamicState{M,T,S}
-    amount_type::M
-    callables::T
+struct ThermodynamicState{S,C}
     specs::S
+    callables::C
 end
 
 
 Base.values(s::ThermodynamicState) = s.specs
 
-function get_spec(val::T,specs::Tuple) where T<:AbstractSpec
-    for spec in specs
-        if specification(spec) isa T
-            return spec
-        end
-    end
-    return nothing
-end
-
-function get_spec(val::Type{T},specs::Tuple) where T<: AbstractSpec
-    for spec in specs
-        if specification(spec) isa T
-            return spec
-        end
-    end
-    return nothing
-end
-
-get_spec(val,spec::ThermodynamicState) = get_spec(val,spec.specs)
- 
-function throw_get_spec(val,specs::ThermodynamicState)
-    res = get_spec(val,specs)
-    if res !== nothing
-        return res
-    else
-        throw(error(string(val) * " not found in specifications"))
-    end
-end
-
-@inline function Base.getindex(specs::ThermodynamicState,val::Int)
-    return specs.specs[val]
-end
-
-#linear search on values
-@inline function Base.getindex(specs::ThermodynamicState,val::AbstractSpec)
-    return throw_get_spec(val,specs)
-end
-
-function has_spec(val::T,tup::Tuple)::Bool where T<:AbstractSpec
-    for sp in tup
-        if specification(sp) isa T
-            return true
-        end
-    end
-    return false
-end
-
-function has_spec(val::Type{T},tup::Tuple) where T<: AbstractSpec
-    for sp in tup
-        if specification(sp) isa T
-            return true
-        end
-    end
-    return false
-end
-
-has_spec(val,sp::ThermodynamicState) = has_spec(val,sp.specs)
 
 #returns the specification symbol in multicomponent
 #returns :singlecomponent if there are no specifications
@@ -319,6 +261,15 @@ _reduce_check_mass(x::Spec{MaterialCompounds{MOLAR,TOTAL_AMOUNT}}) = 210
 _reduce_check_mass(x::Spec{MaterialCompounds{MASS,TOTAL_AMOUNT}}) = 220
 _reduce_check_mass(x::Spec{MaterialAmount{MOLAR}}) = 1
 _reduce_check_mass(x::Spec{MaterialAmount{MASS}}) = 2
+
+_reduce_check_mass(x::Type{MaterialCompounds{MOLAR,FRACTION}}) = 110
+_reduce_check_mass(x::Type{MaterialCompounds{MASS,FRACTION}}) = 120
+_reduce_check_mass(x::Type{MaterialCompounds{MOLAR,TOTAL_AMOUNT}}) = 210
+_reduce_check_mass(x::Type{MaterialCompounds{MASS,TOTAL_AMOUNT}}) = 220
+_reduce_check_mass(x::Type{MaterialAmount{MOLAR}}) = 1
+_reduce_check_mass(x::Type{MaterialAmount{MASS}}) = 2
+_reduce_check_mass(x::Type) = 0
+
 
 _reduce_check_mass(x::Symbol) = _reduce_check_mass(Val(x))
 _reduce_check_mass(::Val{:xn})=110
@@ -484,9 +435,9 @@ function state(;check=true,normalize_units=true,kwargs...)
     end
     if check
         mass_basis = check_spec(kwargs.data)
-        return ThermodynamicState(AMOUNT_CONST[mass_basis],callables,tup)
+        return ThermodynamicState(tup,callables)
     else
-        return ThermodynamicState(nothing,callables,tup)
+        return ThermodynamicState(tup,callables)
     end
 end
 
@@ -504,32 +455,29 @@ function state(args::Vararg{Spec};check=true)
             throw(error("specifications are not unique."))
         end
         mass_basis = check_spec(args)
-        
-        return ThermodynamicState(AMOUNT_CONST[mass_basis],callables,tup)
+    
+        return ThermodynamicState(tup,callables)
     else
-        return ThermodynamicState(nothing,callables,tup)
+        return ThermodynamicState(tup,callables)
     end
 end
 
-function (f::ThermodynamicState{S,Tuple{S1}})(x1::T1) where {S,S1,T1}
-    return ThermodynamicState(f.amount_type,
-    (),
+function (f::ThermodynamicState{T,Tuple{S1}})(x1::T1) where {T,S1,T1}
+    return ThermodynamicState(
     (Spec{S1,T1}(only(f.callables),x1),
-    f.specs...))
+    f.specs...),())
 end
 
 function (f::ThermodynamicState{S,Tuple{S1,S2}})(x1::T1,x2::T2) where {S,S1,S2,T1,T2}
-    return ThermodynamicState(f.amount_type,
-    (),
+    return ThermodynamicState(
     (Spec{S1,T1}(first(f.callables),x1),
     Spec{S2,T2}(last(f.callables),x2),
-    f.specs...))
+    f.specs...),())
 end
 
 function (f::ThermodynamicState{S,Tuple{S1,S2,S3}})(x1::T1,x2::T2,x3::T3) where {S,S1,S2,S3,T1,T2,T3}
-    return ThermodynamicState(f.amount_type,
-    (),
-    (Spec{S1,T1}(first(f.callables),x1),
+    return ThermodynamicState(
+            (Spec{S1,T1}(first(f.callables),x1),
     Spec{S2,T2}(f.callables[2],x2),
     Spec{S3,T3}(last(f.callables),x3),
     f.specs...),())
