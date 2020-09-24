@@ -1,9 +1,17 @@
 """
-    normalize_units(x)
+    normalize_units(val)
+On normal numbers, it is the identity, but on numbers or vectors of `Unitful.Quantity`,it converts the unit to an equivalent SI unit and strips the unit information.
 
-For normal numbers, this is the identity function.
- For `Unitful` quantities, it converts to SI units and strips the `Unitful` type.
+# Examples
+```julia-repl
+julia> normalize_units(0.0u"°C")
+273.15
 
+```
+```julia-repl
+julia> normalize_units(273.15)
+273.15
+```
 """
 normalize_units(x) =  Unitful.ustrip(Unitful.upreferred(x))
 normalize_units(x::AbstractVector) =  Unitful.ustrip.(Unitful.upreferred.(x))
@@ -26,6 +34,27 @@ function mw_div(x,mw)
     return 1000.0*x/mw
 end
 
+"""
+    convert_unit(from,to,val)
+Converts an unit from the unit stored in `from` to the unit stored in `to`. 
+
+When both units are equal, it justs returns `val`. 
+
+If `val` itself is an `unit`, then it converts the from the unit in `val` to the unit in `to`. 
+
+# Examples
+
+```julia-repl
+julia> convert_unit(u"Pa",u"kPa",1000.0)      
+1.0
+```
+
+```julia-repl
+julia> convert_unit(u"Pa",u"kPa",1u"atm")     
+4053//40
+```
+"""
+function convert_unit end
 function convert_unit(from::T,to::T,val::N) where {T,N<:Number}
     return val
 end
