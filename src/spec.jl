@@ -83,17 +83,6 @@ function _ups(x::AbstractVector,normalize_units=true)
     end
 end
 
-#alias for _ups
-"""
-    normalize_units(x)
-
-For normal numbers, this is the identity function.
- For `Unitful` quantities, it converts to SI units and strips the `Unitful` type.
-
-"""
-normalize_units(x) =  Unitful.ustrip(Unitful.upreferred(x))
-normalize_units(x::AbstractVector) =  Unitful.ustrip.(Unitful.upreferred.(x))
-
 
 #check units and normalizes
 function check_and_norm(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:Unitful.Quantity}
@@ -218,6 +207,8 @@ struct ThermodynamicState{S,C}
     specs::S
     callables::C
 end
+
+ThermodynamicState(st::Tuple) = ThermodynamicState(st,())
 
 
 Base.values(s::ThermodynamicState) = s.specs
@@ -482,3 +473,48 @@ function (f::ThermodynamicState{S,Tuple{S1,S2,S3}})(x1::T1,x2::T2,x3::T3) where 
     Spec{S3,T3}(last(f.callables),x3),
     f.specs...),())
 end
+
+
+function Base.Dict(st::ThermodynamicState)
+    return Dict(SPEC_TO_KW[specification(sp)] => value(sp) for sp in st.specs)
+end
+
+module StatePoints
+
+#state points
+    abstract type StatePoint end
+
+    struct CriticalPoint <: StatePoint end
+    struct NormalBoilingPoint <: StatePoint end
+    struct TriplePoint <: StatePoint end
+    struct NormalConditions <: StatePoint end
+    struct StandardConditions <: StatePoint end
+
+    export CriticalPoint,NormalBoilingPoint,TriplePoint,NormalConditions,StandardConditions
+end
+
+
+function state(x::StatePoints.StandardConditions)
+    _t = Spec(Temperature(),273.15)
+    _p = Spec(Pressure(),100000.0)
+    return ThermodynamicState((_p,_t))
+end
+
+function state(x::StatePoints.NormalConditions)
+    _t = Spec(Temperature(),293.15)
+    _p = Spec(Pressure(),101325.0)
+    return ThermodynamicState((_p,_t))
+end
+
+function state(x::StatePoints.NormalBoilingPoint)
+    _p = Spec(Pressure(),101325.0)
+    _sat = Spec(TwoPhaseEquilibrium(),true)
+
+    return ThermodynamicState((_sat,_p))
+end
+
+pressure(model,x::StatePoints.NormalBoilingPoint,unit=u"Pa") = pressure(model,state(x),unit)
+pressure(model,x::StatePoints.NormalConditions,unit=u"Pa") = pressure(model,state(x),unit)
+pressure(model,x::StatePoints.StandardConditions,unit=u"Pa") = pressure(model,state(x),unit)
+temperature(model,x::StatePoints.NormalConditions,unit=u"K") = temperature(model,state(x),unit)
+temperature(model,x::StatePoints.StandardConditions,unit=u"K") = temperature(model,state(x),unit)

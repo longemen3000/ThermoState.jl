@@ -201,3 +201,13 @@ a1 = state(n = n0,t=1,mass_rho = mass_rho0)
 @test mass_density(FromState(),a1,u"kg/m^3",mw0) ≈ mass_rho0
 
 end
+
+@testset "state points" begin
+using ThermoState.StatePoints
+
+@test pressure(FromState(),StandardConditions()) == 100000.0
+@test pressure(FromState(),NormalConditions()) == 101325.0
+@test pressure(FromState(),NormalBoilingPoint()) == 101325.0
+@test temperature(FromState(),StandardConditions()) == 273.15
+@test temperature(FromState(),NormalConditions()) == 293.15
+end

@@ -170,6 +170,63 @@ const KW_TO_SPEC = IdDict{Symbol,Any}(
 
 )
 
+
+const SPEC_TO_KW = IdDict{Any,Symbol}(
+Enthalpy{MOLAR}() => :molar_h
+,Gibbs{MOLAR}() => :molar_g
+,Helmholtz{MOLAR}() => :molar_a
+,InternalEnergy{MOLAR}() => :molar_u
+
+,Enthalpy{MASS}() => :mass_h
+,Gibbs{MASS}()  => :mass_g
+,Helmholtz{MASS}() => :mass_a
+,InternalEnergy{MASS}() => :mass_u
+
+,Enthalpy{TOTAL}() => :total_h
+,Gibbs{TOTAL}() => :total_g
+,Helmholtz{TOTAL}() => :total_a
+,InternalEnergy{TOTAL}() => :total_u
+
+,Entropy{MOLAR}() => :molar_s
+,Entropy{MASS}() => :mass_s
+,Entropy{TOTAL}() => :total_s
+
+,Pressure() => :p
+,Temperature() => :t
+
+,VolumeAmount{MOLAR,VOLUME}() => :mol_v
+,VolumeAmount{MASS,VOLUME}() => :mass_v
+,VolumeAmount{TOTAL,VOLUME}() => :total_v
+
+
+,VolumeAmount{MOLAR,DENSITY}()  => :rho 
+,VolumeAmount{MOLAR,DENSITY}()  => :mol_rho
+,VolumeAmount{MASS,DENSITY}()  => :mass_rho
+
+,MaterialAmount{MASS}() => :mass
+,MaterialAmount{MOLAR}() => :moles
+,MaterialCompounds{MOLAR,FRACTION}() => :xn
+,MaterialCompounds{MASS,FRACTION}() => :xm
+,MaterialCompounds{MOLAR,TOTAL_AMOUNT}() => :n
+,MaterialCompounds{MASS,TOTAL_AMOUNT}() =>  :n
+
+
+,MolecularWeight() => :mw
+
+,VaporFraction() => :vfrac#looking for better name
+,PhaseFractions() => :phase_fracs #looking for better name
+
+,PhaseTag() => :phase
+
+,TwoPhaseEquilibrium() => :sat
+
+
+,SingleComponent() => :single_component
+,OneMol() => :one_mol
+,Options() => :options
+
+)
+
 module QuickStates
 using ..Types
 const SinglePT = Tuple{Pressure,Temperature,SingleComponent}
@@ -244,7 +301,6 @@ export SingleΦP,MultiΦP
 
 
 end
-
 
 
 

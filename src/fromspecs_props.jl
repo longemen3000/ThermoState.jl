@@ -16,17 +16,6 @@ const MassDensityUnits = Unitful.Units{U,((Unitful.𝐋)^-3)*(Unitful.𝐌),A} w
 const MassVolumeUnits = Unitful.Units{U,((Unitful.𝐋)^3)/(Unitful.𝐌),A} where A where U
 const MolVolumeUnits = Unitful.Units{U,((Unitful.𝐋)^3)/(Unitful.𝐍),A} where A where U
 
-function convert_unit(from::T,to::T,val::N) where {T,N<:Number}
-    return val
-end
-
-function convert_unit(from::T1,to::T2,val::N) where {T1,T2,N<:Number}
-    return Unitful.ustrip(Unitful.uconvert(to,val*from))
-end
-
-function convert_unit(from::T1,to::T2,val::N) where {T1,T2,N<:Unitful.Quantity}
-    return Unitful.ustrip(Unitful.uconvert(to,val))
-end
 
 function pressure(model::FromState,st::ThermodynamicState,unit::T=u"Pa",mw=nothing) where T <: Unitful.PressureUnits
     sval = throw_get_spec(Pressure,st)

@@ -8,22 +8,7 @@ a basic singleton type, used to extract thermodynamic specifications from a stat
 struct FromState end
 const URVec = AbstractVector{T} where T<:Number
 
-#upreferred, but the standard unit with just numbers is transformed to kg/mol
-function mw_mul(x,mw::Unitful.Quantity)
-    return upreferred(x*mw)
-end
 
-function mw_mul(x,mw)
-    return 0.001*x*mw
-end
-
-function mw_div(x,mw::Unitful.Quantity)
-    return upreferred(x/mw)
-end
-
-function mw_div(x,mw)
-    return 1000.0*x/mw
-end
 
 
 

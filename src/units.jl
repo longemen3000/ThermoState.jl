@@ -37,10 +37,6 @@ default_units(property::typeof(mol_number)) = u"mol"
 default_units(property::typeof(mass_fraction)) = Unitful.NoUnits
 default_units(property::typeof(mass_number)) = u"kg"
 
-
-
-
-
 function to_spec end
 
 to_spec(property::typeof(mol_helmholtz)) = Helmholtz{MOLAR}()
@@ -84,21 +80,9 @@ to_spec(property::typeof(mass_number)) = MaterialCompounds{MASS,TOTAL_AMOUNT}()
 #to_spec(property::typeof(sound_speed)) = u"m/s"
 #to_spec(property::typeof(compressibility_factor)) = Unitful.NoUnits
 
-
-
 #to_spec(property::typeof(molecular_weight)) = u"g/mol"
 #to_spec(property::typeof(compounds_number)) = Unitful.NoUnits
 #to_spec(property::typeof(covolumes)) = u"(m^3)/mol"
-
-# the combinatorics of volume mass and moles
-#to_spec(property::typeof(critical_mol_volume)) = u"(m^3)/mol"
-#to_spec(property::typeof(critical_mass_volume)) = u"(m^3)/kg"
-#to_spec(property::typeof(critical_mol_density)) = u"mol/(m^3)"
-#to_spec(property::typeof(critical_mass_density)) = u"kg/(m^3)"
-#to_spec(property::typeof(critical_compressibility_factor)) = u"kg/(m^3)"
-#to_spec(property::typeof(critical_temperature)) = u"K"
-#to_spec(property::typeof(critical_pressure)) = u"Pa"
-#to_spec(property::typeof(acentric_factor)) = Unitful.NoUnits
 
 ==#
 

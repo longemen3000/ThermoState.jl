@@ -4,7 +4,7 @@ module ThermoState
 using Unitful
 import Unitful: @u_str
 
-#include("utilities.jl")
+include("utilities.jl")
 include("docs.jl")
 include("types.jl")
 include("spec.jl")
@@ -46,6 +46,6 @@ export options, phase, quality
 
 export @to_units
 export state_type
-export Types,QuickStates
+export Types,QuickStates,StatePoints
 
 end # module
