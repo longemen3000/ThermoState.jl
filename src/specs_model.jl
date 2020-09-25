@@ -3,9 +3,9 @@
 """
     FromState
 
-a basic singleton type, used to extract thermodynamic specifications from a state without using a Equation of State.
+a basic thermodynamic model, used to extract thermodynamic specifications from a state without using a Equation of State.
 """
-struct FromState end
+struct FromState <: ThermoModel end
 const URVec = AbstractVector{T} where T<:Number
 
 

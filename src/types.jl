@@ -62,6 +62,9 @@ module Types
     #variable spec, signal to make a variable specs
     struct VariableSpec  end
 
+    #base type to define models
+    abstract type ThermoModel end
+
 
     export AbstractSpec 
     export SpecModifier 
@@ -96,6 +99,7 @@ module Types
     export Options 
     export MolecularWeight
     export VariableSpec
+    export ThermoModel
 end
 
 using .Types
