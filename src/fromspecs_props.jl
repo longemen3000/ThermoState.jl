@@ -156,11 +156,15 @@ function options(model::FromState,st::ThermodynamicState)
 end
 
 function phase(model::FromState,st::ThermodynamicState)::Symbol
-    hasval = has_spec(PhaseTag,st)
-    if !hasval
-        return :unspecified
+    if has_spec(TwoPhaseEquilibrium,st)
+        return value(get_spec(TwoPhaseEquilibrium,st))
     else
-        return value(get_spec(PhaseTag,st))
+        hasval = has_spec(PhaseTag,st)
+        if !hasval
+            return :unspecified
+        else
+            return value(get_spec(PhaseTag,st))
+        end
     end
 end
 
