@@ -448,7 +448,7 @@ function phase end
 """
     quality(model,state::ThermodynamicState)::NamedTuple
 
-Keyword symbols: `:vfrac`
+Keyword symbols: `:quality`
 
 
 Returns the vapor quality stored in the state
@@ -457,4 +457,10 @@ Returns NaN otherwise.
 
 """
 function quality end
+
+function mass_cp end
+function mol_cp end
+function mass_cv end
+function mol_cv end
+function sound_speed end
 

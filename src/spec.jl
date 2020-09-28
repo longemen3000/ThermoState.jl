@@ -56,7 +56,7 @@ function default_units(x::Type{MaterialCompounds{T,TOTAL_AMOUNT}}) where T
 end
 
 default_units(x::Type{PhaseFractions}) = Unitful.NoUnits
-default_units(x::Type{VaporFraction}) = Unitful.NoUnits
+default_units(x::Type{VaporQuality}) = Unitful.NoUnits
 
 struct Spec{T <: AbstractSpec,U}
     type::T
@@ -275,14 +275,14 @@ _reduce_check_mass(::Val{T} where T)=0
 
 _reduce_check_phase(x::Spec) = 0
 _reduce_check_phase(x::Spec{TwoPhaseEquilibrium}) = 1
-_reduce_check_phase(x::Spec{VaporFraction}) = 1
+_reduce_check_phase(x::Spec{VaporQuality}) = 1
 _reduce_check_phase(x::Spec{PhaseFractions}) = 10
 
 _reduce_check_phase(x::Symbol) = _reduce_check_phase(Val(x))
 _reduce_check_phase(::Val{:vle})=1
 _reduce_check_phase(::Val{:lle})=1
 _reduce_check_phase(::Val{:sat})=1
-_reduce_check_phase(::Val{:vfrac})=1
+_reduce_check_phase(::Val{:quality})=1
 _reduce_check_phase(::Val{:phase_fracs})=10
 _reduce_check_phase(::Val{T} where T)=0
 

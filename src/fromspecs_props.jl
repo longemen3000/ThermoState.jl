@@ -165,11 +165,11 @@ function phase(model::FromState,st::ThermodynamicState)::Symbol
 end
 
 function quality(model::FromState,st::ThermodynamicState)
-    hasval = has_spec(VaporFraction,st)
+    hasval = has_spec(VaporQuality(),st)
     if !hasval
         return NaN
     else
-        return value(get_spec(VaporFraction,st))
+        return value(get_spec(VaporQuality(),st))
     end
 end
 

@@ -3,7 +3,7 @@
 
 _stateorder(x::PhaseFractions) = 1
 _stateorder(x::TwoPhaseEquilibrium) = 2
-_stateorder(x::VaporFraction) = 3
+_stateorder(x::VaporQuality) = 3
 _stateorder(x::Pressure) = 4
 _stateorder(x::Helmholtz) = 5
 _stateorder(x::Gibbs) = 6
