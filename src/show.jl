@@ -1,88 +1,88 @@
 print_spec(t) = print(t) #fallback
 
-print_spec(x::Type{MOLAR}) = print("Molar ")
-print_spec(x::Type{MASS}) = print("Mass ")
-print_spec(x::Type{TOTAL}) = print("Total ")
-print_spec(x::Type{OneMol}) = print("One mol ")
-print_spec(x::Type{SingleComponent}) = print("Single component ")
+print_spec(io::IO,x::Type{MOLAR}) = print(io,"Molar ")
+print_spec(io::IO,x::Type{MASS}) = print(io,"Mass ")
+print_spec(io::IO,x::Type{TOTAL}) = print(io,"Total ")
+print_spec(io::IO,x::Type{OneMol}) = print(io,"One mol ")
+print_spec(io::IO,x::Type{SingleComponent}) = print(io,"Single component ")
 
 
 
-print_spec(::Type{Pressure}) = print("Pressure")
-print_spec(::Type{Temperature}) = print("Temperature")
+print_spec(io::IO,::Type{Pressure}) = print(io,"Pressure")
+print_spec(io::IO,::Type{Temperature}) = print(io,"Temperature")
 
 
-function print_spec(::Type{Gibbs{T2}}) where T2
-    print_spec(T2)
-    print("Gibbs energy")
+function print_spec(io::IO,::Type{Gibbs{T2}}) where T2
+    print_spec(io,T2)
+    print(io,"Gibbs energy")
 end
 
-function print_spec(::Type{Helmholtz{T2}}) where T2
-    print_spec(T2)
-    print("Helmholtz energy")
+function print_spec(io::IO,::Type{Helmholtz{T2}}) where T2
+    print_spec(io,T2)
+    print(io,"Helmholtz energy")
 end
 
-function print_spec(::Type{Enthalpy{T2}}) where T2
-    print_spec(T2)
-    print("enthalpy")
+function print_spec(io::IO,::Type{Enthalpy{T2}}) where T2
+    print_spec(io,T2)
+    print(io,"enthalpy")
 end
 
-function print_spec(::Type{Entropy{T2}}) where T2
-    print_spec(T2)
-    print("entropy")
+function print_spec(io::IO,::Type{Entropy{T2}}) where T2
+    print_spec(io,T2)
+    print(io,"entropy")
 end
 
-function print_spec(::Type{InternalEnergy{T2}}) where T2
-    print_spec(T2)
-    print("internal energy")
-end
-
-
-function print_spec(::Type{MaterialAmount{MOLAR}})
-    print("Moles")
-end
-
-function print_spec(::Type{MaterialAmount{MASS}})
-    print("Mass")
-end
-
-function print_spec(::Type{MaterialCompounds{MASS,FRACTION}})
-    print("Mass fraction")
-end
-
-function print_spec(::Type{PhaseTag})
-    print("Phase specification")
-end
-
-function print_spec(::Type{MaterialCompounds{MOLAR,FRACTION}})
-    print("Molar fraction")
-end
-
-function print_spec(::Type{MaterialCompounds{MASS,TOTAL_AMOUNT}})
-    print("Mass amounts")
-end
-
-function print_spec(::Type{MaterialCompounds{MOLAR,TOTAL_AMOUNT}})
-    print("Molar amounts")
+function print_spec(io::IO,::Type{InternalEnergy{T2}}) where T2
+    print_spec(io,T2)
+    print(io,"internal energy")
 end
 
 
-function print_spec(::Type{VolumeAmount{T,VOLUME}}) where T
-    print_spec(T)
-    print("volume")
+function print_spec(io::IO,::Type{MaterialAmount{MOLAR}})
+    print(io,"Moles")
 end
 
-function print_spec(::Type{VolumeAmount{T,DENSITY}}) where T
-    print_spec(T)
-    print("density")
+function print_spec(io::IO,::Type{MaterialAmount{MASS}})
+    print(io,"Mass")
 end
 
-function print_spec(::Type{TwoPhaseEquilibrium})
-    print("Two phase equilibrium")
+function print_spec(io::IO,::Type{MaterialCompounds{MASS,FRACTION}})
+    print(io,"Mass fraction")
 end
 
-function print_spec(::Type{Options})
-    print("Options")
+function print_spec(io::IO,::Type{PhaseTag})
+    print(io,"Phase specification")
+end
+
+function print_spec(io::IO,::Type{MaterialCompounds{MOLAR,FRACTION}})
+    print(io,"Molar fraction")
+end
+
+function print_spec(io::IO,::Type{MaterialCompounds{MASS,TOTAL_AMOUNT}})
+    print(io,"Mass amounts")
+end
+
+function print_spec(io::IO,::Type{MaterialCompounds{MOLAR,TOTAL_AMOUNT}})
+    print(io,"Molar amounts")
+end
+
+
+function print_spec(io::IO,::Type{VolumeAmount{T,VOLUME}}) where T
+    print_spec(io,T)
+    print(io,"volume")
+end
+
+function print_spec(io::IO,::Type{VolumeAmount{T,DENSITY}}) where T
+    print_spec(io,T)
+    print(io,"density")
+end
+
+function print_spec(io::IO,::Type{TwoPhaseEquilibrium})
+    print(io,"Two phase equilibrium")
+end
+
+function print_spec(io::IO,::Type{Options})
+    print(io,"Options")
 end
 
 is_real(x) = false
@@ -90,34 +90,41 @@ is_real(x::Real) = true
 is_real(x::Bool) = false
 is_real(x::AbstractVector{T} where T<:Real) = true 
 
-function Base.show(::IO, sp::Spec{T}) where T 
-    print_spec(T)
-    print(" : ")
-    a = value(sp)
-    if is_real(a) 
-        print(a," ",default_units(T))
-    else 
-        print(a)
+function Base.show(io::IO, sp::Spec{T}) where T 
+    compact = get(io, :compact, false)
+    if compact
+        print(io,"spec(",string(SPEC_TO_KW[specification(sp)])," = ")
+        
+        a = value(sp)
+        if is_real(a) 
+            print(IOContext(io,:compact => true),a," ",default_units(T))
+        else 
+            print(io,a)
+        end
+        print(io,")")
+    else
+        print_spec(io,T)
+        print(io," : ")
+        a = value(sp)
+        if is_real(a) 
+            print(IOContext(io,:compact => true),a," ",default_units(T))
+        else 
+            print(io,a)
+        end
     end
 end
 
 function Base.show(io::IO, sp::Spec{Options})
-    print_spec(Options)
-    print(" : ")
+    print_spec(io,Options)
+    print(io," : ")
     show(io,value(sp))
-
 end
 
 #==function Base.show(::IO, sp::T) where T <:AbstractSpec
-    print("::" )
-    print_spec(T)
+    print(io,"::" )
+    print_spec(io,T)
 end
 ==#
-
-
-
-
-
 
 function Base.show(io::IO, sp::ThermodynamicState)
     len1 = length(sp.specs)
@@ -127,13 +134,13 @@ function Base.show(io::IO, sp::ThermodynamicState)
         else
             p1 = " Constant Property Specifications:"
         end
-        println(len1,p1)
+        println(io,len1,p1)
         
         for (i,spec) in enumerate(sp.specs)
             if i !=1
                 println()
             end
-            print(" ")
+            print(io," ")
             show(io,spec)
         end 
         
@@ -157,9 +164,10 @@ function Base.show(io::IO, sp::ThermodynamicState)
         if i !=1
             println()
         end
-        print(" ")
+        print(io," ")
         print_spec(typeof(spec))
     end 
 end
-    
+
 end
+
