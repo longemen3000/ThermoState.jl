@@ -55,7 +55,7 @@ julia> convert_unit(u"Pa",u"kPa",1u"atm")
 ```
 """
 function convert_unit end
-function convert_unit(from::T,to::T,val::N) where {T,N<:Number}
+function convert_unit(from::T,to::T,val::N) where {T,N}
     return val
 end
 
@@ -63,6 +63,10 @@ function convert_unit(from::T1,to::T2,val::N) where {T1,T2,N<:Number}
     return Unitful.ustrip(Unitful.uconvert(to,val*from))
 end
 
-function convert_unit(from::T1,to::T2,val::N) where {T1,T2,N<:Unitful.Quantity}
-    return Unitful.ustrip(Unitful.uconvert(to,val))
+function convert_unit(from::T1,to::T2,val::N) where {T1,T2,N<:AbstractVector{<: Number}}
+    return Unitful.ustrip.(Unitful.uconvert.(to,val*from))
+end
+
+function convert_unit(from::T1,to::T2,val::N) where {T1,T2,N<:AbstractVector{{Unitful.Quantity}}
+    return Unitful.ustrip.(Unitful.uconvert.(to,val))
 end
