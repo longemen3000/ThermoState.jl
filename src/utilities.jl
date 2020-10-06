@@ -67,6 +67,6 @@ function convert_unit(from::T1,to::T2,val::N) where {T1,T2,N<:AbstractVector{<: 
     return Unitful.ustrip.(Unitful.uconvert.(to,val*from))
 end
 
-function convert_unit(from::T1,to::T2,val::N) where {T1,T2,N<:AbstractVector{{Unitful.Quantity}}
+function convert_unit(from::T1,to::T2,val::N) where {T1,T2,N<:AbstractVector{<:Unitful.Quantity}}
     return Unitful.ustrip.(Unitful.uconvert.(to,val))
 end
