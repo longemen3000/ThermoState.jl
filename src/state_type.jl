@@ -12,6 +12,7 @@ _stateorder(x::VolumeAmount) = 8
 _stateorder(x::Enthalpy) = 9
 _stateorder(x::Entropy) = 10
 _stateorder(x::Temperature) = 11
+_stateorder(x::HumiditySpec) = 1000
 
 
 _stateorder(x::MaterialCompounds) = 10002

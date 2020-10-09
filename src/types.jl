@@ -46,6 +46,19 @@
 
     struct MaterialAmount{T1<:MassBasisModifier} <: AbstractTotalSpec end
 
+    
+    #humidity, to support wet gas
+    abstract type HumidityModifier <: AbstractSpec end
+    struct WetBulbTemperature <:HumidityModifier end
+    struct RelativeHumidity <:HumidityModifier end
+    struct HumidityRatio <:HumidityModifier end
+    struct MassHumidity  <:HumidityModifier end
+    struct MolarHumidity <:HumidityModifier end
+    struct HumidityDewPoint <:HumidityModifier end
+
+    struct HumiditySpec{T<:HumidityModifier} <: AbstractSpec end
+
+
 
     struct PhaseFractions <: AbstractFractionSpec end
     struct VolumeFraction <: AbstractFractionSpec end
@@ -174,6 +187,13 @@ const KW_TO_SPEC = IdDict{Symbol,Any}(
 ,:one_mol => OneMol()
 ,:options => Options()
 
+,:hum_wetbulb => HumiditySpec{WetBulbTemperature}()
+,:hum_ratio => HumiditySpec{HumidityRatio}()
+,:hum_molfrac => HumiditySpec{MolarHumidity}()
+,:hum_massfrac => HumiditySpec{MassHumidity}()
+,:rel_hum => HumiditySpec{RelativeHumidity}()
+,:hum_dewpoint => HumiditySpec{HumidityDewPoint}()
+
 )
 
 
@@ -232,6 +252,13 @@ Enthalpy{MOLAR}() => :molar_h
 ,SingleComponent() => :single_component
 ,OneMol() => :one_mol
 ,Options() => :options
+
+,HumiditySpec{WetBulbTemperature}()  => :hum_wetbulb
+,HumiditySpec{HumidityRatio}() => :hum_ratio
+,HumiditySpec{MolarHumidity}() => :hum_molfrac 
+,HumiditySpec{MassHumidity}() => :hum_massfrac
+,HumiditySpec{RelativeHumidity}() => :rel_hum 
+,HumiditySpec{HumidityDewPoint}() => :hum_dewpoint
 
 )
 
