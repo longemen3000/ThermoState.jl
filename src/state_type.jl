@@ -66,6 +66,10 @@ function _state_from_type(x::Type{ThermodynamicState{S,C}}) where {S,C}
             has_compound = true
             comp_spec = spec 
             break
+        elseif spec isa HumiditySpec
+            has_compound = true
+            comp_spec = spec 
+            break
         end
     end
     if !has_compound
