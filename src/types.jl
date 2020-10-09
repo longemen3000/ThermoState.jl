@@ -1,4 +1,4 @@
-&module Types
+module Types
     abstract type AbstractSpec end
     abstract type SpecModifier <: AbstractSpec  end
 
@@ -114,6 +114,17 @@
     export MolecularWeight
     export VariableSpec
     export ThermoModel
+
+    export HumidityModifier 
+    export WetBulbTemperature
+    export RelativeHumidity
+    export HumidityRatio
+    export MassHumidity
+    export MolarHumidity
+    export HumidityDewPoint
+
+    export HumiditySpec
+
 end
 
 using .Types
