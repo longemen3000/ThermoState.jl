@@ -3,10 +3,16 @@ print_spec(t) = print(t) #fallback
 print_spec(io::IO,x::Type{MOLAR}) = print(io,"Molar ")
 print_spec(io::IO,x::Type{MASS}) = print(io,"Mass ")
 print_spec(io::IO,x::Type{TOTAL}) = print(io,"Total ")
-print_spec(io::IO,x::Type{OneMol}) = print(io,"One mol ")
-print_spec(io::IO,x::Type{SingleComponent}) = print(io,"Single component ")
+print_spec(io::IO,x::Type{OneMol}) = print(io,"One mol")
+print_spec(io::IO,x::Type{SingleComponent}) = print(io,"Single component")
 
 
+print_spec(io::IO,x::Type{HumidityDewPoint}) = print(io,"Humidity dew point")
+print_spec(io::IO,x::Type{HumidityRatio}) = print(io,"Humidity ratio")
+print_spec(io::IO,x::Type{WetBulbTemperature}) = print(io,"Web bulb temperature")
+print_spec(io::IO,x::Type{RelativeHumidity}) = print(io,"Relative humidity")
+print_spec(io::IO,x::Type{MolarHumidity}) = print(io,"Humidity wet molar fraction")
+print_spec(io::IO,x::Type{MassHumidity}) = print(io,"Humidity wet molar fraction")
 
 print_spec(io::IO,::Type{Pressure}) = print(io,"Pressure")
 print_spec(io::IO,::Type{Temperature}) = print(io,"Temperature")
@@ -15,6 +21,15 @@ print_spec(io::IO,::Type{Temperature}) = print(io,"Temperature")
 function print_spec(io::IO,::Type{Gibbs{T2}}) where T2
     print_spec(io,T2)
     print(io,"Gibbs energy")
+end
+
+function print_spec(io::IO,::Type{VaporFraction{T2}}) where T2
+    print_spec(io,T2)
+    print(io,"vapor fraction")
+end
+
+function print_spec(io::IO,::Type{HumiditySpec{T2}}) where T2
+    print_spec(io,T2)
 end
 
 function print_spec(io::IO,::Type{Helmholtz{T2}}) where T2
