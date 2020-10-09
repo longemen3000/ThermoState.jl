@@ -1,5 +1,5 @@
 """
-    default_units(::Union{Type{AbstractSpec},Type{property_function}})    
+    default_units(::Union{Type{AbstractSpec},Type{property_function}})
 
 returns a default unit of a spec
 
@@ -28,8 +28,8 @@ function default_units(::Type{Entropy{T}}) where T
     return u"J/K"/default_units(T)
 end
 
-default_units(::Type{Pressure}) = u"Pa" 
-default_units(::Type{Temperature}) = u"K" 
+default_units(::Type{Pressure}) = u"Pa"
+default_units(::Type{Temperature}) = u"K"
 
 function default_units(::Type{VolumeAmount{T,VOLUME}}) where T
     return u"m^3"/default_units(T)
@@ -43,7 +43,7 @@ function default_units(::Type{MaterialAmount{T1}}) where T1
     return default_units(T1)
 end
 
-function default_units(::Type{SingleComponent}) 
+function default_units(::Type{SingleComponent})
     return Unitful.NoUnits
 end
 
@@ -147,11 +147,11 @@ function spec(sp::HumiditySpec{T},  val::Number,normalize_units::Bool=true) wher
 end
 
 function spec(sp::HumiditySpec,  val::Number,normalize_units::Bool=true)
-    if _is_frac(u)
-        return Spec(t, float(u))
+    if _is_frac(val)
+        return Spec(sp, float(val))
     else
-        throw(ArgumentError("the value " * string(u) * " is not between 0 and 1."))
-    end 
+        throw(ArgumentError("the value " * string(val) * " is not between 0 and 1."))
+    end
 end
 
 
@@ -164,7 +164,7 @@ function spec(sp::MaterialAmount, val::Number,normalize_units::Bool=true)
     return Spec(sp,val)
 end
 
-function spec(sp::MaterialCompounds{T1,TOTAL_AMOUNT}, val::V,normalize_units::Bool=true) where {T1,V<:AbstractVector} 
+function spec(sp::MaterialCompounds{T1,TOTAL_AMOUNT}, val::V,normalize_units::Bool=true) where {T1,V<:AbstractVector}
     val = check_and_norm_vec(sp,val,normalize_units)
     return Spec(sp,val)
 end
@@ -174,7 +174,7 @@ function _is_frac_vec(u::T1) where T1<:AbstractVector{<:Real}
     return all(x -> x ≥ zero(x), u) && isapprox(sum(u), one(eltype(u)))
 end
 
-function spec(sp::MaterialCompounds{T1,FRACTION}, val::V,normalize_units::Bool=true) where {T1,V<:AbstractVector} 
+function spec(sp::MaterialCompounds{T1,FRACTION}, val::V,normalize_units::Bool=true) where {T1,V<:AbstractVector}
     if _is_frac_vec(val)
         return Spec(sp,val)
     else
@@ -184,7 +184,7 @@ end
 
 function spec(t::AbstractFractionSpec, u::AbstractVector{Real},normalize_units::Bool=true)
     if _is_frac_vec(u)
-        return Spec(t, u) 
+        return Spec(t, u)
     else
         throw(ArgumentError("the the vector of values is not a valid fraction"))
     end
@@ -195,7 +195,7 @@ function spec(t::AbstractFractionSpec, u::Real,normalize_units::Bool=true)
         return Spec(t, float(u))
     else
         throw(ArgumentError("the value " * string(u) * " is not between 0 and 1."))
-    end 
+    end
 end
 
 #catch all for non numerical specs
@@ -203,7 +203,7 @@ function spec(t::T, u,normalize_units::Bool=true) where T<:CategoricalSpec
     return Spec(t,u)
 end
 
-function spec(;kwargs...)   
+function spec(;kwargs...)
     if hasproperty(kwargs.data,:normalize_units)
         norm_units = getproperty(kwargs.data,:normalize_units)
         if length(kwargs.data)==2
@@ -279,6 +279,7 @@ _reduce_check_mass(x::Type{MaterialCompounds{MOLAR,FRACTION}}) = 110
 _reduce_check_mass(x::Type{MaterialCompounds{MASS,FRACTION}}) = 120
 _reduce_check_mass(x::Type{MaterialCompounds{MOLAR,TOTAL_AMOUNT}}) = 210
 _reduce_check_mass(x::Type{MaterialCompounds{MASS,TOTAL_AMOUNT}}) = 220
+_reduce_check_mass(x::Type{HumiditySpec}) = 300
 _reduce_check_mass(x::Type{MaterialAmount{MOLAR}}) = 1
 _reduce_check_mass(x::Type{MaterialAmount{MASS}}) = 2
 _reduce_check_mass(x::Type) = 0
@@ -293,6 +294,13 @@ _reduce_check_mass(::Val{:moles})=1
 _reduce_check_mass(::Val{:mass})=2
 _reduce_check_mass(::Val{T} where T)=0
 
+_reduce_check_mass(::Val{:hum_wetbulb}) = 300
+_reduce_check_mass(::Val{:hum_ratio}) = 300
+_reduce_check_mass(::Val{:hum_molfrac}) = 300
+_reduce_check_mass(::Val{:hum_massfrac}) = 300
+_reduce_check_mass(::Val{:rel_hum}) = 300
+_reduce_check_mass(::Val{:hum_dewpoint}) = 300
+
 #reduce-based phase transform, to check properties
 
 _reduce_check_phase(x::Spec) = 0
@@ -305,6 +313,7 @@ _reduce_check_phase(::Val{:vle})=1
 _reduce_check_phase(::Val{:lle})=1
 _reduce_check_phase(::Val{:sat})=1
 _reduce_check_phase(::Val{:quality})=1
+_reduce_check_phase(::Val{:vfrac})=1
 _reduce_check_phase(::Val{:phase_fracs})=10
 _reduce_check_phase(::Val{T} where T)=0
 
@@ -365,10 +374,10 @@ function _specs_F(args,mass_basis::Int64,phase_basis::Int64)::Int64
     F = length(args)
     opt = mapreduce(_reduce_check_opt,+,keys_or_tuple(args))
     F = F - opt
-    
-    if mass_basis in (1,2,110,120,210,220) #one_specified
+
+    if mass_basis in (1,2,110,120,210,220,300) #one_specified
         F = F -1
-    elseif mass_basis in (111,112,121,122) #two specified
+    elseif mass_basis in (111,112,121,122,301,302) #two specified
         F = F-2
     elseif mass_basis == 0
     else
@@ -454,7 +463,7 @@ function state(;check=true,normalize_units=true,kwargs...)
     end
 end
 
-function state(args::Vararg{Spec};check=true) 
+function state(args::Vararg{Spec};check=true)
     if !any(_is_variable_spec,args)
         callables = ()
         tup = args
@@ -468,7 +477,7 @@ function state(args::Vararg{Spec};check=true)
             throw(error("specifications are not unique."))
         end
         mass_basis = check_spec(args)
-    
+
         return ThermodynamicState(tup,callables)
     else
         return ThermodynamicState(tup,callables)
