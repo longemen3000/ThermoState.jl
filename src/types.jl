@@ -1,4 +1,4 @@
-module Types
+&module Types
     abstract type AbstractSpec end
     abstract type SpecModifier <: AbstractSpec  end
 
@@ -49,7 +49,7 @@ module Types
 
     struct PhaseFractions <: AbstractFractionSpec end
     struct VolumeFraction <: AbstractFractionSpec end
-    struct VaporQuality <: AbstractFractionSpec end
+    struct VaporFraction{T<:MassBasisModifier} <: AbstractFractionSpec end
 
     struct PhaseTag <: CategoricalSpec end
     struct TwoPhaseEquilibrium <: CategoricalSpec end
@@ -61,6 +61,7 @@ module Types
 
     #variable spec, signal to make a variable specs
     struct VariableSpec  end
+
 
     #base type to define models
     abstract type ThermoModel end
@@ -93,7 +94,7 @@ module Types
     export MaterialCompounds 
     export MaterialAmount 
     export PhaseFractions 
-    export VaporQuality 
+    export VaporFraction 
     export PhaseTag 
     export TwoPhaseEquilibrium 
     export Options 
@@ -159,7 +160,9 @@ const KW_TO_SPEC = IdDict{Symbol,Any}(
 
 ,:mw =>  MolecularWeight()
 
-,:quality =>  VaporQuality() #looking for better name
+,:quality =>  VaporFraction{MASS}() #looking for better name
+,:vfrac =>  VaporFraction{MOLAR}() #looking for better name
+
 ,:phase_fracs =>  PhaseFractions() #looking for better name
 
 ,:phase =>PhaseTag()
@@ -216,7 +219,9 @@ Enthalpy{MOLAR}() => :molar_h
 
 ,MolecularWeight() => :mw
 
-,VaporQuality() => :quality#looking for better name
+,VaporFraction{MASS}() => :quality#looking for better name
+,VaporFraction{MOLAR}() => :vfrac#looking for better name
+
 ,PhaseFractions() => :phase_fracs #looking for better name
 
 ,PhaseTag() => :phase
@@ -272,12 +277,7 @@ sat_t() = (TwoPhaseEquilibrium(),Temperature(),SingleComponent())
 sat_tx() = (TwoPhaseEquilibrium(),Temperature(),MaterialCompounds{MOLAR,FRACTION}())
 sat_tn() = (TwoPhaseEquilibrium(),Temperature(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
 
-const SingleΦT = Tuple{VaporQuality,Temperature,SingleComponent}
-const MultiΦT = Tuple{VaporQuality,Temperature,MaterialCompounds}
 
-ϕt() = (VaporQuality(),Temperature(),SingleComponent())
-ϕtx() = (VaporQuality(),Temperature(),MaterialCompounds{MOLAR,FRACTION}())
-ϕtn() = (VaporQuality(),Temperature(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
 
 const SingleSatP = Tuple{TwoPhaseEquilibrium,Pressure,SingleComponent}
 const MultiSatP = Tuple{TwoPhaseEquilibrium,Pressure,MaterialCompounds}
@@ -286,8 +286,32 @@ sat_p() = (TwoPhaseEquilibrium(),Pressure(),SingleComponent())
 sat_px() = (TwoPhaseEquilibrium(),Pressure(),MaterialCompounds{MOLAR,FRACTION}())
 sat_pn() = (TwoPhaseEquilibrium(),Pressure(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
 
-const SingleΦP = Tuple{VaporQuality,Pressure,SingleComponent}
-const MultiΦP = Tuple{VaporQuality,Pressure,MaterialCompounds}
+
+
+
+molar_ϕt() = (VaporFraction{MOLAR}(),Temperature(),SingleComponent())
+molar_ϕntx() = (VaporFraction{MOLAR}(),Temperature(),MaterialCompounds{MOLAR,FRACTION}())
+molar_ϕtn() = (VaporFraction{MOLAR}(),Temperature(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
+
+mass_ϕt() = (VaporFraction{MASS}(),Temperature(),SingleComponent())
+mass_ϕntx() = (VaporFraction{MASS}(),Temperature(),MaterialCompounds{MOLAR,FRACTION}())
+mass_ϕtn() = (VaporFraction{MASS}(),Temperature(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
+
+
+const SingleΦP = Tuple{VaporFraction,Pressure,SingleComponent}
+const MultiΦP = Tuple{VaporFraction,Pressure,MaterialCompounds}
+const SingleΦT = Tuple{VaporFraction,Temperature,SingleComponent}
+const MultiΦT = Tuple{VaporFraction,Temperature,MaterialCompounds}
+
+const SingleΦnP = Tuple{VaporFraction{MOLAR},Pressure,SingleComponent}
+const MultiΦnP = Tuple{VaporFraction{MOLAR},Pressure,MaterialCompounds}
+const SingleΦnT = Tuple{VaporFraction{MOLAR},Temperature,SingleComponent}
+const MultiΦnT = Tuple{VaporFraction{MOLAR},Temperature,MaterialCompounds}
+
+const SingleΦmP = Tuple{VaporFraction{MASS},Pressure,SingleComponent}
+const MultiΦmP = Tuple{VaporFraction{MASS},Pressure,MaterialCompounds}
+const SingleΦmT = Tuple{VaporFraction{MASS},Temperature,SingleComponent}
+const MultiΦmT = Tuple{VaporFraction{MASS},Temperature,MaterialCompounds}
 
 ϕp() = (VaporQuality(),Pressure(),SingleComponent())
 ϕpx() = (VaporQuality(),Pressure(),MaterialCompounds{MOLAR,FRACTION}())
@@ -298,10 +322,13 @@ export SingleVT,MultiVT
 export SinglePS,MultiPS
 export SinglePH,MultiPH
 export SingleSatT,MultiSatT
-export SingleΦT,MultiΦT
 export SingleSatP,MultiSatP
+export SingleΦT,MultiΦT
 export SingleΦP,MultiΦP
-
+export SingleΦmT,MultiΦmT
+export SingleΦmP,MultiΦmP
+export SingleΦnT,MultiΦnT
+export SingleΦnP,MultiΦnP
 
 end
 
