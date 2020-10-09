@@ -42,7 +42,7 @@ export mass_internal_energy, mol_internal_energy, total_internal_energy
 export mass_entropy, mol_entropy, total_entropy
 export mass_fraction, mol_fraction
 export mass_number, mol_number
-export options, phase, quality
+export options, phase, quality, mass_vapor_fraction,mol_vapor_fraction
 
 export @to_units
 export state_type
