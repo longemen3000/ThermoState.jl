@@ -56,7 +56,15 @@ function default_units(x::Type{MaterialCompounds{T,TOTAL_AMOUNT}}) where T
 end
 
 default_units(x::Type{PhaseFractions}) = Unitful.NoUnits
-default_units(x::Type{VaporQuality}) = Unitful.NoUnits
+default_units(x::Type{VaporFraction}) = Unitful.NoUnits
+
+default_units(::Type{HumiditySpec{HumidityDewPoint}}) = u"K"
+default_units(::Type{HumiditySpec{HumidityRatio}}) = Unitful.NoUnits
+default_units(::Type{HumiditySpec{WetBulbTemperature}}) = u"K"
+default_units(::Type{HumiditySpec{RelativeHumidity}}) = Unitful.NoUnits
+default_units(::Type{HumiditySpec{MolarHumidity}}) = Unitful.NoUnits
+default_units(::Type{HumiditySpec{MassHumidity}}) = Unitful.NoUnits
+
 
 struct Spec{T <: AbstractSpec,U}
     type::T
@@ -132,6 +140,20 @@ function spec(sp::Union{Pressure,Temperature},  val::Number,normalize_units::Boo
     val = check_and_norm(sp,val,normalize_units)
     return Spec(sp,val)
 end
+
+function spec(sp::HumiditySpec{T},  val::Number,normalize_units::Bool=true) where T <: Union{HumidityDewPoint,WetBulbTemperature}
+    val = check_and_norm(sp,val,normalize_units)
+    return Spec(sp,val)
+end
+
+function spec(sp::HumiditySpec,  val::Number,normalize_units::Bool=true)
+    if _is_frac(u)
+        return Spec(t, float(u))
+    else
+        throw(ArgumentError("the value " * string(u) * " is not between 0 and 1."))
+    end 
+end
+
 
 function spec(sp::Pressure, val::Nothing,normalize_units::Bool=true)
     return Spec(sp,val)
@@ -275,7 +297,7 @@ _reduce_check_mass(::Val{T} where T)=0
 
 _reduce_check_phase(x::Spec) = 0
 _reduce_check_phase(x::Spec{TwoPhaseEquilibrium}) = 1
-_reduce_check_phase(x::Spec{VaporQuality}) = 1
+_reduce_check_phase(x::Spec{VaporFraction}) = 1
 _reduce_check_phase(x::Spec{PhaseFractions}) = 10
 
 _reduce_check_phase(x::Symbol) = _reduce_check_phase(Val(x))
