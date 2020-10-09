@@ -168,15 +168,27 @@ function phase(model::FromState,st::ThermodynamicState)::Symbol
     end
 end
 
-function quality(model::FromState,st::ThermodynamicState)
-    hasval = has_spec(VaporQuality(),st)
+function mol_vapor_fraction(model::FromState,st::ThermodynamicState)
+    hasval = has_spec(VaporFraction{MOLAR}(),st)
     if !hasval
         return NaN
     else
-        return value(get_spec(VaporQuality(),st))
+        return value(get_spec(VaporFraction{MOLAR}(),st))
     end
 end
 
+function mass_vapor_fraction(model::FromState,st::ThermodynamicState)
+    hasval = has_spec(VaporFraction{MASS}(),st)
+    if !hasval
+        return NaN
+    else
+        return value(get_spec(VaporFraction{MASS}(),st))
+    end
+end
+
+function quality(model::FromState,st::ThermodynamicState)
+    return mass_vapor_fraction(model,st)
+end
 
 
 
