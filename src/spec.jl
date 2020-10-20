@@ -224,7 +224,12 @@ function spec(;kwargs...)
         end
     end
 end
+"""
+    struct ThermodynamicState{S,C}
 
+Struct containing thermodynamic specifications, constituting a state of an specific amount of matter.
+
+"""
 struct ThermodynamicState{S,C}
     specs::S
     callables::C
