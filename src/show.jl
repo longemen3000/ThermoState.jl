@@ -114,7 +114,6 @@ end
 function Base.show(io::IO, sp::Spec{T}) where T 
     print(io,"spec(")
     
-    
     a = value(sp)
     units = default_units(T)
 
@@ -140,18 +139,23 @@ function Base.show(io::IO, sp::Spec{T}) where T
 end
 
 function print_long_spec(io::IO, sp::Spec{T}) where T 
-        print_spec(io,T)
-        print(io," : ")
-        a = value(sp)
-        print(io,a)
-        if is_real(a) 
-            units = default_units(T)
-            if !(units == Unitful.NoUnits)
-                printstyled(io,'[',color = :light_black)
-                print(IOContext(io,:compact => true),units)
-                printstyled(io,']',color = :light_black)
-            end        
-        end       
+    print_spec(io,T)
+    print(io," : ")
+    a = value(sp)
+    units = default_units(T)
+
+    if is_unitful(a)
+        units = unit(a)
+        a = ustrip(a)
+    end
+    print(io,a)
+    if is_real(a) 
+        if !(units == Unitful.NoUnits)
+            printstyled(io,'[',color = :light_black)
+            print(IOContext(io,:compact => true),units)
+            printstyled(io,']',color = :light_black)
+        end        
+    end       
 end
 
 
@@ -229,9 +233,13 @@ function Base.show(io::IO, sp::ThermodynamicState)
             (i !=1) && print(io,", ")
             print(io,string(SPEC_TO_KW[specification(spec)])," = ")
             a = value(spec)
+            units = default_units(typeof(specification(spec)))
+            if is_unitful(a)
+                units = unit(a)
+                a = ustrip(a)
+            end
             if is_real(a) 
                 print(IOContext(io,:compact => true),a)
-                units = default_units(typeof(specification(spec)))
                 if !(units == Unitful.NoUnits)
                     printstyled(io,'[',color = :light_black)
                     print(IOContext(io,:compact => true),units)
