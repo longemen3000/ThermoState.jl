@@ -1,7 +1,7 @@
 name = "ThermoState"
 uuid = "e7b6519d-fdf7-4a33-b544-2b37a9c1234a"
 authors = ["Andres Riedemann"]
-version = "0.4.0"
+version = "0.4.1"
 
 [deps]
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
