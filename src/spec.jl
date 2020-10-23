@@ -462,7 +462,7 @@ function state(;check=true,normalize_units=true,kwargs...)
         tup = map(f0,keys(kwargs.data))
         callables = ()
     else
-        tup = ((spec(KW_TO_SPEC[k],v) for (k, v) in kwargs if !_is_variable_spec(v))...,)
+        tup = ((spec(KW_TO_SPEC[k],v,normalize_units) for (k, v) in kwargs if !_is_variable_spec(v))...,)
         callables = ((KW_TO_SPEC[k] for (k,v) in kwargs if _is_variable_spec(v))...,)
     end
     if check
@@ -515,6 +515,9 @@ function (f::ThermodynamicState{S,Tuple{S1,S2,S3}})(x1::T1,x2::T2,x3::T3) where 
     f.specs...),())
 end
 
+function (f::Spec{T,VariableSpec})(x;normalize_units = true) where T
+    return spec(specification(f),x,normalize_units)
+end
 
 function Base.Dict(st::ThermodynamicState)
     return Dict(SPEC_TO_KW[specification(sp)] => value(sp) for sp in st.specs)
