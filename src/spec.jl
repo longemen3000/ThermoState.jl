@@ -20,6 +20,11 @@ default_units(::Type{MOLAR}) = u"mol"
 default_units(::Type{MASS}) = u"kg"
 default_units(::Type{TOTAL}) = Unitful.NoUnits
 
+function default_units(::Type{T1}) where T1
+    return Unitful.NoUnits
+end
+
+
 function default_units(::Type{T1}) where T1 <: AbstractEnergySpec{T2} where T2
     return u"J"/default_units(T2)
 end

@@ -1,4 +1,4 @@
-print_spec(t) = print(t) #fallback
+print_spec(io::IO,t) = print(io,t) #fallback
 
 print_spec(io::IO,x::Type{MOLAR}) = print(io,"Molar ")
 print_spec(io::IO,x::Type{MASS}) = print(io,"Mass ")
@@ -104,36 +104,56 @@ is_real(x) = false
 is_real(x::Real) = true
 is_real(x::Bool) = false
 is_real(x::AbstractVector{T} where T<:Real) = true 
+is_unitful(x) = false
+is_unitful(x::Unitful.Quantity) = true
+function is_unitful(x::T) where T <: AbstractArray{T2} where T2
+    return true 
+end
+
 
 function Base.show(io::IO, sp::Spec{T}) where T 
-    compact = get(io, :compact, false)
-    if compact
-        print(io,"spec(",string(SPEC_TO_KW[specification(sp)])," = ")
-        
-        a = value(sp)
-        if is_real(a) 
-            print(IOContext(io,:compact => true),a," ",default_units(T))
-        else 
-            print(io,a)
-        end
-        print(io,")")
-    else
+    print(io,"spec(")
+    
+    
+    a = value(sp)
+    units = default_units(T)
+
+    if a isa VariableSpec
+        print(io,"x₀)(")
+        a = "x₀"
+    end
+    print(io,string(SPEC_TO_KW[specification(sp)])," = ")    
+
+    if is_unitful(a)
+        units = unit(a)
+        a = ustrip(a)
+    end
+    print(io,a)
+    if is_real(a) 
+        if !(units == Unitful.NoUnits)
+            printstyled(io,'[',color = :light_black)
+            print(IOContext(io,:compact => true),units)
+            printstyled(io,']',color = :light_black)  
+        end       
+    end 
+    print(io,")")
+end
+
+function print_long_spec(io::IO, sp::Spec{T}) where T 
         print_spec(io,T)
         print(io," : ")
         a = value(sp)
+        print(io,a)
         if is_real(a) 
-            print(IOContext(io,:compact => true),a," ",default_units(T))
-        else 
-            print(io,a)
-        end
-    end
+            units = default_units(T)
+            if !(units == Unitful.NoUnits)
+                printstyled(io,'[',color = :light_black)
+                print(IOContext(io,:compact => true),units)
+                printstyled(io,']',color = :light_black)
+            end        
+        end       
 end
 
-function Base.show(io::IO, sp::Spec{Options})
-    print_spec(io,Options)
-    print(io," : ")
-    show(io,value(sp))
-end
 
 #==function Base.show(::IO, sp::T) where T <:AbstractSpec
     print(io,"::" )
@@ -141,48 +161,87 @@ end
 end
 ==#
 
-function Base.show(io::IO, sp::ThermodynamicState)
-    len1 = length(sp.specs)
-    if len1 > 0
-        if len1 == 1
-            p1 = " Constant Property Specification:"
-        else
-            p1 = " Constant Property Specifications:"
+function Base.show(io::IO, ::MIME"text/plain", sp::ThermodynamicState)
+    lcall = length(sp.callables)
+    lsp = length(sp.specs) 
+    subscripts = '₁':'₉'
+
+    print(io,"ThermodynamicState")
+    if !iszero(lcall)
+        print(io,"(")
+        for (i,spec) in enumerate(sp.callables)
+            (i !=1) && print(io,",")
+            print(io,"x",subscripts[i])
         end
-        println(io,len1,p1)
-        
-        for (i,spec) in enumerate(sp.specs)
-            if i !=1
-                println()
-            end
-            print(io," ")
-            show(io,spec)
-        end 
-        
+    print(io,")")
     end
-    
-    len2 = length(sp.callables)
-    if len2 > 0
-        if len1 > 0
-        println()
-        println()
-        end
-    if len2 == 1
-        p2 = " Variable Property Specification:"
+
+    if isone(lcall+lsp)
+        println(io," with 1 property:")
     else
-        p2 = " Variable Property Specifications:"
+        println(io," with ",lcall+lsp, " properties:")
     end
-    
-    println(len2,p2)
-    
-    for (i,spec) in enumerate(sp.callables)
-        if i !=1
-            println()
+
+    if !iszero(lcall)
+        for (i,spec) in enumerate(sp.callables)
+            (i !=1) && println(io)
+            print("  ")
+            print_spec(io,typeof(spec))
+            print(io," : ")
+            print(io,"x",subscripts[i])
         end
-        print(io," ")
-        print_spec(typeof(spec))
-    end 
+        !iszero(lsp) && println(io)
+    end
+
+    if !iszero(lsp)
+        for (i,spec) in enumerate(sp.specs)
+            (i !=1) && println(io)
+            print("  ")
+            print_long_spec(io,spec)
+        end
+    end
 end
 
-end
+function Base.show(io::IO, sp::ThermodynamicState)
+    lcall = length(sp.callables)
+    lsp = length(sp.specs) 
+    subscripts = '₁':'₉'
 
+    print(io,"state(")
+
+    if !iszero(lcall)
+        for (i,spec) in enumerate(sp.callables)
+            (i !=1) && print(io,",")
+            print(io,"x",subscripts[i])
+        end
+        print(io,")(")
+    
+        for (i,spec) in enumerate(sp.callables)
+            (i !=1) && print(io,", ")
+            print(io,string(SPEC_TO_KW[spec])," = ")
+            print(io,"x",subscripts[i])
+        end
+        !iszero(lsp) && print(io,", ")
+    end
+
+    if !iszero(lsp)
+        for (i,spec) in enumerate(sp.specs)
+            (i !=1) && print(io,", ")
+            print(io,string(SPEC_TO_KW[specification(spec)])," = ")
+            a = value(spec)
+            if is_real(a) 
+                print(IOContext(io,:compact => true),a)
+                units = default_units(typeof(specification(spec)))
+                if !(units == Unitful.NoUnits)
+                    printstyled(io,'[',color = :light_black)
+                    print(IOContext(io,:compact => true),units)
+                    printstyled(io,']',color = :light_black)
+                end
+            else 
+                print(io,a)
+            end
+        end
+    end
+
+    print(io,")")
+end
