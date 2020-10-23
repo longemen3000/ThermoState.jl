@@ -494,25 +494,25 @@ function state(args::Vararg{Spec};check=true)
     end
 end
 
-function (f::ThermodynamicState{T,Tuple{S1}})(x1::T1) where {T,S1,T1}
+function (f::ThermodynamicState{T,Tuple{S1}})(x1::T1;normalize_units=true) where {T,S1,T1}
     return ThermodynamicState(
-    (Spec{S1,T1}(only(f.callables),x1),
-    f.specs...),())
+    (spec(only(f.callables),x1,normalize_units),
+    f.specs...))
 end
 
-function (f::ThermodynamicState{S,Tuple{S1,S2}})(x1::T1,x2::T2) where {S,S1,S2,T1,T2}
+function (f::ThermodynamicState{S,Tuple{S1,S2}})(x1::T1,x2::T2;normalize_units=true) where {S,S1,S2,T1,T2}
     return ThermodynamicState(
-    (Spec{S1,T1}(first(f.callables),x1),
-    Spec{S2,T2}(last(f.callables),x2),
-    f.specs...),())
+            (spec(first(f.callables),x1),
+            spec(last(f.callables),x2),
+            f.specs...))
 end
 
-function (f::ThermodynamicState{S,Tuple{S1,S2,S3}})(x1::T1,x2::T2,x3::T3) where {S,S1,S2,S3,T1,T2,T3}
+function (f::ThermodynamicState{S,Tuple{S1,S2,S3}})(x1::T1,x2::T2,x3::T3;normalize_units=true) where {S,S1,S2,S3,T1,T2,T3}
     return ThermodynamicState(
-            (Spec{S1,T1}(first(f.callables),x1),
-    Spec{S2,T2}(f.callables[2],x2),
-    Spec{S3,T3}(last(f.callables),x3),
-    f.specs...),())
+            (spec(first(f.callables),x1,normalize_units),
+            spec(f.callables[2],x2,normalize_units),
+            spec(last(f.callables),x3,normalize_units),
+            f.specs...))
 end
 
 function (f::Spec{T,VariableSpec})(x;normalize_units = true) where T
