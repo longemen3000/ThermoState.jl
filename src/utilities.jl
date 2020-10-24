@@ -76,6 +76,6 @@ is_real(x::Bool) = false
 is_real(x::AbstractVector{T} where T<:Real) = true 
 is_unitful(x) = false
 is_unitful(x::Unitful.Quantity) = true
-function is_unitful(x::T) where T <: AbstractArray{T2} where T2
+function is_unitful(x::T) where T <: AbstractArray{T2} where T2 <: Unitful.Quantity
     return true 
 end
