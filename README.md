@@ -177,9 +177,18 @@ The `mw` argument can be, depending of the situation, a number of vector of numb
 sometimes is needed a more direct approach to evaluation of properties.For example, you may want to create a function that accepts only temperature to pass it to an ODE system or an optimization system. for this purpose, the Singleton `VariableSpec` is provided. if you pass it to a `Spec` and create a `ThermodynamicState` object (or assign via keywords) the resulting state will be callable:
 
 ```julia-repl
-a_t = state(t=VariableSpec(),ρ=5.0u"mol/L")
-a_t(303)
+julia> a_t = state(t=VariableSpec(),ρ=5.0u"mol/L")
+ThermodynamicState(x₁) with 2 properties:
+  Temperature : x₁
+  Molar density : 5000.0[mol m^-3]
+ 
+julia> a_t(300.15)
+ThermodynamicState with 2 properties:
+  Temperature : 300.15[K]
+  Molar density : 5000.0[mol m^-3]
+
 ```
+up to 3 `VariableSpec` can be added to each `ThermodynamicState`. The variable is normalized by default (can be overrided with the optional keyword `normalize_units = false`)
 ## Dispatching on the state type with `state_type`
 
 Good. we now have a struct designed to store thermodynamic properties. now we can create functions that dispatch on a specific combination of thermodynamic specifications, using the function `state_type(st::ThermodynamicState)`:

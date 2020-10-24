@@ -265,7 +265,10 @@ _reduce_check_mass(x::Type{MaterialCompounds{MOLAR,FRACTION}}) = 110
 _reduce_check_mass(x::Type{MaterialCompounds{MASS,FRACTION}}) = 120
 _reduce_check_mass(x::Type{MaterialCompounds{MOLAR,TOTAL_AMOUNT}}) = 210
 _reduce_check_mass(x::Type{MaterialCompounds{MASS,TOTAL_AMOUNT}}) = 220
-_reduce_check_mass(x::Type{HumiditySpec}) = 300
+
+function _reduce_check_mass(x::Type{T}) where T<:HumiditySpec
+    return 300
+end
 _reduce_check_mass(x::Type{MaterialAmount{MOLAR}}) = 1
 _reduce_check_mass(x::Type{MaterialAmount{MASS}}) = 2
 _reduce_check_mass(x::Type) = 0
