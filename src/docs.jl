@@ -459,10 +459,3 @@ This function is an alias for `mass_vapor_fraction`.
 
 """
 function quality end
-
-function mass_cp end
-function mol_cp end
-function mass_cv end
-function mol_cv end
-function sound_speed end
-
