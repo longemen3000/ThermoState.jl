@@ -1,6 +1,7 @@
 # ThermoState.jl
 
 [![Build Status](https://travis-ci.com/longemen3000/ThermoState.jl.svg?branch=master)](https://travis-ci.com/longemen3000/ThermoState.jl)
+[![Build Status](https://github.com/longemen3000/ThermoState.jl/workflows/CI/badge.svg)](https://github.com/longemen3000/ThermoState.jl/actions)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://longemen3000.github.io/ThermoState.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://longemen3000.github.io/ThermoState.jl/dev)
 
