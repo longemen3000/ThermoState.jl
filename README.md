@@ -249,11 +249,13 @@ default_units(Pressure()) #u"Pa"
 
 ## Implementing a model using the `ThermoState` interface
 
-using this package, we can implement a basic ideal gas model that only calculates the pressure, given a temperature and molar volume, using the relation `Pv=RT`:
+using this package, we can implement a basic ideal gas model that only calculates the pressure, given a temperature and molar volume, using the relation `pvₙ=Rt`:
 
 
 ```julia
 using ThermoState, Unitful, ThermoState.QuickStates
+import ThermoState: pressure,mol_volume,temperature
+
 struct MyIdealGas
     mw::Float64
 end
@@ -268,21 +270,19 @@ function pressure(model::MyIdealGas,st::ThermodynamicState,unit=u"Pa")
 return pressure(state_type(st),model,st,unit)
 end
 
-function pressure(mt::SingleVT,model::MyIdealGas,st::ThermodynamicState,unit=u"Pa")
+function pressure(mt::SingleVT,model::MyIdealGas,st::ThermodynamicState,unit)
     v = mol_volume(FromState(),st,u"m^3/mol",mw)
     t = temperature(FromState(),st,u"K") 
     val = pressure_impl(mt,model,v,t)
-    return ThermoState.convert_unit(u"Pa",unit,val)
+    return convert_unit(u"Pa",unit,val)
 end
-
-
 
 a = state(mass = 3u"kg",total_v = 30u"m^3",t=30u"°C")
 model = MyIdealGas(18.01)
 p = pressure(model,a)
 
 ```
-Using variable state:
+Using a variable state:
 
 ```julia
 tx = state(mass = 3u"kg",total_v = 30u"m^3",t=var) #one free variable
