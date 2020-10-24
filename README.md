@@ -69,8 +69,8 @@ A `Spec` is just a tagged value. it can be constructed by two ways:
   there is a slight thing to mention: `temperature` is really a function, binded to the `Temperature <: AbstractSpec` type. this is for convenience, as we will see later.
 - keyword constructor: 
     ```julia
-   t0 = spec(t=300.15)
-   t0 = spec(T=30u"°C") 
+   t0 = spec(t= 300.15)
+   t0 = spec(T= 30u"°C") 
    t0 = spec(T = 30u"°C",normalize_units= false) 
   ```
 All keyword arguments are stored in the `KW_TO_SPEC` dict keys.
@@ -78,7 +78,7 @@ All keyword arguments are stored in the `KW_TO_SPEC` dict keys.
 The result of those operations is a `Spec` struct:
 ```julia-repl
 julia> t0 = spec(T = 30.0u"°C")     
-Temperature : 303.15 K
+spec(t = 303.15[K])
 
 julia> typeof(t0)
 Spec{ThermoState.Types.Temperature,Float64}
@@ -87,15 +87,15 @@ julia> val_t0 = value(t0) #extracting value
 303.15
 
 julia> spec_t0 = specification(t0) #specification of t0 
-::Temperature
+Temperature()
 ```
 an example of a enthalpy specification:
 ```julia-repl
 julia> h0 = spec(mol_h = 3000.0)
-Molar enthalpy : 3000.0 J mol^-1   
+spec(mol_h = 3000.0[J mol^-1])
 
 julia> specification(h0)
-::Molar enthalpy
+Enthalpy{MOLAR}()
 
 julia> typeof(h0)
 Spec{ThermoState.Types.Enthalpy{ThermoState.Types.MOLAR},Float64} ##?
@@ -131,9 +131,9 @@ The `ThermodynamicState` struct is a collection of `Spec`s. When creating this o
 
 ```julia-repl
 julia> a = state(t=300.0,ρ=5u"mol/m^3")
-2 Property Specifications:
- Temperature : 300.0 K
- Molar density : 5 mol m^-3
+ThermodynamicState with 2 properties:
+  Temperature : 300.0[K]
+  Molar density : 5[mol m^-3]
  ```
 In this case, neither a phase nor any amount of compounds was specified. In those cases, the function assumes when the system has one mol, one phase, and/or a single component.
 
@@ -143,9 +143,10 @@ Another way to build a `ThermodynamicState` struct is by directly passing `Spec`
  h0 = spec(mol_h = 3000.0)
  t0 = spec(t=401.0)
  st = state(h0,t0)
- 2 Property Specifications:
- Molar enthalpy : 3000.0 J mol^-1
- Temperature : 401.0 K
+julia>  st = state(h0,t0)
+ThermodynamicState with 2 properties:
+  Molar enthalpy : 3000.0[J mol^-1]
+  Temperature : 401.0[K]
 ```
 You can skip the check of the Gibbs' Phase Rule using the `check = false` keyword, or, in the case of building the state using keywords, decide to not normalize units via the 
 `normalize_units= false` keyword.

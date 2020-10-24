@@ -82,50 +82,22 @@ specification(s::Spec) = s.type
 #preferred stripped
 function _ups(x,normalize_units=true)
     if normalize_units
-        return Unitful.ustrip(Unitful.upreferred(x))
-    else
-        return x
-    end
-end
-
-function _ups(x::AbstractVector,normalize_units=true)
-    if normalize_units
         return Unitful.ustrip.(Unitful.upreferred.(x))
     else
         return x
     end
 end
 
-
 #check units and normalizes
-function check_and_norm(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:Unitful.Quantity}
-    if dimension(default_units(SP)) == dimension(val)
-    return _ups(val,normalize_units)
-    else
-        throw(ArgumentError("the input value is not a type of " * string(SP)))
-    end
-end
-
-function check_and_norm_vec(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:AbstractVector{<: Unitful.Quantity}}
+function check_and_norm(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U}
+    is_real(val) && return val
     if dimension(default_units(SP)) == dimension(eltype(val))
-    return _ups(val,normalize_units)
+        return _ups(val,normalize_units)
     else
         throw(ArgumentError("the input value is not a type of " * string(SP)))
     end
 end
 
-function check_and_norm_vec(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:Number}
-    throw(ArgumentError("invalid material compounds specification, provide a vector."))
-end
-
-function check_and_norm_vec(::SP,val::U,normalize_units::Bool=true) where {SP<:AbstractSpec,U<:AbstractVector{<:Number}}
-    return _ups(val,normalize_units)
-end
-
-function check_and_norm(::SP, val::Number,normalize_units::Bool=true) where {SP<:AbstractSpec}
-    return _ups(val,normalize_units)
-
-end
 
 #special cases, VariableSpec and Misssing
 function spec(sp::AbstractSpec, val::VariableSpec,normalize_units::Bool=true)
@@ -170,8 +142,12 @@ function spec(sp::MaterialAmount, val::Number,normalize_units::Bool=true)
 end
 
 function spec(sp::MaterialCompounds{T1,TOTAL_AMOUNT}, val::V,normalize_units::Bool=true) where {T1,V<:AbstractVector}
-    val = check_and_norm_vec(sp,val,normalize_units)
-    return Spec(sp,val)
+    if isone(length(val))
+        return ArgumentError("invalid material compounds specification, provide a vector.")
+    else
+        val = check_and_norm(sp,val,normalize_units)
+        return Spec(sp,val)
+    end
 end
 
 _is_frac(x::Real) = (zero(x) <= x <= one(x))
@@ -191,7 +167,7 @@ function spec(t::AbstractFractionSpec, u::AbstractVector{Real},normalize_units::
     if _is_frac_vec(u)
         return Spec(t, u)
     else
-        throw(ArgumentError("the the vector of values is not a valid fraction"))
+        return ArgumentError("the the vector of values is not a valid fraction")
     end
 end
 
@@ -199,7 +175,7 @@ function spec(t::AbstractFractionSpec, u::Real,normalize_units::Bool=true)
     if _is_frac(u)
         return Spec(t, float(u))
     else
-        throw(ArgumentError("the value " * string(u) * " is not between 0 and 1."))
+        return ArgumentError("the value " * string(u) * " is not between 0 and 1.")
     end
 end
 

@@ -1,9 +1,14 @@
 
  
+#the following functions are essencial in the ordering
+#do not change the relative order!!
 
+#equilibria properties are always first
 _stateorder(x::PhaseFractions) = 1
 _stateorder(x::TwoPhaseEquilibrium) = 2
 _stateorder(x::VaporFraction) = 3
+
+#pressure is always first in the scalar properties
 _stateorder(x::Pressure) = 4
 _stateorder(x::Helmholtz) = 5
 _stateorder(x::Gibbs) = 6
@@ -11,11 +16,16 @@ _stateorder(x::InternalEnergy) = 7
 _stateorder(x::VolumeAmount) = 8
 _stateorder(x::Enthalpy) = 9
 _stateorder(x::Entropy) = 10
+#temperature always for last of the scalar properties
 _stateorder(x::Temperature) = 11
+
+#humidity is always between temperature and the others
 _stateorder(x::HumiditySpec) = 1000
 
-
+#Material Compounds is always before Material Amount
 _stateorder(x::MaterialCompounds) = 10002
+
+#From here, it doesnt matter the order
 _stateorder(x::MaterialAmount ) = 10001
 _stateorder(x::PhaseTag) = 10000
 _stateorder(x::Options) = 10004

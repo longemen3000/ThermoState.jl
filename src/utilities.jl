@@ -13,8 +13,7 @@ julia> normalize_units(273.15)
 273.15
 ```
 """
-normalize_units(x) =  Unitful.ustrip(Unitful.upreferred(x))
-normalize_units(x::AbstractVector) =  Unitful.ustrip.(Unitful.upreferred.(x))
+normalize_units(x) =  Unitful.ustrip.(Unitful.upreferred.(x))
 
 
 #upreferred, but the standard unit with just numbers is transformed to kg/mol
@@ -69,4 +68,14 @@ end
 
 function convert_unit(from::T1,to::T2,val::N) where {T1,T2,N<:AbstractVector{<:Unitful.Quantity}}
     return Unitful.ustrip.(Unitful.uconvert.(to,val))
+end
+
+is_real(x) = false
+is_real(x::Real) = true
+is_real(x::Bool) = false
+is_real(x::AbstractVector{T} where T<:Real) = true 
+is_unitful(x) = false
+is_unitful(x::Unitful.Quantity) = true
+function is_unitful(x::T) where T <: AbstractArray{T2} where T2
+    return true 
 end
