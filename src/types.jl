@@ -209,10 +209,10 @@ const KW_TO_SPEC = IdDict{Symbol,Any}(
 
 
 const SPEC_TO_KW = IdDict{Any,Symbol}(
-Enthalpy{MOLAR}() => :molar_h
-,Gibbs{MOLAR}() => :molar_g
-,Helmholtz{MOLAR}() => :molar_a
-,InternalEnergy{MOLAR}() => :molar_u
+Enthalpy{MOLAR}() => :mol_h
+,Gibbs{MOLAR}() => :mol_g
+,Helmholtz{MOLAR}() => :mol_a
+,InternalEnergy{MOLAR}() => :mol_u
 
 ,Enthalpy{MASS}() => :mass_h
 ,Gibbs{MASS}()  => :mass_g
@@ -224,7 +224,7 @@ Enthalpy{MOLAR}() => :molar_h
 ,Helmholtz{TOTAL}() => :total_a
 ,InternalEnergy{TOTAL}() => :total_u
 
-,Entropy{MOLAR}() => :molar_s
+,Entropy{MOLAR}() => :mol_s
 ,Entropy{MASS}() => :mass_s
 ,Entropy{TOTAL}() => :total_s
 
