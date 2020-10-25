@@ -8,10 +8,6 @@ a basic thermodynamic model, used to extract thermodynamic specifications from a
 struct FromState <: ThermoModel end
 const URVec = AbstractVector{T} where T<:Number
 
-
-
-
-
 moles2(a::ThermodynamicState,mw) = moles3(amount_type(a),a,mw)
 mass2(a::ThermodynamicState,mw) =  mass3(amount_type(a),a,mw)
 kg_per_mol2(a::ThermodynamicState,mw) =  kg_per_mol3(amount_type(a),a,mw)

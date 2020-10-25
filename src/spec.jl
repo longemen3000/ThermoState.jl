@@ -218,12 +218,7 @@ end
 
 ThermodynamicState(st::Tuple) = ThermodynamicState(st,())
 
-
 Base.values(s::ThermodynamicState) = s.specs
-
-
-
-
 
 #reduce-based mass transform, to check properties
 
@@ -311,20 +306,10 @@ _specs_C(tup::Tuple,kw::Int64)::Int64 = 1
 _reduce_mass_spec_p(x::Spec) = 0
 _reduce_mass_spec_p(x::Spec{PhaseFractions}) = length(value(x))
 
-function _specs_P(kwargs::NamedTuple,kw::Int64)::Int64
-    if (kw == 0)
+function _specs_P(kw::Int64)::Int64
+    if iszero(kw)
         return 1
-    elseif kw == 1
-        return 2
-    else
-        return 0
-    end
-end
-
-function _specs_P(tup::Tuple,kw::Int64)::Int64
-    if (kw == 0)
-        return 1
-    elseif kw == 1
+    elseif isone(kw)
         return 2
     else
         return 0
@@ -374,10 +359,19 @@ function spec_equal(x1::Spec{T1},x2::Spec{T2})::Bool where {T1,T2}
     return false
 end
 function spec_tuple_unique(a)::Bool
-    @inbounds for i = 1:length(a)
-        for j = (i+1):length(a)
-            if spec_equal(a[i],a[j])
-                return false
+    len = length(a)
+    if len == 1
+        return true
+    elseif len == 2
+        return !spec_equal(a[1],a[2])
+    elseif len == 3
+        return !(spec_equal(a[1],a[2]) | spec_equal(a[3],a[2]) | spec_equal(a[3],a[2]))
+    else
+        @inbounds for i = 1:len
+            for j = (i+1):len
+                if spec_equal(a[i],a[j])
+                    return false
+                end
             end
         end
     end
@@ -388,7 +382,7 @@ function check_spec(args)
     mass_basis = _specs_components(args)
     phase_basis = _specs_phase_basis(args)
     C = _specs_C(args,mass_basis)
-    P = _specs_P(args,phase_basis)
+    P = _specs_P(phase_basis)
     F = _specs_F(args,mass_basis,phase_basis)
     DF = C - P + 2 - F#behold, the gibbs phase rule!
     if DF<0
