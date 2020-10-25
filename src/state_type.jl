@@ -1,5 +1,28 @@
 
- 
+ #returns the specification symbol in multicomponent
+#returns :singlecomponent if there are no specifications
+#throws error if more than one specification is found
+const AMOUNT_CONST_FIRST =Dict{Int,Any}(
+     000 => SingleComponent()
+    ,110 => MaterialCompounds{MOLAR,FRACTION}()
+    ,120 => MaterialCompounds{MASS,FRACTION}()
+    ,210 => MaterialCompounds{MOLAR,TOTAL_AMOUNT}()
+    ,220 => MaterialCompounds{MASS,TOTAL_AMOUNT}()
+    ,310 => HumiditySpec{WetBulbTemperature}()
+    ,320 => HumiditySpec{HumidityRatio}()
+    ,330 => HumiditySpec{MolarHumidity}()
+    ,340 => HumiditySpec{MassHumidity}()
+    ,350 => HumiditySpec{RelativeHumidity}()
+    ,360 => HumiditySpec{HumidityDewPoint}()
+)
+
+const AMOUNT_CONST_SECOND =Dict{Int,Any}(
+     000 => OneMol()
+    ,001 => MaterialAmount{MOLAR}()
+    ,002 => MaterialAmount{MASS}()
+)
+
+
 #the following functions are essencial in the ordering
 #do not change the relative order!!
 
@@ -19,13 +42,13 @@ _stateorder(x::Entropy) = 10
 #temperature always for last of the scalar properties
 _stateorder(x::Temperature) = 11
 
-#humidity is always between temperature and the others
+
+#From here, it doesnt matter the order, as those are treated specially
+
 _stateorder(x::HumiditySpec) = 1000
 
-#Material Compounds is always before Material Amount
 _stateorder(x::MaterialCompounds) = 10002
 
-#From here, it doesnt matter the order
 _stateorder(x::MaterialAmount ) = 10001
 _stateorder(x::PhaseTag) = 10000
 _stateorder(x::Options) = 10004
@@ -62,9 +85,14 @@ end
 @generated function static_amount_type(x::T) where T<: ThermodynamicState
     sps = _static_specs_types(x)
     mass_int = mapreduce(_reduce_check_mass,+,sps)
-    res = AMOUNT_CONST[mass_int]
+    val = mass_int
+    modval = mod(val,10)
+    if val in (210,220)
+        res =  (AMOUNT_CONST_FIRST[val],AMOUNT_CONST_FIRST[val])
+    else
+        res =  (AMOUNT_CONST_FIRST[val-modval],AMOUNT_CONST_SECOND[modval])
+    end
     return :($res)
-
 end
 
 
@@ -85,7 +113,7 @@ function _state_from_type(x::Type{ThermodynamicState{S,C}}) where {S,C}
     if !has_compound
         comp_spec = SingleComponent()
     end
-    sorted_specs = sort(state_specs,by=_stateorder)
+    sorted_specs = sort(state_specs,by= _stateorder)
     res = (sorted_specs[1],sorted_specs[2],comp_spec)
 end
 

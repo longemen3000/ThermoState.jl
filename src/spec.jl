@@ -222,23 +222,7 @@ ThermodynamicState(st::Tuple) = ThermodynamicState(st,())
 Base.values(s::ThermodynamicState) = s.specs
 
 
-#returns the specification symbol in multicomponent
-#returns :singlecomponent if there are no specifications
-#throws error if more than one specification is found
 
-const AMOUNT_CONST =Dict{Int,Any}(
-    0 => (SingleComponent(),OneMol())
-    ,1 => (SingleComponent(),MaterialAmount{MOLAR}())
-    ,2 => (SingleComponent(),MaterialAmount{MASS}())
-    ,110 => (MaterialCompounds{MOLAR,FRACTION}(),OneMol())
-    ,111 => (MaterialCompounds{MOLAR,FRACTION}(),MaterialAmount{MOLAR}())
-    ,112 => (MaterialCompounds{MOLAR,FRACTION}(),MaterialAmount{MASS}())
-    ,120 => (MaterialCompounds{MASS,FRACTION}(),OneMol())
-    ,121 => (MaterialCompounds{MASS,FRACTION}(),MaterialAmount{MOLAR}())
-    ,122 => (MaterialCompounds{MASS,FRACTION}(),MaterialAmount{MASS}())
-    ,210 => (MaterialCompounds{MOLAR,TOTAL_AMOUNT}(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
-    ,220 => (MaterialCompounds{MASS,TOTAL_AMOUNT}(),MaterialCompounds{MASS,TOTAL_AMOUNT}())
-    )
 
 
 #reduce-based mass transform, to check properties
@@ -256,9 +240,15 @@ _reduce_check_mass(x::Type{MaterialCompounds{MASS,FRACTION}}) = 120
 _reduce_check_mass(x::Type{MaterialCompounds{MOLAR,TOTAL_AMOUNT}}) = 210
 _reduce_check_mass(x::Type{MaterialCompounds{MASS,TOTAL_AMOUNT}}) = 220
 
-function _reduce_check_mass(x::Type{T}) where T<:HumiditySpec
-    return 300
-end
+_reduce_check_mass(x::Type{HumiditySpec{WetBulbTemperature}})  = 310
+_reduce_check_mass(x::Type{HumiditySpec{HumidityRatio}}) = 320
+_reduce_check_mass(x::Type{HumiditySpec{MolarHumidity}}) = 330
+_reduce_check_mass(x::Type{HumiditySpec{MassHumidity}}) = 340
+_reduce_check_mass(x::Type{HumiditySpec{RelativeHumidity}}) = 350
+_reduce_check_mass(x::Type{HumiditySpec{HumidityDewPoint}}) = 360
+
+
+#mass modifiers
 _reduce_check_mass(x::Type{MaterialAmount{MOLAR}}) = 1
 _reduce_check_mass(x::Type{MaterialAmount{MASS}}) = 2
 _reduce_check_mass(x::Type) = 0
@@ -273,13 +263,16 @@ _reduce_check_mass(::Val{:moles})=1
 _reduce_check_mass(::Val{:mass})=2
 _reduce_check_mass(::Val{T} where T)=0
 
-_reduce_check_mass(::Val{:hum_wetbulb}) = 300
-_reduce_check_mass(::Val{:hum_ratio}) = 300
-_reduce_check_mass(::Val{:hum_molfrac}) = 300
-_reduce_check_mass(::Val{:hum_massfrac}) = 300
-_reduce_check_mass(::Val{:rel_hum}) = 300
-_reduce_check_mass(::Val{:hum_dewpoint}) = 300
+_reduce_check_mass(::Val{:hum_wetbulb}) = 310
+_reduce_check_mass(::Val{:hum_ratio}) = 320
+_reduce_check_mass(::Val{:hum_molfrac}) = 330
+_reduce_check_mass(::Val{:hum_massfrac}) = 340
+_reduce_check_mass(::Val{:rel_hum}) = 350
+_reduce_check_mass(::Val{:hum_dewpoint}) = 360
 
+#=
+
+=#
 #reduce-based phase transform, to check properties
 
 _reduce_check_phase(x::Spec) = 0
@@ -353,12 +346,12 @@ function _specs_F(args,mass_basis::Int64,phase_basis::Int64)::Int64
     F = length(args)
     opt = mapreduce(_reduce_check_opt,+,keys_or_tuple(args))
     F = F - opt
-
-    if mass_basis in (1,2,110,120,210,220,300) #one_specified
+    mass_basis_mod = mod(mass_basis,10)
+    if iszero(mass_basis)
+    elseif (mass_basis in (1,2)) | iszero(mass_basis_mod) #one_specified
         F = F -1
-    elseif mass_basis in (111,112,121,122,301,302) #two specified
+    elseif mass_basis_mod in (1,2) #two specified
         F = F-2
-    elseif mass_basis == 0
     else
         throw(error("incorrect mass specification."))
     end
