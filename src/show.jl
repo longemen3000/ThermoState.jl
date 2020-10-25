@@ -157,6 +157,7 @@ end
 ==#
 
 function Base.show(io::IO, ::MIME"text/plain", sp::ThermodynamicState)
+    @nospecialize sp
     lcall = length(sp.callables)
     lsp = length(sp.specs) 
     subscripts = '₁':'₉'

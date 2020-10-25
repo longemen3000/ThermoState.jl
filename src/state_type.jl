@@ -58,6 +58,7 @@ _stateorder(x::VariableSpec) = 10006
 
 
 function _static_specs(x::Type{ThermodynamicState{S,C}}) where {S,C}
+    @nospecialize S,C
     tvec = S.parameters
     res1 = [tvec[i].parameters[1]() for i in 1:length(tvec)]
     if C === Tuple{}
@@ -71,6 +72,7 @@ function _static_specs(x::Type{ThermodynamicState{S,C}}) where {S,C}
 end
 
 function _static_specs_types(x::Type{ThermodynamicState{S,C}}) where {M,C,S}
+    @nospecialize S,C
     tvec = S.parameters
     res1 = [tvec[i].parameters[1] for i in 1:length(tvec)]
     if C === Tuple{}
@@ -96,7 +98,8 @@ end
 end
 
 
-function _state_from_type(x::Type{ThermodynamicState{S,C}}) where {S,C}
+function _state_from_type(x::T) where T<: ThermodynamicState
+    @nospecialize x
     state_specs =  _static_specs(x)
     has_compound = false
     for spec in state_specs
@@ -125,7 +128,8 @@ function _state_from_type(x::Type{ThermodynamicState{S,C}}) where {S,C}
     res = (sorted_specs[1],sorted_specs[2],comp_spec)
 end
 
-function _static_get_spec_idx(x::Type{ThermodynamicState{S,C}},sp::Type{S2})::Int where {S,C,S2}
+function _static_get_spec_idx(@nospecialize(x::Type{ThermodynamicState{S,C}}),@nospecialize(sp::Type{S2}))::Int where {S,C,S2}
+    @nospecialize S,C,S2
     state_specs =  _static_specs(x)
     for (i,spec) in pairs(state_specs)
         if spec isa sp
