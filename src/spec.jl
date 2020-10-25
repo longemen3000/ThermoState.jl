@@ -240,16 +240,6 @@ const AMOUNT_CONST =Dict{Int,Any}(
     ,220 => (MaterialCompounds{MASS,TOTAL_AMOUNT}(),MaterialCompounds{MASS,TOTAL_AMOUNT}())
     )
 
-    AMOUNT_CONST2 = Dict{Int64,Symbol}(
-        110 => :xn
-        ,111 => :xn
-        ,112 => :xn
-        ,120 => :xm
-        ,121 => :xm
-        ,122 => :xm
-        ,210 => :n
-        ,220 => :m
-    )
 
 #reduce-based mass transform, to check properties
 
