@@ -309,4 +309,19 @@ using ThermoState.StatePoints
 end
 
 @testset "variable spec" begin
+    λ = VariableSpec()
+    p0 = 1
+    t0 = 1
+    moles0 = 1
+    st0 = state(t=t0,p=p0,moles=moles0)
+    st1 = state(t=λ,p=p0,moles=moles0)
+    @test st1(t0) == st0
+    st1 = state(t=λ,p=λ,moles=moles0)
+    @test st1(t0,p0) == st0
+    st1 = state(t=λ,p=λ,moles=λ)
+    @test st1(t0,p0,moles0) == st0
+
+    sp0 = spec(t=t0)
+    sp1 = spec(t=λ)
+    @test sp1(t0) == sp0
 end
