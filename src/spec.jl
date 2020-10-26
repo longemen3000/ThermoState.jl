@@ -271,9 +271,9 @@ end
 
 _reduce_check_phase(x::Symbol) = static_check_phase_kws(Val(x))
 
-_reduce_check_phase(x::Type{TwoPhaseEquilibrium}) = 1
-_reduce_check_phase(x::Type{VaporFraction}) = 1
-_reduce_check_phase(x::Type{PhaseFractions}) = 10
+_reduce_check_phase(::Type{TwoPhaseEquilibrium}) = 1
+_reduce_check_phase(::Type{VaporFraction}) = 1
+_reduce_check_phase(::Type{PhaseFractions}) = 10
 
 
 
@@ -312,9 +312,9 @@ end
 
 _reduce_check_opt(x::Spec) = _reduce_check_opt(typeof(specification(x)))
 
-_reduce_check_opt(x::Type) = 0
-_reduce_check_opt(x::Type{PhaseTag}) = 1
-_reduce_check_opt(x::Type{Options}) = 1
+_reduce_check_opt(::Type) = 0
+_reduce_check_opt(::Type{PhaseTag}) = 1
+_reduce_check_opt(::Type{Options}) = 1
 #optional values not counted during degrees of freedom calc
 @generated function static_check_opt_kws(x::Val{T}) where T
     _type = KW_TO_SPEC[T]
