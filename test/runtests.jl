@@ -24,6 +24,15 @@ end
     xm0 = m0 ./ sum(m0)
     mass0 = sum(m0)
     moles0 = sum(n0)
+    _t = spec(t=1)
+    _p = spec(p=2)
+    _n = spec(n=n0)
+    _m = spec(m=m0)
+    _xm = spec(xm=xm0)
+    _xn = spec(xn=xn0)
+    _mass = spec(mass=mass0)
+    _moles = spec(moles=moles0)
+
     a1 = state(mass=mass0,xm = xm0,t=1,p=2)
     @test mol_fraction(FromState(),a1,nothing,mw0)≈ xn0
     @test mass_fraction(FromState(),a1,nothing,mw0)≈ xm0
@@ -31,6 +40,16 @@ end
     @test mol_number(FromState(),a1,u"mol",mw0)≈ n0
     @test mass(FromState(),a1,u"kg",mw0)≈ mass0
     @test moles(FromState(),a1,u"mol",mw0)≈ moles0
+
+    a1 = state(_mass,_xm,_t,_p)
+    @test mol_fraction(FromState(),a1,nothing,mw0)≈ xn0
+    @test mass_fraction(FromState(),a1,nothing,mw0)≈ xm0
+    @test mass_number(FromState(),a1,u"kg",mw0)≈ m0
+    @test mol_number(FromState(),a1,u"mol",mw0)≈ n0
+    @test mass(FromState(),a1,u"kg",mw0)≈ mass0
+    @test moles(FromState(),a1,u"mol",mw0)≈ moles0
+
+
 
     a1 = state(moles=moles0,xm = xm0,t=1,p=2)
     @test mol_fraction(FromState(),a1,nothing,mw0)≈ xn0
@@ -40,6 +59,16 @@ end
     @test mass(FromState(),a1,u"kg",mw0)≈ mass0 #fail
     @test moles(FromState(),a1,u"mol",mw0)≈ moles0
 
+    a1 = state(_moles,_xm,_t,_p)
+    @test mol_fraction(FromState(),a1,nothing,mw0)≈ xn0
+    @test mass_fraction(FromState(),a1,nothing,mw0)≈ xm0
+    @test mass_number(FromState(),a1,u"kg",mw0)≈ m0 #fail
+    @test mol_number(FromState(),a1,u"mol",mw0)≈ n0 #fail
+    @test mass(FromState(),a1,u"kg",mw0)≈ mass0 #fail
+    @test moles(FromState(),a1,u"mol",mw0)≈ moles0
+
+
+
     a1 = state(moles=moles0,xn = xn0,t=1,p=2)
     @test mol_fraction(FromState(),a1,nothing,mw0)≈ xn0
     @test mass_fraction(FromState(),a1,nothing,mw0)≈ xm0
@@ -48,6 +77,16 @@ end
     @test mass(FromState(),a1,u"kg",mw0)≈ mass0
     @test moles(FromState(),a1,u"mol",mw0)≈ moles0
     
+    a1 = state(_moles,_xn,_t,_p)
+    @test mol_fraction(FromState(),a1,nothing,mw0)≈ xn0
+    @test mass_fraction(FromState(),a1,nothing,mw0)≈ xm0
+    @test mass_number(FromState(),a1,u"kg",mw0)≈ m0
+    @test mol_number(FromState(),a1,u"mol",mw0)≈ n0
+    @test mass(FromState(),a1,u"kg",mw0)≈ mass0
+    @test moles(FromState(),a1,u"mol",mw0)≈ moles0
+
+
+
     a1 = state(mass=mass0,xm = xm0,t=1,p=2)
     @test mol_fraction(FromState(),a1,nothing,mw0)≈ xn0
     @test mass_fraction(FromState(),a1,nothing,mw0)≈ xm0
@@ -55,6 +94,16 @@ end
     @test mol_number(FromState(),a1,u"mol",mw0)≈ n0
     @test mass(FromState(),a1,u"kg",mw0)≈ mass0
     @test moles(FromState(),a1,u"mol",mw0)≈ moles0
+
+    a1 = state(_mass,_xm,_t,_p)
+    @test mol_fraction(FromState(),a1,nothing,mw0)≈ xn0
+    @test mass_fraction(FromState(),a1,nothing,mw0)≈ xm0
+    @test mass_number(FromState(),a1,u"kg",mw0)≈ m0
+    @test mol_number(FromState(),a1,u"mol",mw0)≈ n0
+    @test mass(FromState(),a1,u"kg",mw0)≈ mass0
+    @test moles(FromState(),a1,u"mol",mw0)≈ moles0
+
+
 
     a1 = state(m = m0,t=1,p=2)
     @test mol_fraction(FromState(),a1,nothing,mw0)≈ xn0
@@ -64,6 +113,15 @@ end
     @test mass(FromState(),a1,u"kg",mw0)≈ mass0
     @test moles(FromState(),a1,u"mol",mw0)≈ moles0
 
+    a1 = state(_m,_t,_p)
+    @test mol_fraction(FromState(),a1,nothing,mw0)≈ xn0
+    @test mass_fraction(FromState(),a1,nothing,mw0)≈ xm0
+    @test mass_number(FromState(),a1,u"kg",mw0)≈ m0
+    @test mol_number(FromState(),a1,u"mol",mw0)≈ n0
+    @test mass(FromState(),a1,u"kg",mw0)≈ mass0
+    @test moles(FromState(),a1,u"mol",mw0)≈ moles0
+
+
     a1 = state(n = n0,t=1,p=2)
     @test mol_fraction(FromState(),a1,nothing,mw0)≈ xn0
     @test mass_fraction(FromState(),a1,nothing,mw0)≈ xm0
@@ -71,11 +129,29 @@ end
     @test mol_number(FromState(),a1,u"mol",mw0)≈ n0
     @test mass(FromState(),a1,u"kg",mw0)≈ mass0
     @test moles(FromState(),a1,u"mol",mw0)≈ moles0
-    
+
+    a1 = state(_n,_t,_p)
+    @test mol_fraction(FromState(),a1,nothing,mw0)≈ xn0
+    @test mass_fraction(FromState(),a1,nothing,mw0)≈ xm0
+    @test mass_number(FromState(),a1,u"kg",mw0)≈ m0
+    @test mol_number(FromState(),a1,u"mol",mw0)≈ n0
+    @test mass(FromState(),a1,u"kg",mw0)≈ mass0
+    @test moles(FromState(),a1,u"mol",mw0)≈ moles0
+
     mw1 = 34.3
     moles1 = 2.3
     mass1 = moles1*mw1*0.001
+    _mass = spec(mass=mass1)
+    _moles= spec(moles=moles1)
     a1 = state(t=1,p=2)
+    @test mol_fraction(FromState(),a1,nothing,mw1)≈ [1.0]
+    @test mass_fraction(FromState(),a1,nothing,mw1)≈ [1.0]
+    @test mass_number(FromState(),a1,u"kg",mw1)≈ [0.001*mw1]
+    @test mol_number(FromState(),a1,u"mol",mw1)≈ [1.0]
+    @test mass(FromState(),a1,u"kg",mw1)≈ 0.001*mw1
+    @test moles(FromState(),a1,u"mol",mw1)≈   1.0
+
+    a1 = state(_t,_p)
     @test mol_fraction(FromState(),a1,nothing,mw1)≈ [1.0]
     @test mass_fraction(FromState(),a1,nothing,mw1)≈ [1.0]
     @test mass_number(FromState(),a1,u"kg",mw1)≈ [0.001*mw1]
@@ -91,6 +167,16 @@ end
     @test mass(FromState(),a1,u"kg",mw1)≈ mass1
     @test moles(FromState(),a1,u"mol",mw1)≈  moles1
 
+    a1 = state(_t,_p,_mass)
+    @test mol_fraction(FromState(),a1,nothing,mw1)≈ [1.0]
+    @test mass_fraction(FromState(),a1,nothing,mw1)≈ [1.0]
+    @test mass_number(FromState(),a1,u"kg",mw1)≈ [mass1]
+    @test mol_number(FromState(),a1,u"mol",mw1)≈ [moles1]
+    @test mass(FromState(),a1,u"kg",mw1)≈ mass1
+    @test moles(FromState(),a1,u"mol",mw1)≈  moles1
+
+
+    
     a1 = state(t=1,p=2,moles=moles1)
     @test mol_fraction(FromState(),a1,nothing,mw1)≈ [1.0]
     @test mass_fraction(FromState(),a1,nothing,mw1)≈ [1.0]
@@ -98,6 +184,16 @@ end
     @test mol_number(FromState(),a1,u"mol",mw1)≈ [moles1]
     @test mass(FromState(),a1,u"kg",mw1)≈ mass1
     @test moles(FromState(),a1,u"mol",mw1)≈  moles1
+
+    a1 = state(_t,_p,_moles)
+    @test mol_fraction(FromState(),a1,nothing,mw1)≈ [1.0]
+    @test mass_fraction(FromState(),a1,nothing,mw1)≈ [1.0]
+    @test mass_number(FromState(),a1,u"kg",mw1)≈ [mass1]
+    @test mol_number(FromState(),a1,u"mol",mw1)≈ [moles1]
+    @test mass(FromState(),a1,u"kg",mw1)≈ mass1
+    @test moles(FromState(),a1,u"mol",mw1)≈  moles1
+
+
 end
 
 @testset "energy consistency" begin
