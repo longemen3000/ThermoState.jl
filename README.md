@@ -212,10 +212,13 @@ Some abstract tuple types are saved on `ThermoState.QuickStates`. the tuple type
 - `SinglePS,MultiPS`
 - `SinglePH,MultiPH`
 - `SingleSatT,MultiSatT` (Two phase equilibrium)
-- `SingleΦT,MultiΦT` (vapor fraction)
 - `SingleSatP,MultiSatP`
+- `SingleΦT,MultiΦT`  (vapor fraction, general)
 - `SingleΦP,MultiΦP`
-
+- `SingleΦmT,MultiΦmT` (mass vapor fraction, or quality)
+- `SingleΦmP,MultiΦmP`
+- `SingleΦnT,MultiΦnT`(molar vapor fraction)
+- `SingleΦnP,MultiΦnP`
 
 ## Exported utilities
 
@@ -253,17 +256,20 @@ default_units(Pressure()) #u"Pa"
 
 using this package, we can implement a basic ideal gas model that only calculates the pressure, given a temperature and molar volume, using the relation `pvₙ=Rt`:
 
-
 ```julia
 using ThermoState, Unitful, ThermoState.QuickStates
-import ThermoState: pressure,mol_volume,temperature
+import ThermoState: pressure #import all functions to overload, if you have a custom property, this is not necessary.
+
+import ThermoState: molecular_weight #you can use your own name in your files, but it is recommended to use this to better interop between packages.
 
 struct MyIdealGas
     mw::Float64
 end
-
+#t
 molecular_weight(model::MyIdealGas) = model.mw
 
+#your implementation of pressure, with v and t. 
+#pass a state type to dispatch on the available properties.
 function pressure_impl(mt::SingleVT,model::MyIdealGas,v,t)
     return 8.314*t/v
 end

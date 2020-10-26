@@ -191,4 +191,6 @@ function quality(model::FromState,st::ThermodynamicState)
 end
 
 
+molecular_weight(x) = nothing
+
 
