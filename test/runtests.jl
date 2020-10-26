@@ -307,3 +307,6 @@ using ThermoState.StatePoints
 @test temperature(FromState(),StandardConditions()) == 273.15
 @test temperature(FromState(),NormalConditions()) == 293.15
 end
+
+@testset "variable spec" begin
+end

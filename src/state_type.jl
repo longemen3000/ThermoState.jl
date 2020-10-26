@@ -2,8 +2,13 @@
  #returns the specification symbol in multicomponent
 #returns :singlecomponent if there are no specifications
 #throws error if more than one specification is found
-const AMOUNT_CONST_FIRST =Dict{Int,Any}(
-     0000 => SingleComponent()
+
+
+const AMOUNT_CONST =Dict{Int,Any}(
+     0000 => OneMol()
+    ,0001 => MaterialAmount{MOLAR}()
+    ,0002 => MaterialAmount{MASS}() 
+    ,0099 => SingleComponent()
     ,1100 => MaterialCompounds{MOLAR,FRACTION}()
     ,1200 => MaterialCompounds{MASS,FRACTION}()
     ,2100 => MaterialCompounds{MOLAR,TOTAL_AMOUNT}()
@@ -16,11 +21,7 @@ const AMOUNT_CONST_FIRST =Dict{Int,Any}(
     ,3600 => HumiditySpec{HumidityDewPoint}()
 )
 
-const AMOUNT_CONST_SECOND =Dict{Int,Any}(
-     00 => OneMol()
-    ,01 => MaterialAmount{MOLAR}()
-    ,02 => MaterialAmount{MASS}()
-)
+
 
 
 #the following functions are essencial in the ordering
@@ -75,14 +76,17 @@ end
 
 @generated function static_amount_type(x::T) where T<: ThermodynamicState
     sps = _static_specs(x)
-    mass_int = mapreduce(_reduce_check_mass,+,sps)
-    val = mass_int
+    val = mapreduce(_reduce_check_mass,+,sps)
     modval = mod(val,MATERIAL_SINGLE_MAX)
     if val in (2100,2200)
-        res =  (AMOUNT_CONST_FIRST[val],AMOUNT_CONST_FIRST[val])
+        _1 = val
+        _2 = val
     else
-        res =  (AMOUNT_CONST_FIRST[val-modval],AMOUNT_CONST_SECOND[modval])
+        _1 = max(val-modval,99)
+        _2 = modval
     end
+    res =  (AMOUNT_CONST[_1],AMOUNT_CONST[_2])
+
     return :($res)
 end
 
