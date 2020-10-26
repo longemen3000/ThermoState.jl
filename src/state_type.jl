@@ -56,7 +56,7 @@ _stateorder(x::MolecularWeight) = 10005
 _stateorder(x::VariableSpec) = 10006
 
 
-
+#using specs here allows to delete all reduce_check_mass(::Type)
 function _static_specs(x::Type{ThermodynamicState{S,C}}) where {S,C}
     @nospecialize S,C
     tvec = S.parameters
@@ -71,21 +71,10 @@ function _static_specs(x::Type{ThermodynamicState{S,C}}) where {S,C}
     end
 end
 
-function _static_specs_types(x::Type{ThermodynamicState{S,C}}) where {M,C,S}
-    @nospecialize S,C
-    tvec = S.parameters
-    res1 = [tvec[i].parameters[1] for i in 1:length(tvec)]
-    if C === Tuple{}
-        return res1
-    else
-        res2 = collect(C.parameters)
-        append!(res1,res2)
-        return res1
-    end
-end
+
 
 @generated function static_amount_type(x::T) where T<: ThermodynamicState
-    sps = _static_specs_types(x)
+    sps = _static_specs(x)
     mass_int = mapreduce(_reduce_check_mass,+,sps)
     val = mass_int
     modval = mod(val,MATERIAL_SINGLE_MAX)
@@ -176,8 +165,6 @@ get_spec(val,st::ThermodynamicState) = get_spec(val,st.specs)
 function throw_get_spec(val,st::ThermodynamicState)
     return static_get_spec(st,val)
 end
-
-
 
 function has_spec(val::Type{T},st::ThermodynamicState) where T<: AbstractSpec
     static_has_spec(st,val)
