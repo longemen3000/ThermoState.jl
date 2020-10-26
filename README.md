@@ -33,6 +33,12 @@ At this moment, the following properties are defined:
  - `internal_energy` (`total_internal_energy`,`mol_internal_energy`,`mass_internal_energy`) 
  - `moles`
  - `mass`
+ - `molar_mass` (molecular weight ponderated by material amounts)
+ - `options`
+ - `phase` (extracted from `:sat` or `:phase` keywords)
+ - `vapor_fraction` (`mol_vapor_fraction`,`mass_vapor_fraction`)
+
+
 
 For defining property specifications, the package defines the `AbstractSpec` type and the `Spec` container. an individual specification can be defined by:
 
