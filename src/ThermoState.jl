@@ -43,7 +43,7 @@ export mass_entropy, mol_entropy, total_entropy
 export mass_fraction, mol_fraction
 export mass_number, mol_number
 export options, phase, quality, mass_vapor_fraction,mol_vapor_fraction
-
+export molecular_weight
 export @to_units
 export state_type
 export Types,QuickStates,StatePoints
