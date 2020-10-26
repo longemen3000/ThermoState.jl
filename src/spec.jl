@@ -222,9 +222,7 @@ Base.values(s::ThermodynamicState) = s.specs
 
 #reduce-based mass transform, to check properties
 #to add a new value, participating on mass_check, add:
-#_reduce_check_mass(x::Spec{newtype}) used in state(specs...)
-#_reduce_check_mass(x::Type{newtype}) used in state(kw...)
-#_reduce_check_mass(x::Val{:x}) used in state(kw...)
+#_reduce_check_mass(x::Type{newtype})
 
 const MATERIAL_SINGLE_MAX = 100
 
@@ -232,6 +230,14 @@ const MATERIAL_SINGLE_MAX = 100
  function _reduce_check_mass(x::T) where T<: AbstractSpec
     return _reduce_check_mass(T)
  end
+
+ @generated function static_check_mass_kws(x::Val{T}) where T
+    _type = KW_TO_SPEC[T]
+    res = _reduce_check_mass(typeof(_type))
+    return :($res)
+end
+_reduce_check_mass(x::Symbol) = static_check_mass_kws(Val(x))
+
 _reduce_check_mass(::Type) = 0
 _reduce_check_mass(sp::Spec) = _reduce_check_mass(typeof(specification(sp)))
 _reduce_check_mass(::Type{MaterialAmount{MOLAR}}) = 1
@@ -251,52 +257,25 @@ _reduce_check_mass(::Type{HumiditySpec{MassHumidity}}) = 3400
 _reduce_check_mass(::Type{HumiditySpec{RelativeHumidity}}) = 3500
 _reduce_check_mass(::Type{HumiditySpec{HumidityDewPoint}}) = 3600
 
-
-
-
-#mass modifiers
-_reduce_check_mass(x::Symbol) = _reduce_check_mass(Val(x))
-_reduce_check_mass(::Val{T} where T)=0
-
-_reduce_check_mass(::Val{:moles})=1
-_reduce_check_mass(::Val{:mass})=2
-
-_reduce_check_mass(::Val{:xn})=1100
-_reduce_check_mass(::Val{:xm})=1200
-_reduce_check_mass(::Val{:n})=2100
-_reduce_check_mass(::Val{:m})=2200
-
-
-_reduce_check_mass(::Val{:hum_wetbulb}) = 3100
-_reduce_check_mass(::Val{:hum_ratio}) = 3200
-_reduce_check_mass(::Val{:hum_molfrac}) = 3300
-_reduce_check_mass(::Val{:hum_massfrac}) = 3400
-_reduce_check_mass(::Val{:rel_hum}) = 3500
-_reduce_check_mass(::Val{:hum_dewpoint}) = 3600
-
-#=
-
-=#
-#reduce-based phase transform, to check properties
-
 _reduce_check_phase(::Type) = 0
 _reduce_check_phase(sp::Spec) = _reduce_check_phase(typeof(specification(sp)))
 function _reduce_check_phase(x::T) where T<: AbstractSpec
     return _reduce_check_phase(T)
  end
 
+ @generated function static_check_phase_kws(x::Val{T}) where T
+    _type = KW_TO_SPEC[T]
+    res = _reduce_check_phase(typeof(_type))
+    return :($res)
+end
+
+_reduce_check_phase(x::Symbol) = static_check_phase_kws(Val(x))
+
 _reduce_check_phase(x::Type{TwoPhaseEquilibrium}) = 1
 _reduce_check_phase(x::Type{VaporFraction}) = 1
 _reduce_check_phase(x::Type{PhaseFractions}) = 10
 
-_reduce_check_phase(x::Symbol) = _reduce_check_phase(Val(x))
-_reduce_check_phase(::Val{:vle})=1
-_reduce_check_phase(::Val{:lle})=1
-_reduce_check_phase(::Val{:sat})=1
-_reduce_check_phase(::Val{:quality})=1
-_reduce_check_phase(::Val{:vfrac})=1
-_reduce_check_phase(::Val{:phase_fracs})=10
-_reduce_check_phase(::Val{T} where T)=0
+
 
 #function to correctly dispatch on the function terms
 keys_or_tuple(x::Tuple) = x
@@ -312,14 +291,14 @@ function _specs_phase_basis(args)::Int64
     return mapreduce(_reduce_check_phase,+,keys_or_tuple(args))
 end
 
-_reduce_mass_spec_c(x::Spec) = 0
-_reduce_mass_spec_c(x::Spec{MaterialCompounds}) = length(value(x))
+#_reduce_mass_spec_c(x::Spec) = 0
+#_reduce_mass_spec_c(x::Spec{MaterialCompounds}) = length(value(x))
 
 _specs_C(kwargs::NamedTuple,kw::Int64) = 1
 _specs_C(tup::Tuple,kw::Int64)::Int64 = 1
 
-_reduce_mass_spec_p(x::Spec) = 0
-_reduce_mass_spec_p(x::Spec{PhaseFractions}) = length(value(x))
+#_reduce_mass_spec_p(x::Spec) = 0
+#_reduce_mass_spec_p(x::Spec{PhaseFractions}) = length(value(x))
 
 function _specs_P(kw::Int64)::Int64
     if iszero(kw)
@@ -331,16 +310,22 @@ function _specs_P(kw::Int64)::Int64
     end
 end
 
+_reduce_check_opt(x::Spec) = _reduce_check_opt(typeof(specification(x)))
+
+_reduce_check_opt(x::Type) = 0
+_reduce_check_opt(x::Type{PhaseTag}) = 1
+_reduce_check_opt(x::Type{Options}) = 1
 #optional values not counted during degrees of freedom calc
+@generated function static_check_opt_kws(x::Val{T}) where T
+    _type = KW_TO_SPEC[T]
+    res = _reduce_check_opt(typeof(_type))
+    return :($res)
+end
+_reduce_check_opt(x::Symbol) = static_check_opt_kws(Val(x))
 
-_reduce_check_opt(x::Spec) = 0
-_reduce_check_opt(x::Spec{PhaseTag}) = 1
-_reduce_check_opt(x::Spec{Options}) = 1
 
-_reduce_check_opt(x::Symbol) = _reduce_check_opt(Val(x))
-_reduce_check_opt(::Val{:phase})=1
-_reduce_check_opt(::Val{:options})=1
-_reduce_check_opt(::Val{T} where T)=0
+
+
 
 function _specs_F(args,mass_basis::Int64,phase_basis::Int64)::Int64
     F = length(args)
@@ -366,14 +351,14 @@ function _specs_F(args,mass_basis::Int64,phase_basis::Int64)::Int64
     return F
 end
 
+####Buggy
 
-function spec_equal(x1::Spec{T},x2::Spec{T})::Bool where {T}
-    return true
+function spec_equal(x1::Spec,x2::Spec)::Bool
+    t1 = specification(x1)
+    t2 = specification(x2)
+    t1 == t2
 end
 
-function spec_equal(x1::Spec{T1},x2::Spec{T2})::Bool where {T1,T2}
-    return false
-end
 function spec_tuple_unique(a)::Bool
     len = length(a)
     if len == 1

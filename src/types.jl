@@ -129,7 +129,7 @@ end
 
 using .Types
 
-const KW_TO_SPEC = IdDict{Symbol,Any}(
+const KW_TO_SPEC = Dict{Symbol,Any}(
 :h =>  Enthalpy{MOLAR}()
 ,:g =>  Gibbs{MOLAR}()
 ,:a =>  Helmholtz{MOLAR}()
@@ -208,7 +208,7 @@ const KW_TO_SPEC = IdDict{Symbol,Any}(
 )
 
 
-const SPEC_TO_KW = IdDict{Any,Symbol}(
+const SPEC_TO_KW = Dict{Any,Symbol}(
 Enthalpy{MOLAR}() => :mol_h
 ,Gibbs{MOLAR}() => :mol_g
 ,Helmholtz{MOLAR}() => :mol_a
