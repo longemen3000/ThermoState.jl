@@ -3,23 +3,23 @@
 #returns :singlecomponent if there are no specifications
 #throws error if more than one specification is found
 const AMOUNT_CONST_FIRST =Dict{Int,Any}(
-     000 => SingleComponent()
-    ,110 => MaterialCompounds{MOLAR,FRACTION}()
-    ,120 => MaterialCompounds{MASS,FRACTION}()
-    ,210 => MaterialCompounds{MOLAR,TOTAL_AMOUNT}()
-    ,220 => MaterialCompounds{MASS,TOTAL_AMOUNT}()
-    ,310 => HumiditySpec{WetBulbTemperature}()
-    ,320 => HumiditySpec{HumidityRatio}()
-    ,330 => HumiditySpec{MolarHumidity}()
-    ,340 => HumiditySpec{MassHumidity}()
-    ,350 => HumiditySpec{RelativeHumidity}()
-    ,360 => HumiditySpec{HumidityDewPoint}()
+     0000 => SingleComponent()
+    ,1100 => MaterialCompounds{MOLAR,FRACTION}()
+    ,1200 => MaterialCompounds{MASS,FRACTION}()
+    ,2100 => MaterialCompounds{MOLAR,TOTAL_AMOUNT}()
+    ,2200 => MaterialCompounds{MASS,TOTAL_AMOUNT}()
+    ,3100 => HumiditySpec{WetBulbTemperature}()
+    ,3200 => HumiditySpec{HumidityRatio}()
+    ,3300 => HumiditySpec{MolarHumidity}()
+    ,3400 => HumiditySpec{MassHumidity}()
+    ,3500 => HumiditySpec{RelativeHumidity}()
+    ,3600 => HumiditySpec{HumidityDewPoint}()
 )
 
 const AMOUNT_CONST_SECOND =Dict{Int,Any}(
-     000 => OneMol()
-    ,001 => MaterialAmount{MOLAR}()
-    ,002 => MaterialAmount{MASS}()
+     00 => OneMol()
+    ,01 => MaterialAmount{MOLAR}()
+    ,02 => MaterialAmount{MASS}()
 )
 
 
@@ -88,8 +88,8 @@ end
     sps = _static_specs_types(x)
     mass_int = mapreduce(_reduce_check_mass,+,sps)
     val = mass_int
-    modval = mod(val,10)
-    if val in (210,220)
+    modval = mod(val,MATERIAL_SINGLE_MAX)
+    if val in (2100,2200)
         res =  (AMOUNT_CONST_FIRST[val],AMOUNT_CONST_FIRST[val])
     else
         res =  (AMOUNT_CONST_FIRST[val-modval],AMOUNT_CONST_SECOND[modval])

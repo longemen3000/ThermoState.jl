@@ -221,49 +221,68 @@ ThermodynamicState(st::Tuple) = ThermodynamicState(st,())
 Base.values(s::ThermodynamicState) = s.specs
 
 #reduce-based mass transform, to check properties
-
-_reduce_check_mass(x::Spec) = 0
-_reduce_check_mass(x::Spec{MaterialCompounds{MOLAR,FRACTION}}) = 110
-_reduce_check_mass(x::Spec{MaterialCompounds{MASS,FRACTION}}) = 120
-_reduce_check_mass(x::Spec{MaterialCompounds{MOLAR,TOTAL_AMOUNT}}) = 210
-_reduce_check_mass(x::Spec{MaterialCompounds{MASS,TOTAL_AMOUNT}}) = 220
+#to add a new value, participating on mass_check, add:
+#_reduce_check_mass(x::Spec{newtype}) used in state(specs...)
+#_reduce_check_mass(x::Type{newtype}) used in state(kw...)
+#_reduce_check_mass(x::Val{:x}) used in state(kw...)
+#=
 _reduce_check_mass(x::Spec{MaterialAmount{MOLAR}}) = 1
 _reduce_check_mass(x::Spec{MaterialAmount{MASS}}) = 2
-
-_reduce_check_mass(x::Type{MaterialCompounds{MOLAR,FRACTION}}) = 110
-_reduce_check_mass(x::Type{MaterialCompounds{MASS,FRACTION}}) = 120
-_reduce_check_mass(x::Type{MaterialCompounds{MOLAR,TOTAL_AMOUNT}}) = 210
-_reduce_check_mass(x::Type{MaterialCompounds{MASS,TOTAL_AMOUNT}}) = 220
-
-_reduce_check_mass(x::Type{HumiditySpec{WetBulbTemperature}})  = 310
-_reduce_check_mass(x::Type{HumiditySpec{HumidityRatio}}) = 320
-_reduce_check_mass(x::Type{HumiditySpec{MolarHumidity}}) = 330
-_reduce_check_mass(x::Type{HumiditySpec{MassHumidity}}) = 340
-_reduce_check_mass(x::Type{HumiditySpec{RelativeHumidity}}) = 350
-_reduce_check_mass(x::Type{HumiditySpec{HumidityDewPoint}}) = 360
-
-
-#mass modifiers
+=#
 _reduce_check_mass(x::Type{MaterialAmount{MOLAR}}) = 1
 _reduce_check_mass(x::Type{MaterialAmount{MASS}}) = 2
+
+#this const is the max number of Material amount types that can be defined, before, it was 10
+const MATERIAL_SINGLE_MAX = 100
+#=
+_reduce_check_mass(x::Spec) = 0 #default
+=#
 _reduce_check_mass(x::Type) = 0
 
+_reduce_check_mass(x::Spec{MaterialCompounds{MOLAR,FRACTION}}) = 1100
+_reduce_check_mass(x::Spec{MaterialCompounds{MASS,FRACTION}}) = 1200
+_reduce_check_mass(x::Spec{MaterialCompounds{MOLAR,TOTAL_AMOUNT}}) = 2100
+_reduce_check_mass(x::Spec{MaterialCompounds{MASS,TOTAL_AMOUNT}}) = 2200
 
+_reduce_check_mass(x::Type{MaterialCompounds{MOLAR,FRACTION}}) = 1100
+_reduce_check_mass(x::Type{MaterialCompounds{MASS,FRACTION}}) = 1200
+_reduce_check_mass(x::Type{MaterialCompounds{MOLAR,TOTAL_AMOUNT}}) = 2100
+_reduce_check_mass(x::Type{MaterialCompounds{MASS,TOTAL_AMOUNT}}) = 2200
+
+_reduce_check_mass(x::Type{HumiditySpec{WetBulbTemperature}})  = 3100
+_reduce_check_mass(x::Type{HumiditySpec{HumidityRatio}}) = 3200
+_reduce_check_mass(x::Type{HumiditySpec{MolarHumidity}}) = 3300
+_reduce_check_mass(x::Type{HumiditySpec{MassHumidity}}) = 3400
+_reduce_check_mass(x::Type{HumiditySpec{RelativeHumidity}}) = 3500
+_reduce_check_mass(x::Type{HumiditySpec{HumidityDewPoint}}) = 3600
+#=
+_reduce_check_mass(x::Spec{HumiditySpec{WetBulbTemperature}})  = 3100
+_reduce_check_mass(x::Spec{HumiditySpec{HumidityRatio}}) = 3200
+_reduce_check_mass(x::Spec{HumiditySpec{MolarHumidity}}) = 3300
+_reduce_check_mass(x::Spec{HumiditySpec{MassHumidity}}) = 3400
+_reduce_check_mass(x::Spec{HumiditySpec{RelativeHumidity}}) = 3500
+_reduce_check_mass(x::Spec{HumiditySpec{HumidityDewPoint}}) = 3600
+=#
+
+#mass modifiers
 _reduce_check_mass(x::Symbol) = _reduce_check_mass(Val(x))
-_reduce_check_mass(::Val{:xn})=110
-_reduce_check_mass(::Val{:xm})=120
-_reduce_check_mass(::Val{:n})=210
-_reduce_check_mass(::Val{:m})=220
-_reduce_check_mass(::Val{:moles})=1
-_reduce_check_mass(::Val{:mass})=2
 _reduce_check_mass(::Val{T} where T)=0
 
-_reduce_check_mass(::Val{:hum_wetbulb}) = 310
-_reduce_check_mass(::Val{:hum_ratio}) = 320
-_reduce_check_mass(::Val{:hum_molfrac}) = 330
-_reduce_check_mass(::Val{:hum_massfrac}) = 340
-_reduce_check_mass(::Val{:rel_hum}) = 350
-_reduce_check_mass(::Val{:hum_dewpoint}) = 360
+_reduce_check_mass(::Val{:moles})=1
+_reduce_check_mass(::Val{:mass})=2
+
+_reduce_check_mass(::Val{:xn})=1100
+_reduce_check_mass(::Val{:xm})=1200
+_reduce_check_mass(::Val{:n})=2100
+_reduce_check_mass(::Val{:m})=2200
+
+
+_reduce_check_mass(::Val{:hum_wetbulb}) = 3100
+_reduce_check_mass(::Val{:hum_ratio}) = 3200
+_reduce_check_mass(::Val{:hum_molfrac}) = 3300
+_reduce_check_mass(::Val{:hum_massfrac}) = 3400
+_reduce_check_mass(::Val{:rel_hum}) = 3500
+_reduce_check_mass(::Val{:hum_dewpoint}) = 3600
 
 #=
 
@@ -287,6 +306,7 @@ _reduce_check_phase(::Val{T} where T)=0
 #function to correctly dispatch on the function terms
 keys_or_tuple(x::Tuple) = x
 keys_or_tuple(x::NamedTuple) = keys(x)
+
 
 function _specs_components(args)::Int64
     return mapreduce(_reduce_check_mass,+,keys_or_tuple(args))
@@ -331,7 +351,8 @@ function _specs_F(args,mass_basis::Int64,phase_basis::Int64)::Int64
     F = length(args)
     opt = mapreduce(_reduce_check_opt,+,keys_or_tuple(args))
     F = F - opt
-    mass_basis_mod = mod(mass_basis,10)
+    #MATERIAL_SINGLE_MAX = 100
+    mass_basis_mod = mod(mass_basis,MATERIAL_SINGLE_MAX)
     if iszero(mass_basis)
     elseif (mass_basis in (1,2)) | iszero(mass_basis_mod) #one_specified
         F = F -1
