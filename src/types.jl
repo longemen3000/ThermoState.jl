@@ -289,8 +289,6 @@ pv() = (Pressure(),VolumeAmount{MOLAR,VOLUME}(),SingleComponent())
 pvx() = (Pressure(),VolumeAmount{MOLAR,VOLUME}(),MaterialCompounds{MOLAR,FRACTION}())
 pvn() = (Pressure(),VolumeAmount{MOLAR,VOLUME}(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
 
-
-
 const SingleVT = Tuple{VolumeAmount,Temperature,SingleComponent}
 const MultiVT = Tuple{VolumeAmount,Temperature,MaterialCompounds}
 
@@ -309,7 +307,6 @@ st() = (Pressure(),Entropy{MOLAR}(),SingleComponent())
 stx() = (Pressure(),Entropy{MOLAR}(),MaterialCompounds{MOLAR,FRACTION}())
 stn() = (Pressure(),Entropy{MOLAR}(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
 
-
 const SinglePH = Tuple{Pressure,Enthalpy,SingleComponent}
 const MultiPH = Tuple{Pressure,Enthalpy,MaterialCompounds}
 
@@ -324,17 +321,12 @@ sat_t() = (TwoPhaseEquilibrium(),Temperature(),SingleComponent())
 sat_tx() = (TwoPhaseEquilibrium(),Temperature(),MaterialCompounds{MOLAR,FRACTION}())
 sat_tn() = (TwoPhaseEquilibrium(),Temperature(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
 
-
-
 const SingleSatP = Tuple{TwoPhaseEquilibrium,Pressure,SingleComponent}
 const MultiSatP = Tuple{TwoPhaseEquilibrium,Pressure,MaterialCompounds}
 
 sat_p() = (TwoPhaseEquilibrium(),Pressure(),SingleComponent())
 sat_px() = (TwoPhaseEquilibrium(),Pressure(),MaterialCompounds{MOLAR,FRACTION}())
 sat_pn() = (TwoPhaseEquilibrium(),Pressure(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
-
-
-
 
 molar_ϕt() = (VaporFraction{MOLAR}(),Temperature(),SingleComponent())
 molar_ϕntx() = (VaporFraction{MOLAR}(),Temperature(),MaterialCompounds{MOLAR,FRACTION}())

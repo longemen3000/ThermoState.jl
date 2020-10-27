@@ -339,5 +339,11 @@ end
     @test state_type(st) isa SinglePV
     
     st = state(v=1,p=2,n=rand(5))
-    @test state_type(st) isa MultiPT
+    @test state_type(st) isa MultiPV
+
+    st = state(t=2,v=1)
+    @test state_type(st) isa SingleVT
+    
+    st = state(t=2,v=1,n=rand(5))
+    @test state_type(st) isa MultiVT
 end
