@@ -193,4 +193,10 @@ end
 
 molecular_weight(x) = nothing
 
+function mol_cp end
+function mol_cv end
+function mass_cp end
+function mass_cv end
+function sound_speed end
+
 

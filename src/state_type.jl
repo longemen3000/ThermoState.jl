@@ -91,9 +91,9 @@ end
 end
 
 
-function _state_from_type(x::T) where T<: ThermodynamicState
-    @nospecialize x
-    state_specs =  _static_specs(x)
+function _state_from_type(x::Type{T}) where T<: ThermodynamicState
+    @nospecialize T
+    state_specs =  _static_specs(T)
     has_compound = false
     for spec in state_specs
         if spec isa MaterialCompounds
