@@ -218,6 +218,7 @@ Some abstract tuple types are saved on `ThermoState.QuickStates`. the tuple type
 
 - `SinglePT,MultiPT`
 - `SingleVT,MultiVT`
+- `SinglePV,MultiPV`
 - `SinglePS,MultiPS`
 - `SinglePH,MultiPH`
 - `SingleSatT,MultiSatT` (Two phase equilibrium)

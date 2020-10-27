@@ -282,6 +282,15 @@ pt() = (Pressure(),Temperature(),SingleComponent())
 ptx() = (Pressure(),Temperature(),MaterialCompounds{MOLAR,FRACTION}())
 ptn() = (Pressure(),Temperature(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
 
+const SinglePV = Tuple{Pressure,VolumeAmount,SingleComponent}
+const MultiPV = Tuple{Pressure,VolumeAmount,MaterialCompounds}
+
+pv() = (Pressure(),VolumeAmount{MOLAR,VOLUME}(),SingleComponent())
+pvx() = (Pressure(),VolumeAmount{MOLAR,VOLUME}(),MaterialCompounds{MOLAR,FRACTION}())
+pvn() = (Pressure(),VolumeAmount{MOLAR,VOLUME}(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
+
+
+
 const SingleVT = Tuple{VolumeAmount,Temperature,SingleComponent}
 const MultiVT = Tuple{VolumeAmount,Temperature,MaterialCompounds}
 
@@ -367,6 +376,7 @@ export SingleΦmT,MultiΦmT
 export SingleΦmP,MultiΦmP
 export SingleΦnT,MultiΦnT
 export SingleΦnP,MultiΦnP
+export SinglePV,MultiPV
 
 end
 

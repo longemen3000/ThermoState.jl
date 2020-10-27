@@ -1,6 +1,8 @@
 using Test
 using ThermoState
 using ThermoState.Types
+using ThermoState.QuickStates
+
 using Unitful
 
 
@@ -324,4 +326,18 @@ end
     sp0 = spec(t=t0)
     sp1 = spec(t=λ)
     @test sp1(t0) == sp0
+end
+
+@testset "state_type" begin
+    st = state(t=1,p=2)
+    @test state_type(st) isa SinglePT
+    
+    st = state(t=1,p=2,n=rand(5))
+    @test state_type(st) isa MultiPT
+
+    st = state(v=1,p=2)
+    @test state_type(st) isa SinglePV
+    
+    st = state(v=1,p=2,n=rand(5))
+    @test state_type(st) isa MultiPT
 end
