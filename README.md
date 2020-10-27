@@ -37,6 +37,9 @@ At this moment, the following properties are defined:
  - `options`
  - `phase` (extracted from `:sat` or `:phase` keywords)
  - `vapor_fraction` (`mol_vapor_fraction`,`mass_vapor_fraction`)
+ - `cp` (`mol_cp`,`mass_cp`, not defined, for interop use)
+ - `cv` (`mol_cv`,`mass_cv`, not defined, for interop use)
+ - `sound_speed` (not defined, for interop use)
 
 
 
