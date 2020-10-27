@@ -354,8 +354,8 @@ end
 ####Buggy
 
 function spec_equal(x1::Spec,x2::Spec)::Bool
-    t1 = specification(x1)
-    t2 = specification(x2)
+    t1::Symbol = nameof(typeof(specification(x1)))
+    t2::Symbol = nameof(typeof(specification(x2)))
     t1 == t2
 end
 
