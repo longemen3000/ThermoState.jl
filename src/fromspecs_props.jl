@@ -125,23 +125,23 @@ function mol_density(model::FromState,st::ThermodynamicState,unit::T=u"mol/m^3",
 
 end
 
-function mol_fraction(model::FromState,st::ThermodynamicState,unit,mw=nothing)
+function mol_fraction(model::FromState,st::ThermodynamicState,unit=nothing,mw=nothing)
     val = to_spec_compounds(st,mw,MaterialCompounds{MOLAR,FRACTION}())
     return val
 end
 
-function mass_fraction(model::FromState,st::ThermodynamicState,unit,mw=nothing)
+function mass_fraction(model::FromState,st::ThermodynamicState,unit=nothing,mw=nothing)
     val = to_spec_compounds(st,mw,MaterialCompounds{MASS,FRACTION}())
     return val   
 end
 
-function mol_number(model::FromState,st::ThermodynamicState,unit::T,mw=nothing) where T <: MolUnits
+function mol_number(model::FromState,st::ThermodynamicState,unit=u"mol",mw=nothing)
     val = to_spec_compounds(st,mw,MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
     return convert_unit.(u"mol",unit,val)
 
 end
 
-function mass_number(model::FromState,st::ThermodynamicState,unit::T,mw=nothing) where T <: Unitful.MassUnits
+function mass_number(model::FromState,st::ThermodynamicState,unit=u"kg",mw=nothing)
     val = to_spec_compounds(st,mw,MaterialCompounds{MASS,TOTAL_AMOUNT}())
     return convert_unit.(u"kg",unit,val)
 end

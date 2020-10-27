@@ -7,8 +7,29 @@ using Unitful
 
 
 @testset "spec" begin
+    #value
     @test value(spec(t=42))==42
-    @test value(spec(t=42.0))==42.0
+
+    #specification
+    @test specification(spec(spec"t",1)) == spec"t"
+
+    #@spec_str keyword
+    st = spec(t=1)
+    st2 = spec(spec"t",1)
+    @test st==st2
+
+    #variable spec
+    st2 = spec(spec"t",VariableSpec())
+    @test st2(1) == st
+
+    #units
+    st2 = spec(spec"t",1u"K",false)
+    @test st != st2
+
+    st2 = spec(spec"t",1u"K")
+    @test st == st2
+
+    
 end
 
 @testset "mass consistency" begin
@@ -310,6 +331,17 @@ using ThermoState.StatePoints
 @test temperature(FromState(),NormalConditions()) == 293.15
 end
 
+@testset "state errors" begin
+    
+    #@test_throws Exception state(t=1,T=1) #broken
+    mass0 = spec(spec"mass",1)
+    moles0 = spec(spec"moles",1)
+    t0 = spec(spec"t",1)
+    p0 = spec(spec"p",1)
+
+    @test_throws Exception state(mass0,moles0,t0,p0)
+end
+
 @testset "variable spec" begin
     λ = VariableSpec()
     p0 = 1
@@ -331,25 +363,69 @@ end
 @testset "state_type" begin
     st = state(t=1,p=2)
     @test state_type(st) isa SinglePT
-    
+    @test QuickStates.pt() isa SinglePT
+
     st = state(t=1,p=2,n=rand(5))
     @test state_type(st) isa MultiPT
+    @test QuickStates.ptx() isa MultiPT
+    @test QuickStates.ptn() isa MultiPT
 
     st = state(v=1,p=2)
     @test state_type(st) isa SinglePV
-    
+    @test QuickStates.pv() isa SinglePV
+
+
     st = state(v=1,p=2,n=rand(5))
     @test state_type(st) isa MultiPV
+    @test QuickStates.pvx() isa MultiPV
+    @test QuickStates.pvn() isa MultiPV
 
     st = state(t=2,v=1)
     @test state_type(st) isa SingleVT
-    
+    @test QuickStates.vt() isa SingleVT
+
     st = state(t=2,v=1,n=rand(5))
     @test state_type(st) isa MultiVT
+    @test QuickStates.vtx() isa MultiVT
+    @test QuickStates.vtn() isa MultiVT
 
     st = state(h=2,p=1)
     @test state_type(st) isa SinglePH
-    
+    @test QuickStates.ph() isa SinglePH
+
     st = state(h=2,p=1,n=rand(5))
     @test state_type(st) isa MultiPH
+    @test QuickStates.phx() isa MultiPH
+    @test QuickStates.phn() isa MultiPH
+
+    st = state(sat=true,p=1)
+    @test state_type(st) isa SingleSatP
+    @test QuickStates.sat_p() isa SingleSatP
+
+    st = state(sat=true,p=1,n=rand(5))
+    @test state_type(st) isa MultiSatP
+    @test QuickStates.sat_px() isa MultiSatP
+    @test QuickStates.sat_pn() isa MultiSatP
+
+    st = state(sat=true,t=1)
+    @test state_type(st) isa SingleSatT
+    @test QuickStates.sat_t() isa SingleSatT
+
+    st = state(sat=true,t=1,n=rand(5))
+    @test state_type(st) isa MultiSatT
+    @test QuickStates.sat_tx() isa MultiSatT
+    @test QuickStates.sat_tn() isa MultiSatT
+
+
 end
+
+@testset "@to_units" begin
+    xn = rand(5)
+    xn = xn ./ sum(xn)
+    st = state(sat=true,t=1u"K",xn=xn)
+    @test (@to_units temperature(FromState(),st)) == 1u"K"
+    @test (@to_units temperature(FromState(),st,u"°C")) ==(-5443//20)u"°C"
+    @test (@to_units mol_fraction(FromState(),st)) == xn
+
+end
+

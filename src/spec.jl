@@ -79,6 +79,30 @@ end
 value(s::Spec) = s.val
 specification(s::Spec) = s.type
 
+"""
+    @spec_str(term)
+
+Allows an easy instantiation of specification properties, returning a specification type corresponding to the input symbol:
+
+```
+spec"t" = Temperature()
+```
+
+This property, among with the `spec` function, allows the creation of specification properties at compile time:
+
+```julia-repl
+julia> Using Unitful,ThermoState,BenchmarkTools
+
+julia> @btime spec(spec"t",232u"°C",false)
+  0.001 ns (0 allocations: 0 bytes)
+spec(t = 232[°C])
+```
+"""
+macro spec_str(term)
+    res = KW_TO_SPEC[Symbol(term)]
+    return :($res)
+end
+
 #preferred stripped
 function _ups(x,normalize_units=true)
     if normalize_units
@@ -99,6 +123,29 @@ function check_and_norm(::SP,val::U,normalize_units::Bool=true) where {SP<:Abstr
 end
 
 
+"""
+    spec(sp::AbstractSpec,val,normalize_units=true)
+    spec(;kwargs,normalize_units=true)
+
+Generates a specification property. It can be called with the keyword interface:
+```julia
+sp = spec(t=32u"°C")
+sp = spec(t=32u"°C",normalize_units = true)
+```
+Or the positional argument interface:
+```julia
+sp = spec(Types.Temperature(),32u"°C")
+sp = spec(Types.Temperature(),32u"°C",true)
+```
+If `normalize_units` is set to false, then any unitful quantities are stored as-is, instead of being transformed to SI units.
+
+You can use the @spec_str macro to call the apropiate `Spec` type:
+```julia
+sp = spec(spec"t",32u"°C")
+sp = spec(spec"t",32u"°C",true)
+```
+"""
+function spec end
 #special cases, VariableSpec and Misssing
 function spec(sp::AbstractSpec, val::VariableSpec,normalize_units::Bool=true)
     return Spec(sp,val)
@@ -183,6 +230,8 @@ end
 function spec(t::T, u,normalize_units::Bool=true) where T<:CategoricalSpec
     return Spec(t,u)
 end
+
+
 
 function spec(;kwargs...)
     if hasproperty(kwargs.data,:normalize_units)
@@ -401,7 +450,8 @@ _is_variable_spec(x::Spec{T,VariableSpec} where T) =true
 
 """
     state(;normalize_units=true,check=true,kwargs...)
-
+    state(args...;check=true)
+    state((specs...))
 Creates a `ThermodynamicState` from the arguments passed.
 If one or more of the arguments is the value `VariableSpec()`, the state created will be a callable,
  returning a complete state when evaluated.
@@ -410,7 +460,26 @@ If one or more of the arguments is the value `VariableSpec()`, the state created
  This can be disabled with `normalize_units=false`
 
 When creating a thermodynamic state, the input arguments are checked for consistency with the gibbs rule.
- This check can be skipped with `check=false`
+This check can be skipped with `check=false`
+
+if called with a tuple of specs, all the checks are skipped, allowing defining states at compile time. this form does not allow variable specifications.
+## examples:
+
+```
+st1 = state(t=1,p=2,mass=3) #keyword interface
+
+t0 = spec(spec"t",1)
+p0 = spec(spec"p",2)
+mass0 = spec(spec"mass",3)
+st2 = state(t0,p0,mass0) # positional arguments interface
+
+st3 = state((t0,p0,mass0)) #no runtime cost, not checked
+
+st4 = state(t=1,T=2,p=3,P=4) #errors, spends a determinate amount of time checking for errors
+st4 = state(t=1,T=2,p=3,P=4,check=false) #doesnt error, doenst check
+
+
+```
 
 """
 function state(;check=true,normalize_units=true,kwargs...)
@@ -449,6 +518,10 @@ function state(args::Vararg{Spec};check=true)
     else
         return ThermodynamicState(tup,callables)
     end
+end
+
+function state(specs::NTuple{N,Spec}) where N
+    return ThermodynamicState(specs,())
 end
 
 function (f::ThermodynamicState{T,Tuple{S1}})(x1::T1;normalize_units=true) where {T,S1,T1}

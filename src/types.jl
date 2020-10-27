@@ -310,7 +310,7 @@ stn() = (Pressure(),Entropy{MOLAR}(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
 const SinglePH = Tuple{Pressure,Enthalpy,SingleComponent}
 const MultiPH = Tuple{Pressure,Enthalpy,MaterialCompounds}
 
-pht() = (Pressure(),Enthalpy{MOLAR}(),SingleComponent())
+ph() = (Pressure(),Enthalpy{MOLAR}(),SingleComponent())
 phx() = (Pressure(),Enthalpy{MOLAR}(),MaterialCompounds{MOLAR,FRACTION}())
 phn() = (Pressure(),Enthalpy{MOLAR}(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
 
