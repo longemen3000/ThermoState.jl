@@ -346,4 +346,10 @@ end
     
     st = state(t=2,v=1,n=rand(5))
     @test state_type(st) isa MultiVT
+
+    st = state(h=2,p=1)
+    @test state_type(st) isa SinglePH
+    
+    st = state(h=2,p=1,n=rand(5))
+    @test state_type(st) isa MultiPH
 end
