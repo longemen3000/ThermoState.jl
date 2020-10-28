@@ -21,27 +21,6 @@ This package proposes the following conventions for naming properties:
 
  - `total_$PROPERTY` is a property of units U. (total Helmholtz energy has joule units)
 
-At this moment, the following properties are defined:
- - `volume` (`total_volume`,`mol_volume`,`mass_volume`)
- - `density` (`mol_density`,`mass_density`)
- - `pressure`
- - `temperature`
- - `enthalpy` (`total_enthalpy`,`mol_entalphy`,`mass_enthalpy`)
- - `entropy` (`total_entropy`,`mol_entropy`,`mass_entropy`)
- - `gibbs` (`total_gibbs`,`mol_gibbs`,`mass_gibbs`) 
- - `helmholtz` (`total_helmholtz`,`mol_helmholtz`,`mass_helmholtz`) 
- - `internal_energy` (`total_internal_energy`,`mol_internal_energy`,`mass_internal_energy`) 
- - `moles`
- - `mass`
- - `molar_mass` (molecular weight ponderated by material amounts)
- - `options`
- - `phase` (extracted from `:sat` or `:phase` keywords)
- - `vapor_fraction` (`mol_vapor_fraction`,`mass_vapor_fraction`)
- - `cp` (`mol_cp`,`mass_cp`, not defined, for interop use)
- - `cv` (`mol_cv`,`mass_cv`, not defined, for interop use)
- - `sound_speed` (not defined, for interop use)
-
-
 The following properties are accepted by an state and have an accesor function:
 
 | Property             |Units     |Accessor function      |Keywords for `spec` and `state` |
