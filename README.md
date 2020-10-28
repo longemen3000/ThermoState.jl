@@ -42,8 +42,62 @@ At this moment, the following properties are defined:
  - `sound_speed` (not defined, for interop use)
 
 
+The following properties are accepted by an state and have an accesor function:
 
-For defining property specifications, the package defines the `AbstractSpec` type and the `Spec` container. an individual specification can be defined by:
+| Property             |Units     |Accessor function      |Keywords for `spec` and `state` |
+|----------------------|----------|-----------------------|--------------------------------|
+| Molar volume         |m3/mol    |`mol_volume`           | `v`, `mol_v`                   |
+| Mass volume          |m3/kg     |`mass_volume`          | `mass_v`                       |
+| Total volume         |m3        |`total_volume`         | `total_v`, `V`                 |
+| Molar density        |mol/m3    |`mol_density`          | `ρ`, `mol_ρ`, `rho`, `mol_rho` |
+| Mass density         |mol/kg    |`mass_density`         | `mass_ρ`, `mass_rho`           |
+| Temperature          |K         |`temperature`          | `t`, `T`                       |
+| Pressure             |Pa        |`pressure`             | `p`, `P`                       |
+| Molar enthalpy       |J/mol     |`mol_enthalpy`         | `h`, `mol_h`                   |
+| Mass enthalpy        |J/kg      |`mass_enthalpy`        | `mass_h`                       |
+| Total enthalpy       |J         |`total_enthalpy`       | `total_h`                      |
+| Molar Gibbs          |J/mol     |`mol_gibbs`            | `g`, `mol_g`                   |
+| Mass Gibbs           |J/kg      |`mass_gibbs`           | `mass_g`                       |
+| Total Gibbs          |J         |`total_gibbs`          | `total_g`                      |
+| Molar Helmholtz      |J/mol     |`mol_helmholtz`        | `a`, `mol_a`                   |
+| Mass Helmholtz       |J/kg      |`mass_helmholtz`       | `mass_a`                       |
+| Total Helmholtz      |J         |`total_helmholtz`      | `total_a`                      |
+| Molar Internal Energy|J/mol     |`mol_internal_energy`  | `a`, `mol_a`                   |
+| Mass Internal Energy |J/kg      |`mass_internal_energy` | `mass_a`                       |
+| Total Internal Energy|J         |`total_internal_energy`| `total_a`                      |
+| Molar entropy        |J/(mol K) |`mol_entropy`          | `s`, `mol_s`                   |
+| Mass entropy         |J/(kg K)  |`mass_entropy`         | `mass_s`                       |
+| Total entropy        |J/K       |`total_entropy`        | `total_s`                      |
+| Amount of Moles      |mol       |`moles`                | `moles`                        |
+| Amount of Mass       |kg        |`mass`                 | `mass`                         |
+| Molar Fraction       |no units  |`mol_fraction`         | `xn`                           |
+| Mass Fraction        |no units  |`mass_fraction`        | `xm`                           |
+| Molar Numbers        |mol       |`mol_number`           | `n`                            |
+| Mass Numbers         |kg        |`mass_number`          | `m`                            |
+| Molar Vapor Fraction |no units  |`mol_vapor_fraction`   | `vfrac`                        |
+| Mass Vapor Fraction  |no units  |`mass_vapor_fraction`  | `quality`                      |
+| Current Phase        |no units  |`phase`                | `phase`, `sat`                 |
+| Aditional Options    |no units  |`options`              | `options`                      |
+---
+
+
+You can view the keywords in the `KW_TO_SPEC` constant.
+
+The Following functions aren't accepted as a keyword to `state` or `spec`, but are defined on the package:
+
+
+| Property             |Units     |Accessor function      |Notes                                          |
+|----------------------|----------|-----------------------|-----------------------------------------------|
+| Molar Mass           |kg/mol    |`molar_mass`           |molecular weight ponderated by material amounts|
+| Molar Cₚ              |J/(mol K) |`mol_cp`               |no impl, for interop use                      |
+| Mass Cₚ               |J/(kg K)  |`mass_cp`              |no impl, for interop use                      |
+| Molar Cᵥ             |J/(mol K) |`mol_cv`               |no impl, for interop use                       |
+| Mass Cᵥ              |J/(kg K)  |`mass_cv`              |no impl, for interop use                       |
+| Speed of sound       |m/s       |`sound_speed`          |no impl, for interop use                       |
+---
+
+
+For defining property specifications, the package defines the `AbstractSpec` types and the `Spec` container. an individual specification can be defined by:
 
 ```julia
 using Unitful, ThermoState
@@ -59,14 +113,7 @@ And extract values for the use of property models:
 ```julia
 mass_rho0=mass_density(FromState(),st,"kg/L",18.0u"g/mol")
 ```
-So, instead of defining multiple functions for each combination of specifications, you just dispatch your new model on:
-```julia
-function property(model::MyModel,state::ThermodynamicState;kwargs...)
-    v = mol_volume(FromSpecs(),state,unit,molecular_weight(model)
-    T = mol_volume(FromSpecs(),state,u"°C",molecular_weight(model)) #default: SI units (Kelvin)
-    return property_impl(v,T)
-end
-```
+
 ## Specification object (`Spec`)
 
 A `Spec` is just a tagged value. it can be constructed by two ways:
@@ -184,8 +231,7 @@ v = mass_volume(FromSpecs(),a,u"cm^3/g",mw)
 The `mw` argument can be, depending of the situation, a number of vector of number. if not units are provided, a default units of `g/mol` are assumed. this conversion can be done on any unit that accepts molar, total and mass specifications, mass and moles themselves, molar and mass fractions,and molar and mass numbers.
 
 ## Variable `ThermodynamicState`s
-
-sometimes is needed a more direct approach to evaluation of properties.For example, you may want to create a function that accepts only temperature to pass it to an ODE system or an optimization system. for this purpose, the Singleton `VariableSpec` is provided. if you pass it to a `Spec` and create a `ThermodynamicState` object (or assign via keywords) the resulting state will be callable:
+Sometimes a more direct approach is needed when properties.For example, you may want to create a function that accepts only temperature to pass it to an ODE system or an optimization system. for this purpose, the Singleton `VariableSpec` is provided. if you pass it to a `Spec` or create a `ThermodynamicState` object, the resulting `state` or `spec` will be callable:
 
 ```julia-repl
 julia> a_t = state(t=VariableSpec(),ρ=5.0u"mol/L")
@@ -199,7 +245,10 @@ ThermodynamicState with 2 properties:
   Molar density : 5000.0[mol m^-3]
 
 ```
-up to 3 `VariableSpec` can be added to each `ThermodynamicState`. The variable is normalized by default (can be overrided with the optional keyword `normalize_units = false`)
+up to 3 `VariableSpec` can be added to each `ThermodynamicState`. a spec can only have one `VariableSpec` 
+
+Its important to note that the functor created accepts the arguments in the same order as the arguments passed to the state function. for example,  `st = state(t=VariableSpec(),P=VariableSpec())` will return a functor of the form `st(t,p)` whereas `st = state(P=VariableSpec(),t=VariableSpec())` will create a functor with reversed order: `st(p,t)`
+
 ## Dispatching on the state type with `state_type`
 
 Good. we now have a struct designed to store thermodynamic properties. now we can create functions that dispatch on a specific combination of thermodynamic specifications, using the function `state_type(st::ThermodynamicState)`:
@@ -232,18 +281,45 @@ Some abstract tuple types are saved on `ThermoState.QuickStates`. the tuple type
 
 ## Exported utilities
 
+## `@to_units`
+
+Sometimes, `Unitful` quantities are needed. by default (and convention) all property accessors return a number without units, in SI system. You can automatically prefix the correct unit to the accessor function adding the `@to_units` macro at the start of the expression
+
+```julia
+st = state(t=1.0u"K",p=2.0u"Pa")
+t0 = temperature(FromState(),st) #returns 1.0
+t1 = @to_units temperature(FromState(),st) #returns 1.0 K
+t1 = @to_units temperature(FromState(),st)
+```
+
+## `@spec_str`
+
+Calling `spec(;key = value,normalize_units=true)` is simple, but it has a runtime cost. on the other part, `spec(sp::AbstractSpec,value,normalize_units::Bool=true)` can be determined at compile time. a problem with this interface is that writing the correct type can be cumbersome, for example, for some molar numbers:
+
+```julia
+n0 = spec(MaterialCompounds{MOLAR,TOTAL_AMOUNT}(),[0.1,0.3]) #very long type declaration
+```
+
+The `@spec_str` helps in this situation, creating the AbstractSpec corresponding to the input keyword:
+
+```julia
+n1 = spec(spec"n",[0.1,0.3]) #shorter
+n0 == n1 #true
+```
+
+
 ### `normalize_units(val)`
 
-on normal numbers, it is the identity, but on numbers or vectors of `Unitful.Quantity`,it converts the unit to an equivalent SI unit and strips the unit information.
+On normal numbers, it is the identity, but on numbers or vectors of `Unitful.Quantity`,it converts the unit to an equivalent SI unit and strips the unit information.
 
 ```julia
 x = 0.0u"°C"
-normalize_units(x) #373.15
+normalize_units(x) #273.15
 ```
 
 ### `convert_unit(from,to,val)`
 
-converts an unit from the unit stored in `from` to the unit stored in `to`. when both units are equal, it justs returns `val`. if `val` itself is an `unit`, then it convert the from the unit in `val` to the unit in `to`. 
+Converts an unit from the unit stored in `from` to the unit stored in `to`. when both units are equal, it justs returns `val`. if `val` itself is an `unit`, then it convert the from the unit in `val` to the unit in `to`. 
 
 ```julia
 convert_unit(u"Pa",u"kPa",1000.0) #1.0
@@ -252,7 +328,7 @@ convert_unit(u"Pa",u"kPa",1u"atm") #101.325
 
 ###  `default_units(val)`
 
-returns the SI unit of a thermodynamic specification type or a function name corresponding to those types:
+Returns the SI unit of a thermodynamic specification type or a function name corresponding to those types:
 
 ```julia
 #from a function
@@ -264,10 +340,11 @@ default_units(Pressure()) #u"Pa"
 
 ## Implementing a model using the `ThermoState` interface
 
-using this package, we can implement a basic ideal gas model that only calculates the pressure, given a temperature and molar volume, using the relation `pvₙ=Rt`:
+Using this package, we can implement a basic ideal gas model that only calculates the pressure, given a temperature and molar volume, using the relation `pvₙ=Rt`:
 
 ```julia
-using ThermoState, Unitful, ThermoState.QuickStates
+using ThermoState, Unitful, 
+using ThermoState.QuickStates #provides SingleVT for dispatch on state_type
 import ThermoState: pressure #import all functions to overload, if you have a custom property, this is not necessary.
 
 import ThermoState: molecular_weight #you can use your own name in your files, but it is recommended to use this to better interop between packages.
@@ -308,9 +385,176 @@ p = pressure(model,tx(30u"°C"))
 p_list = map(t-> pressure(model,tx(t)),273.0:373.0)
 ```
 
-## State of this package
+Here the actual function that does the work has the form `$property_impl(mt,model,args...)`, that accepts positional arguments of the form indicated by the result obtained by `state_type(st)`. in this example, it doesnt seem too useful, as there is only one posible implementation: `SingleVT`. However, this  helps when there is more than one posible pair of input to the function. For example, with this dispatch, you can do this:
 
-At the moment of writing this, this package is a  experimental state and many features could (and will) change, please write any sugerences on the issues!, pull requests are very appreciated!
+```julia
+
+struct WaterModel end
+
+...
+
+#Enthalpy from  Pressure - Temperature 
+function mol_enthalpy_impl(::SinglePT,::WaterModel,p,t)
+...
+end
+
+#Enthalpy from  Volume - Temperature 
+function mol_enthalpy_impl(::SingleVT,::WaterModel,v,t)
+...
+end
+
+#Enthalpy from  Entropy - Temperature 
+function mol_enthalpy_impl(::SingleST,::WaterModel,s,t)
+...
+end
+
+
+#Enthalpy from  Pressure - Entropy 
+function mol_enthalpy_impl(::SinglePS,::WaterModel,p,s)
+...
+end
+
+#ThermoState interface, only needed once
+function mol_enthalpy(model::WaterModel,st::ThermodynamicState,unit="J/mol")
+  return mol_enthalpy(state_type(st),model,st,unit)
+end
+
+#dispatch on the apropiate implementation, extracting the args from st
+function mol_enthalpy(mt::SingleVT,model::WaterModel,st::ThermodynamicState,unit)
+    v = mol_volume(FromState(),st,u"m^3/mol",mw)
+    t = temperature(FromState(),st,u"K") 
+    val = mol_enthalpy(mt,model,v,t)
+    return convert_unit(u"J/mol",unit,val)
+end
+
+```
+
+You can also provide automatic conversion to mass an total units, defining the following functions:
+
+```julia
+
+function mass_enthalpy(model::WaterModel,st::ThermodynamicState,unit="J/kg")
+  mol_h = mol_enthalpy(model,st) #we dont care about state_type, just the result
+  #to obtain mass_h, we need to divide by kg/mol
+  kg_per_mol = molar_mass(FromState(),st,u"kg/mol",molecular_weight(model)) #we can do this or overload molar_mass(WaterModel,st)
+
+  mass_h = mol_h/kg_per_mol
+  return convert_unit(u"J/kg",unit,mass_h)
+end
+
+function total_enthalpy(model::WaterModel,st::ThermodynamicState,unit="J")
+  mol_h = mol_enthalpy(model,st) 
+  #to obtain total_h, we need to divide by moles
+  mol = moles(FromState(),st,u"mol",molecular_weight(model)) #we can do this or overload moles(WaterModel,st)
+  total_h = mol_h*mol
+  return convert_unit(u"J/kg",unit,total_h)
+end
+```
+As seen here, this is an easy, but repetitive and boring task. Thankfully, julia metaprogramming helps a lot here. if you have a lot of properties, you can evaluate all those functions at once this `@eval`. This is an actual piece of code used on WaterIF97.jl (not published yet). the implementation functions where defined before hand, whereas the `ThermoState` interface is mostly defined in this `@eval` loop
+
+```julia
+for op in [:helmholtz, :gibbs, :internal_energy, :enthalpy,:cp,:cv,:volume,:entropy]
+        mol_op_impl = Symbol(:mol_,op,:_impl)
+        mass_op_impl = Symbol(:mass_,op,:_impl)
+        total_op_impl = Symbol(:total_,op,:_impl)
+        mol_op = Symbol(:mol_,op)
+        mass_op = Symbol(:mass_,op)
+        total_op = Symbol(:total_,op)
+        if op == :volume
+            _unit = u"m^3/kg"
+            mol_unit = u"m^3/mol"
+            total_unit = u"m^3"
+
+        elseif op in (:cv,:cp,:entropy)
+            _unit = u"J/(kg*K)"
+            mol_unit = u"J/(mol*K)"
+            total_unit = u"J/(K)"
+        else
+            _unit = u"J/(kg)"
+            mol_unit = u"J/(mol)"
+            total_unit = u"J"
+        end
+     
+        @eval begin
+
+            #dispatch basic mass impl to the correct region, P,T
+            function $mass_op_impl(mt::SinglePT,model::IndustrialWater,p,t)
+                id = region_id(mt,model,p,t)
+                return $mass_op_impl(mt,IF97Region{id}(),p,t)
+            end
+
+
+            function $mass_op(model::IndustrialWater,st::ThermodynamicState,unit=$_unit)
+                return $mass_op(state_type(st),model,st,unit)
+            end
+            # P T impl
+            function $mass_op(mt::SinglePT,model::IndustrialWater,st::ThermodynamicState,unit)
+                p = pressure(FromState(),st)
+                t = temperature(FromState(),st)
+                res = $mass_op_impl(mt,model,p,t)
+                return convert_unit($_unit,unit,res)
+            end
+
+            #mol op
+            function $mol_op(model::IndustrialWater,st::ThermodynamicState,unit=$mol_unit)
+                prod = molar_mass(FromState(),st,u"kg/mol",molecular_weight(model))
+                res =  $mass_op(state_type(st),model,st,$_unit)*prod
+                return convert_unit($mol_unit,unit,res)
+            end 
+        end
+
+        if !(op in (:cv,:cp))
+            #total ops, cv and cp dont have total operations
+            @eval begin
+                function $total_op(model::IndustrialWater,st::ThermodynamicState,unit=$total_unit)
+                    prod = mass(FromState(),st,u"kg",molecular_weight(model))
+                    res =  $mass_op(mt,model,st,unit)*prod
+                    return convert_unit($total_unit,unit,res)
+                end
+            end
+        end
+
+    if op != :enthalpy
+        @eval begin
+            #if not enthalpy, define PH impl
+            function $mass_op_impl(mt::SinglePH,model::IndustrialWater,p,h)
+                id = region_id(mt,model,p,h)
+                return $mass_op_impl(mt,IF97Region{id}(),p,h)
+            end
+
+            function $mass_op(mt::SinglePH,model::IndustrialWater,st::ThermodynamicState,unit)
+                p = pressure(FromState(),st)
+                h = mass_enthalpy(FromState(),st)
+                res = $mass_op_impl(mt,model,p,h)
+                return convert_unit($_unit,unit,res)
+            end
+        end   
+    end
+
+    if op != :entropy
+        @eval begin
+            #if not entropy, define PS impl
+            function $mass_op_impl(mt::SinglePS,model::IndustrialWater,p,s)
+                id = region_id(mt,model,p,h)
+                t = temperature_impl(mt,IF97Region{id}(),p,s) #transform to SinglePT
+                _mt = QuickStates.pt()
+                return $mass_op_impl(_mt,model,p,t)
+            end
+
+            function $mass_op(mt::SinglePS,model::IndustrialWater,st::ThermodynamicState,unit)
+                p = pressure(FromState(),st)
+                s = mass_entropy(FromState(),st)
+                res = $mass_op_impl(mt,model,p,s)
+                return convert_unit($_unit,unit,res)
+            end
+        end   
+    end
+end
+```
+With this loop, we defined at 22 property accessor functions, in molar, mass an total units, with 3 implementations each (except enthalpy and entropy, with 2 implementations).
+
+
+
 
 
 
