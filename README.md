@@ -98,19 +98,29 @@ mass_rho0=mass_density(FromState(),st,"kg/L",18.0u"g/mol")
 A `Spec` is just a tagged value. it can be constructed by two ways:
 - type-value constructor: 
   ```julia
-   t0 = spec(temperature,300.15)
-   t0 = spec(temperature,30u"°C") #normalized
-   t0 = spec(temperature,30u"°C",false) #not normalized
+   t0 = spec(Types.Temperature(),300.15)
+   t0 = spec(Types.Temperature(),30u"°C") #normalized
+   t0 = spec(Types.Temperature(),30u"°C",false) #not normalized
+  ```
+
+- type-value constructor (using `@spec_str` macro): 
+  ```julia
+   t0 = spec(spec"t",300.15)
+   t0 = spec(spec"t",30u"°C") #normalized
+   t0 = spec(spec"t",30u"°C",false) #not normalized
   ```
   by default, unitful quantities are unit stripped and normalized to SI units, you can use the argument `normalize_units` to change that default.
-  there is a slight thing to mention: `temperature` is really a function, binded to the `Temperature <: AbstractSpec` type. this is for convenience, as we will see later.
+
 - keyword constructor: 
     ```julia
    t0 = spec(t= 300.15)
    t0 = spec(T= 30u"°C") 
    t0 = spec(T = 30u"°C",normalize_units= false) 
   ```
+
 All keyword arguments are stored in the `KW_TO_SPEC` dict keys.
+The Main difference between the type-value constructor and the keyword constructor is that the first can be resolved at compile time, where as the second has a runtime cost.
+
 
 The result of those operations is a `Spec` struct:
 ```julia-repl
@@ -146,6 +156,9 @@ julia> using ThermoState.Types #importing the spec types for shorter printing
 
 
 julia> typeof(specification(spec(mol_v = 0.005)))
+VolumeAmount{MOLAR,VOLUME}
+
+julia> typeof(spec"mol_v")
 VolumeAmount{MOLAR,VOLUME}
 
 julia> typeof(specification(spec(mass_rho = 875.2)))
@@ -190,13 +203,13 @@ You can skip the check of the Gibbs' Phase Rule using the `check = false` keywor
 
 ## Obtaining properties from a `ThermodynamicState` struct
 
-as said in the Basics section, you can query properties from the created `ThermodynamicState` struct. the way of obtaining those properties is by calling a property function. The interface proposed by this package is the following:
+As said in the Basics section, you can query properties from the created `ThermodynamicState` struct. the way of obtaining those properties is by calling a property function. The interface proposed by this package is the following:
 
 ```julia
 prop = property(model::MyModel,state::ThermodynamicState,unit::Unitful.unit=[default],args...)
 
 ```
-dispatching on the model type, you can calculate properties from the specifications contained in `state`.
+Dispatching on the model type, you can calculate properties from the specifications contained in `state`.
 This package exports one single model: `FromState`, that doesn't calculate (almost) anything, just checks if the selected property is in the argument, and if it is, it returns its numerical (unit stripped) value.
 By default, the units of the number returned correspond to SI units, you can obtain a number with appropiate units by passing a corresponding `unit` argument.
 the `FromState` model, given a corresponding molecular weight `mw` argument, can calculate derived properties, for example:
@@ -273,19 +286,19 @@ t1 = @to_units temperature(FromState(),st)
 
 ## `@spec_str`
 
-Calling `spec(;key = value,normalize_units=true)` is simple, but it has a runtime cost. on the other part, `spec(sp::AbstractSpec,value,normalize_units::Bool=true)` can be determined at compile time. a problem with this interface is that writing the correct type can be cumbersome, for example, for some molar numbers:
+Calling `spec(;key = value,normalize_units=true)` is simple, but it has a runtime cost. on the other part, `spec(sp::AbstractSpec,value,normalize_units::Bool=true)` can be determined at compile time. A problem with this interface is that writing the correct type can be cumbersome, for example, for some molar numbers:
 
 ```julia
 n0 = spec(MaterialCompounds{MOLAR,TOTAL_AMOUNT}(),[0.1,0.3]) #very long type declaration
 ```
 
-The `@spec_str` helps in this situation, creating the AbstractSpec corresponding to the input keyword:
+The `@spec_str` helps in this situation, creating the `AbstractSpec` type corresponding to the input keyword:
 
 ```julia
 n1 = spec(spec"n",[0.1,0.3]) #shorter
 n0 == n1 #true
 ```
-
+The statement `spec(spec"n",[0.1,0.3])` can be defined at compile time.
 
 ### `normalize_units(val)`
 
