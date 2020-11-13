@@ -270,6 +270,7 @@ Some abstract tuple types are saved on `ThermoState.QuickStates`. the tuple type
 - `SingleΦmP,MultiΦmP`
 - `SingleΦnT,MultiΦnT`(molar vapor fraction)
 - `SingleΦnP,MultiΦnP`
+- `SingleT,MultiT` (a state that has a temperature)
 
 ## Exported utilities
 
