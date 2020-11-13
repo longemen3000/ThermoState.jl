@@ -16,7 +16,6 @@ include("fromspecs_props.jl")
 
 
 
-#Spec Dispatch Types
 #Spec types
 export Spec,ThermodynamicState,VariableSpec
 
@@ -44,8 +43,14 @@ export mass_fraction, mol_fraction
 export mass_number, mol_number
 export options, phase, quality, mass_vapor_fraction,mol_vapor_fraction
 export molecular_weight
+
+#macros
 export @to_units, @spec_str
+
+#state type for dispach
 export state_type
+
+#modules
 export Types,QuickStates,StatePoints
 
 end # module
