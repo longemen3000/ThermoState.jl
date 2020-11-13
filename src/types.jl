@@ -356,6 +356,9 @@ const MultiΦmT = Tuple{VaporFraction{MASS},Temperature,MaterialCompounds}
 ϕpx() = (VaporQuality(),Pressure(),MaterialCompounds{MOLAR,FRACTION}())
 ϕpn() = (VaporQuality(),Pressure(),MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
 
+const MultiT = Union{Tuple{Temperature,AbstractSpec,MaterialCompounds},Tuple{AbstractSpec,Temperature,MaterialCompounds}}
+const SingleT = Union{Tuple{Temperature,AbstractSpec,SingleComponent},Tuple{AbstractSpec,Temperature,SingleComponent}}
+
 export SinglePT,MultiPT
 export SingleVT,MultiVT
 export SinglePS,MultiPS
@@ -369,6 +372,7 @@ export SingleΦmP,MultiΦmP
 export SingleΦnT,MultiΦnT
 export SingleΦnP,MultiΦnP
 export SinglePV,MultiPV
+export SingleT,MultiT
 
 end
 
