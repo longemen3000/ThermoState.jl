@@ -96,7 +96,6 @@ function total_volume(model::FromState,st::ThermodynamicState,unit::T=u"m^3",mw=
     sval = throw_get_spec(VolumeAmount,st)
     val = to_spec(st,sval,mw,VolumeAmount{TOTAL,VOLUME}())
     return convert_unit(u"m^3",unit,val)
-
 end
 
 function mass_volume(model::FromState,st::ThermodynamicState,unit::T=u"(m^3)/kg",mw=nothing) where T <: MassVolumeUnits
@@ -109,7 +108,6 @@ function mol_volume(model::FromState,st::ThermodynamicState,unit::T=u"(m^3)/mol"
     sval = throw_get_spec(VolumeAmount,st)
     val = to_spec(st,sval,mw,VolumeAmount{MOLAR,VOLUME}())
     return convert_unit(u"m^3/mol",unit,val)
-
 end
 
 function mass_density(model::FromState,st::ThermodynamicState,unit::T=u"kg/m^3",mw=nothing) where T <: MassDensityUnits
@@ -122,7 +120,6 @@ function mol_density(model::FromState,st::ThermodynamicState,unit::T=u"mol/m^3",
     sval = throw_get_spec(VolumeAmount,st)
     val = to_spec(st,sval,mw,VolumeAmount{MOLAR,DENSITY}())
     return convert_unit(u"mol/m^3",unit,val)
-
 end
 
 function mol_fraction(model::FromState,st::ThermodynamicState,unit=nothing,mw=nothing)
@@ -138,7 +135,6 @@ end
 function mol_number(model::FromState,st::ThermodynamicState,unit=u"mol",mw=nothing)
     val = to_spec_compounds(st,mw,MaterialCompounds{MOLAR,TOTAL_AMOUNT}())
     return convert_unit.(u"mol",unit,val)
-
 end
 
 function mass_number(model::FromState,st::ThermodynamicState,unit=u"kg",mw=nothing)
@@ -199,4 +195,9 @@ function mass_cp end
 function mass_cv end
 function sound_speed end
 
+default_units(property::typeof(mol_cp)) = u"J/(mol*K)"
+default_units(property::typeof(mol_cv)) = u"J/(mol*K)"
+default_units(property::typeof(mass_cp)) = u"J/(kg*K)"
+default_units(property::typeof(mass_cv)) = u"J/(kg*K)"
+default_units(property::typeof(sound_speed)) = u"m/s"
 
