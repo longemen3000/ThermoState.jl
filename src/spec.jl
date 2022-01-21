@@ -178,7 +178,6 @@ function spec(sp::HumiditySpec,  val::Number,normalize_units::Bool=true)
     end
 end
 
-
 function spec(sp::Pressure, val::Nothing,normalize_units::Bool=true)
     return Spec(sp,val)
 end
@@ -231,29 +230,11 @@ function spec(t::T, u,normalize_units::Bool=true) where T<:CategoricalSpec
     return Spec(t,u)
 end
 
-
-
-function spec(;kwargs...)
-    if hasproperty(kwargs.data,:normalize_units)
-        norm_units = getproperty(kwargs.data,:normalize_units)
-        if length(kwargs.data)==2
-            kw1,kw2 = keys(kwargs)
-            if kw1 == :normalize_units
-                return spec(KW_TO_SPEC[kw2],last(Base.values(kwargs.data)),norm_units)
-            else
-                return spec(KW_TO_SPEC[kw1],first(Base.values(kwargs.data)),norm_units)
-            end
-        else
-            throw("invalid keyword combination.")
-        end
-    else
-        if length(kwargs.data)==1
-            return spec(KW_TO_SPEC[first(keys(kwargs.data))],first(Base.values(kwargs.data)))
-        else
-            throw("invalid keyword combination.")
-        end
-    end
+function spec(;normalize_units::Bool = true,kwargs...)
+    vals = values(kwargs)
+    return spec(KW_TO_SPEC[only(keys(vals))],only(values(vals)))
 end
+
 """
     struct ThermodynamicState{S,C}
 
@@ -276,19 +257,9 @@ Base.values(s::ThermodynamicState) = s.specs
 const MATERIAL_SINGLE_MAX = 100
 
  #default
- function _reduce_check_mass(x::T) where T<: AbstractSpec
-    return _reduce_check_mass(T)
- end
-
- @generated function static_check_mass_kws(x::Val{T}) where T
-    _type = KW_TO_SPEC[T]
-    res = _reduce_check_mass(typeof(_type))
-    return :($res)
-end
-_reduce_check_mass(x::Symbol) = static_check_mass_kws(Val(x))
-
+_reduce_check_mass(x::T) where T<: AbstractSpec =  _reduce_check_mass(T)
+_reduce_check_mass(sp::Spec{T}) where T= _reduce_check_mass(T)
 _reduce_check_mass(::Type) = 0
-_reduce_check_mass(sp::Spec) = _reduce_check_mass(typeof(specification(sp)))
 _reduce_check_mass(::Type{MaterialAmount{MOLAR}}) = 1
 _reduce_check_mass(::Type{MaterialAmount{MASS}}) = 2
 
@@ -307,47 +278,22 @@ _reduce_check_mass(::Type{HumiditySpec{RelativeHumidity}}) = 3500
 _reduce_check_mass(::Type{HumiditySpec{HumidityDewPoint}}) = 3600
 
 _reduce_check_phase(::Type) = 0
-_reduce_check_phase(sp::Spec) = _reduce_check_phase(typeof(specification(sp)))
-function _reduce_check_phase(x::T) where T<: AbstractSpec
-    return _reduce_check_phase(T)
- end
-
- @generated function static_check_phase_kws(x::Val{T}) where T
-    _type = KW_TO_SPEC[T]
-    res = _reduce_check_phase(typeof(_type))
-    return :($res)
-end
-
-_reduce_check_phase(x::Symbol) = static_check_phase_kws(Val(x))
-
+_reduce_check_phase(sp::Spec{T}) where T= _reduce_check_phase(T)
+_reduce_check_phase(x::T) where T<: AbstractSpec = _reduce_check_phase(T)
 _reduce_check_phase(::Type{TwoPhaseEquilibrium}) = 1
 _reduce_check_phase(::Type{VaporFraction}) = 1
 _reduce_check_phase(::Type{PhaseFractions}) = 10
 
-
-
-#function to correctly dispatch on the function terms
-keys_or_tuple(x::Tuple) = x
-keys_or_tuple(x::NamedTuple) = keys(x)
-
-
 function _specs_components(args)::Int64
-    return mapreduce(_reduce_check_mass,+,keys_or_tuple(args))
+    return mapreduce(_reduce_check_mass,+,args)
 end
 
 #this needs future work to specify
 function _specs_phase_basis(args)::Int64
-    return mapreduce(_reduce_check_phase,+,keys_or_tuple(args))
+    return mapreduce(_reduce_check_phase,+,args)
 end
 
-#_reduce_mass_spec_c(x::Spec) = 0
-#_reduce_mass_spec_c(x::Spec{MaterialCompounds}) = length(value(x))
-
-_specs_C(kwargs::NamedTuple,kw::Int64) = 1
 _specs_C(tup::Tuple,kw::Int64)::Int64 = 1
-
-#_reduce_mass_spec_p(x::Spec) = 0
-#_reduce_mass_spec_p(x::Spec{PhaseFractions}) = length(value(x))
 
 function _specs_P(kw::Int64)::Int64
     if iszero(kw)
@@ -359,26 +305,15 @@ function _specs_P(kw::Int64)::Int64
     end
 end
 
-_reduce_check_opt(x::Spec) = _reduce_check_opt(typeof(specification(x)))
-
+_reduce_check_opt(x::Spec{T}) where T= _reduce_check_opt(T)
 _reduce_check_opt(::Type) = 0
 _reduce_check_opt(::Type{PhaseTag}) = 1
 _reduce_check_opt(::Type{Options}) = 1
-#optional values not counted during degrees of freedom calc
-@generated function static_check_opt_kws(x::Val{T}) where T
-    _type = KW_TO_SPEC[T]
-    res = _reduce_check_opt(typeof(_type))
-    return :($res)
-end
-_reduce_check_opt(x::Symbol) = static_check_opt_kws(Val(x))
-
-
-
 
 
 function _specs_F(args,mass_basis::Int64,phase_basis::Int64)::Int64
     F = length(args)
-    opt = mapreduce(_reduce_check_opt,+,keys_or_tuple(args))
+    opt = mapreduce(_reduce_check_opt,+,args)
     F = F - opt
     #MATERIAL_SINGLE_MAX = 100
     mass_basis_mod = mod(mass_basis,MATERIAL_SINGLE_MAX)
@@ -443,9 +378,17 @@ function check_spec(args)
         return mass_basis
     end
 end
+
+function check_unique(args)
+    all_unique = spec_tuple_unique(args) #this function is the main speed bottleneck
+    if !all_unique
+        throw(error("specifications are not unique."))
+    end
+    return nothing
+end
 _is_variable_spec(x) = false
-_is_variable_spec(x::VariableSpec) = true
-_is_variable_spec(x::Spec{T,VariableSpec} where T) =true
+_is_variable_spec(::VariableSpec) = true
+_is_variable_spec(::Spec{T,VariableSpec} where T) =true
 
 
 """
@@ -483,41 +426,31 @@ st4 = state(t=1,T=2,p=3,P=4,check=false) #doesnt error, doenst check
 
 """
 function state(;check=true,normalize_units=true,kwargs...)
-    if !any(_is_variable_spec,values(kwargs.data))
-        f0 = k -> spec(KW_TO_SPEC[k],getproperty(kwargs.data,k),normalize_units)
-        tup = map(f0,keys(kwargs.data))
-        callables = ()
-    else
-        tup = ((spec(KW_TO_SPEC[k],v,normalize_units) for (k, v) in kwargs if !_is_variable_spec(v))...,)
-        callables = ((KW_TO_SPEC[k] for (k,v) in kwargs if _is_variable_spec(v))...,)
-    end
-    if check
-        mass_basis = check_spec(kwargs.data)
-        return ThermodynamicState(tup,callables)
-    else
-        return ThermodynamicState(tup,callables)
-    end
+    named_tuple = values(kwargs)
+    kws = keys(named_tuple)
+    vals = values(named_tuple)
+    kw_types = ((KW_TO_SPEC[k] for k in kws)...,)
+    pre_spec = _spectuple(kw_types,vals,normalize_units)
+    return _state(pre_spec,check,true)
+end
+
+function _spectuple(kw_types::K,vals::V,normalize_units::Bool) where {K,V}
+    return spec.(kw_types,vals,normalize_units)
+end
+
+function _state(pre_spec::T,check::Bool,unique::Bool) where T
+    varspec = _is_variable_spec.(pre_spec)
+    isfixed = !any(varspec)
+    check && check_spec(pre_spec)
+    !unique && check_unique(pre_spec)
+    isfixed && return ThermodynamicState(pre_spec,())
+    tup = filter(!_is_variable_spec,pre_spec)
+    callables = filter(_is_variable_spec,pre_spec) 
+    return ThermodynamicState(tup,callables)
 end
 
 function state(args::Vararg{Spec};check=true)
-    if !any(_is_variable_spec,args)
-        callables = ()
-        tup = args
-    else
-        tup = ((arg for arg in args if !_is_variable_spec(arg))...,)
-        callables  = ((arg.type for arg in args if _is_variable_spec(arg))...,)
-    end
-    if check
-        all_unique = spec_tuple_unique(args) #this function is the main speed bottleneck
-        if !all_unique
-            throw(error("specifications are not unique."))
-        end
-        mass_basis = check_spec(args)
-
-        return ThermodynamicState(tup,callables)
-    else
-        return ThermodynamicState(tup,callables)
-    end
+    return _state(args,check,check)
 end
 
 function state(specs::NTuple{N,Spec}) where N
@@ -526,22 +459,22 @@ end
 
 function (f::ThermodynamicState{T,Tuple{S1}})(x1::T1;normalize_units=true) where {T,S1,T1}
     return ThermodynamicState(
-    (spec(only(f.callables),x1,normalize_units),
+    (spec(only(f.callables).type,x1,normalize_units),
     f.specs...))
 end
 
 function (f::ThermodynamicState{S,Tuple{S1,S2}})(x1::T1,x2::T2;normalize_units=true) where {S,S1,S2,T1,T2}
     return ThermodynamicState(
-            (spec(first(f.callables),x1),
-            spec(last(f.callables),x2),
+            (spec(first(f.callables).type,x1,normalize_units),
+            spec(last(f.callables).type,x2,normalize_units),
             f.specs...))
 end
 
 function (f::ThermodynamicState{S,Tuple{S1,S2,S3}})(x1::T1,x2::T2,x3::T3;normalize_units=true) where {S,S1,S2,S3,T1,T2,T3}
     return ThermodynamicState(
-            (spec(first(f.callables),x1,normalize_units),
-            spec(f.callables[2],x2,normalize_units),
-            spec(last(f.callables),x3,normalize_units),
+            (spec(first(f.callables).type,x1,normalize_units),
+            spec(f.callables[2].type,x2,normalize_units),
+            spec(last(f.callables).type,x3,normalize_units),
             f.specs...))
 end
 
@@ -567,7 +500,6 @@ module StatePoints
     export CriticalPoint,NormalBoilingPoint,TriplePoint,NormalConditions,StandardConditions
 end
 
-
 function state(x::StatePoints.StandardConditions)
     _t = Spec(Temperature(),273.15)
     _p = Spec(Pressure(),100000.0)
@@ -583,7 +515,6 @@ end
 function state(x::StatePoints.NormalBoilingPoint)
     _p = Spec(Pressure(),101325.0)
     _sat = Spec(TwoPhaseEquilibrium(),true)
-
     return ThermodynamicState((_sat,_p))
 end
 

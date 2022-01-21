@@ -14,8 +14,6 @@ include("show.jl")
 include("specs_model.jl")
 include("fromspecs_props.jl")
 
-
-
 #Spec types
 export Spec,ThermodynamicState,VariableSpec
 

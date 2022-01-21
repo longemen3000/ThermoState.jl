@@ -195,9 +195,9 @@ function mass_cp end
 function mass_cv end
 function sound_speed end
 
-default_units(property::typeof(mol_cp)) = u"J/(mol*K)"
-default_units(property::typeof(mol_cv)) = u"J/(mol*K)"
-default_units(property::typeof(mass_cp)) = u"J/(kg*K)"
-default_units(property::typeof(mass_cv)) = u"J/(kg*K)"
-default_units(property::typeof(sound_speed)) = u"m/s"
+default_units(::typeof(mol_cp)) = u"J/(mol*K)"
+default_units(::typeof(mol_cv)) = u"J/(mol*K)"
+default_units(::typeof(mass_cp)) = u"J/(kg*K)"
+default_units(::typeof(mass_cv)) = u"J/(kg*K)"
+default_units(::typeof(sound_speed)) = u"m/s"
 
