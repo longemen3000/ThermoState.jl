@@ -1,3 +1,4 @@
+## Specification Object (`Spec`)
 
 For defining property specifications, the package defines the `AbstractSpec` types and the `Spec` container. an individual specification can be defined by:
 
@@ -15,8 +16,6 @@ And extract values for the use of property models:
 ```julia
 mass_rho0=mass_density(FromState(),st,"kg/L",18.0u"g/mol")
 ```
-
-## Specification Object (`Spec`)
 
 A `Spec` is just a tagged value. it can be constructed by two ways:
 - type-value constructor: 

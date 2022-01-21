@@ -1,4 +1,4 @@
-## Implementing a model using the `ThermoState` interface
+# Implementing a model using the `ThermoState` interface
 
 Using this package, we can implement a basic ideal gas model that only calculates the pressure, given a temperature and molar volume, using the relation `pvₙ=Rt`:
 
