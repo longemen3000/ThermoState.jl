@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>- · Chemicals.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link rel="canonical" href="https://longemen3000.github.io/ThermoState.jl/new_model/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><script src="../../copy.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">Chemicals.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../spec/">The Specification Object (<code>Spec</code>)</a></li><li><a class="tocitem" href="../state/"><code>ThermodynamicState</code></a></li><li><a class="tocitem" href="../utils/">Utilities</a></li><li><span class="tocitem">Examples</span><ul><li class="is-active"><a class="tocitem" href>-</a><ul class="internal"><li><a class="tocitem" href="#Implementing-a-model-using-the-ThermoState-interface"><span>Implementing a model using the <code>ThermoState</code> interface</span></a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>-</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>-</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/longemen3000/ThermoState.jl/blob/master/docs/src/new_model.md#L" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h2 id="Implementing-a-model-using-the-ThermoState-interface"><a class="docs-heading-anchor" href="#Implementing-a-model-using-the-ThermoState-interface">Implementing a model using the <code>ThermoState</code> interface</a><a id="Implementing-a-model-using-the-ThermoState-interface-1"></a><a class="docs-heading-anchor-permalink" href="#Implementing-a-model-using-the-ThermoState-interface" title="Permalink"></a></h2><p>Using this package, we can implement a basic ideal gas model that only calculates the pressure, given a temperature and molar volume, using the relation <code>pvₙ=Rt</code>:</p><pre><code class="language-julia hljs">using ThermoState, Unitful, 
+using ThermoState.QuickStates #provides SingleVT for dispatch on state_type
+import ThermoState: pressure #import all functions to overload, if you have a custom property, this is not necessary.
+
+import ThermoState: molecular_weight #you can use your own name in your files, but it is recommended to use this to better interop between packages.
+
+struct MyIdealGas
+    mw::Float64
+end
+#t
+molecular_weight(model::MyIdealGas) = model.mw
+
+#your implementation of pressure, with v and t. 
+#pass a state type to dispatch on the available properties.
+function pressure_impl(mt::SingleVT,model::MyIdealGas,v,t)
+    return 8.314*t/v
+end
+
+function pressure(model::MyIdealGas,st::ThermodynamicState,unit=u&quot;Pa&quot;)
+return pressure(state_type(st),model,st,unit)
+end
+
+function pressure(mt::SingleVT,model::MyIdealGas,st::ThermodynamicState,unit)
+    v = mol_volume(FromState(),st,u&quot;m^3/mol&quot;,mw)
+    t = temperature(FromState(),st,u&quot;K&quot;) 
+    val = pressure_impl(mt,model,v,t)
+    return convert_unit(u&quot;Pa&quot;,unit,val)
+end
+
+a = state(mass = 3u&quot;kg&quot;,total_v = 30u&quot;m^3&quot;,t=30u&quot;°C&quot;)
+model = MyIdealGas(18.01)
+p = pressure(model,a)
+</code></pre><p>Using a variable state:</p><pre><code class="language-julia hljs">tx = state(mass = 3u&quot;kg&quot;,total_v = 30u&quot;m^3&quot;,t=var) #one free variable
+p = pressure(model,tx(30u&quot;°C&quot;))
+p_list = map(t-&gt; pressure(model,tx(t)),273.0:373.0)</code></pre><p>Here the actual function that does the work has the form <code>$property_impl(mt,model,args...)</code>, that accepts positional arguments of the form indicated by the result obtained by <code>state_type(st)</code>. in this example, it doesnt seem too useful, as there is only one posible implementation: <code>SingleVT</code>. However, this  helps when there is more than one posible pair of input to the function. For example, with this dispatch, you can do this:</p><pre><code class="language-julia hljs">
+struct WaterModel end
+
+...
+
+#Enthalpy from  Pressure - Temperature 
+function mol_enthalpy_impl(::SinglePT,::WaterModel,p,t)
+...
+end
+
+#Enthalpy from  Volume - Temperature 
+function mol_enthalpy_impl(::SingleVT,::WaterModel,v,t)
+...
+end
+
+#Enthalpy from  Entropy - Temperature 
+function mol_enthalpy_impl(::SingleST,::WaterModel,s,t)
+...
+end
+
+
+#Enthalpy from  Pressure - Entropy 
+function mol_enthalpy_impl(::SinglePS,::WaterModel,p,s)
+...
+end
+
+#ThermoState interface, only needed once
+function mol_enthalpy(model::WaterModel,st::ThermodynamicState,unit=&quot;J/mol&quot;)
+  return mol_enthalpy(state_type(st),model,st,unit)
+end
+
+#dispatch on the apropiate implementation, extracting the args from st
+function mol_enthalpy(mt::SingleVT,model::WaterModel,st::ThermodynamicState,unit)
+    v = mol_volume(FromState(),st,u&quot;m^3/mol&quot;,mw)
+    t = temperature(FromState(),st,u&quot;K&quot;) 
+    val = mol_enthalpy(mt,model,v,t)
+    return convert_unit(u&quot;J/mol&quot;,unit,val)
+end
+</code></pre><p>You can also provide automatic conversion to mass an total units, defining the following functions:</p><pre><code class="language-julia hljs">
+function mass_enthalpy(model::WaterModel,st::ThermodynamicState,unit=&quot;J/kg&quot;)
+  mol_h = mol_enthalpy(model,st) #we dont care about state_type, just the result
+  #to obtain mass_h, we need to divide by kg/mol
+  kg_per_mol = molar_mass(FromState(),st,u&quot;kg/mol&quot;,molecular_weight(model)) #we can do this or overload molar_mass(WaterModel,st)
+
+  mass_h = mol_h/kg_per_mol
+  return convert_unit(u&quot;J/kg&quot;,unit,mass_h)
+end
+
+function total_enthalpy(model::WaterModel,st::ThermodynamicState,unit=&quot;J&quot;)
+  mol_h = mol_enthalpy(model,st) 
+  #to obtain total_h, we need to divide by moles
+  mol = moles(FromState(),st,u&quot;mol&quot;,molecular_weight(model)) #we can do this or overload moles(WaterModel,st)
+  total_h = mol_h*mol
+  return convert_unit(u&quot;J/kg&quot;,unit,total_h)
+end</code></pre><p>As seen here, this is an easy, but repetitive and boring task. Thankfully, julia metaprogramming helps a lot here. if you have a lot of properties, you can evaluate all those functions at once this <code>@eval</code>. This is an actual piece of code used on WaterIF97.jl (not published yet). the implementation functions where defined before hand, whereas the <code>ThermoState</code> interface is mostly defined in this <code>@eval</code> loop</p><pre><code class="language-julia hljs">for op in [:helmholtz, :gibbs, :internal_energy, :enthalpy,:cp,:cv,:volume,:entropy]
+        mol_op_impl = Symbol(:mol_,op,:_impl)
+        mass_op_impl = Symbol(:mass_,op,:_impl)
+        total_op_impl = Symbol(:total_,op,:_impl)
+        mol_op = Symbol(:mol_,op)
+        mass_op = Symbol(:mass_,op)
+        total_op = Symbol(:total_,op)
+        if op == :volume
+            _unit = u&quot;m^3/kg&quot;
+            mol_unit = u&quot;m^3/mol&quot;
+            total_unit = u&quot;m^3&quot;
+
+        elseif op in (:cv,:cp,:entropy)
+            _unit = u&quot;J/(kg*K)&quot;
+            mol_unit = u&quot;J/(mol*K)&quot;
+            total_unit = u&quot;J/(K)&quot;
+        else
+            _unit = u&quot;J/(kg)&quot;
+            mol_unit = u&quot;J/(mol)&quot;
+            total_unit = u&quot;J&quot;
+        end
+     
+        @eval begin
+
+            #dispatch basic mass impl to the correct region, P,T
+            function $mass_op_impl(mt::SinglePT,model::IndustrialWater,p,t)
+                id = region_id(mt,model,p,t)
+                return $mass_op_impl(mt,IF97Region{id}(),p,t)
+            end
+
+
+            function $mass_op(model::IndustrialWater,st::ThermodynamicState,unit=$_unit)
+                return $mass_op(state_type(st),model,st,unit)
+            end
+            # P T impl
+            function $mass_op(mt::SinglePT,model::IndustrialWater,st::ThermodynamicState,unit)
+                p = pressure(FromState(),st)
+                t = temperature(FromState(),st)
+                res = $mass_op_impl(mt,model,p,t)
+                return convert_unit($_unit,unit,res)
+            end
+
+            #mol op
+            function $mol_op(model::IndustrialWater,st::ThermodynamicState,unit=$mol_unit)
+                prod = molar_mass(FromState(),st,u&quot;kg/mol&quot;,molecular_weight(model))
+                res =  $mass_op(state_type(st),model,st,$_unit)*prod
+                return convert_unit($mol_unit,unit,res)
+            end 
+        end
+
+        if !(op in (:cv,:cp))
+            #total ops, cv and cp dont have total operations
+            @eval begin
+                function $total_op(model::IndustrialWater,st::ThermodynamicState,unit=$total_unit)
+                    prod = mass(FromState(),st,u&quot;kg&quot;,molecular_weight(model))
+                    res =  $mass_op(mt,model,st,unit)*prod
+                    return convert_unit($total_unit,unit,res)
+                end
+            end
+        end
+
+    if op != :enthalpy
+        @eval begin
+            #if not enthalpy, define PH impl
+            function $mass_op_impl(mt::SinglePH,model::IndustrialWater,p,h)
+                id = region_id(mt,model,p,h)
+                return $mass_op_impl(mt,IF97Region{id}(),p,h)
+            end
+
+            function $mass_op(mt::SinglePH,model::IndustrialWater,st::ThermodynamicState,unit)
+                p = pressure(FromState(),st)
+                h = mass_enthalpy(FromState(),st)
+                res = $mass_op_impl(mt,model,p,h)
+                return convert_unit($_unit,unit,res)
+            end
+        end   
+    end
+
+    if op != :entropy
+        @eval begin
+            #if not entropy, define PS impl
+            function $mass_op_impl(mt::SinglePS,model::IndustrialWater,p,s)
+                id = region_id(mt,model,p,h)
+                t = temperature_impl(mt,IF97Region{id}(),p,s) #transform to SinglePT
+                _mt = QuickStates.pt()
+                return $mass_op_impl(_mt,model,p,t)
+            end
+
+            function $mass_op(mt::SinglePS,model::IndustrialWater,st::ThermodynamicState,unit)
+                p = pressure(FromState(),st)
+                s = mass_entropy(FromState(),st)
+                res = $mass_op_impl(mt,model,p,s)
+                return convert_unit($_unit,unit,res)
+            end
+        end   
+    end
+end</code></pre><p>With this loop, we defined at 22 property accessor functions, in molar, mass an total units, with 3 implementations each (except enthalpy and entropy, with 2 implementations).</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../utils/">« Utilities</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.12 on <span class="colophon-date" title="Friday 21 January 2022 03:30">Friday 21 January 2022</span>. Using Julia version 1.6.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
