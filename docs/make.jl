@@ -15,7 +15,7 @@ makedocs(;
         "Home" => "index.md",
         "The Specification Object (`Spec`)" => "spec.md",
         "`ThermodynamicState`" => "state.md",
-        "Utilities" => "utils.md"
+        "Utilities" => "utils.md",
         "Examples" => [
             "new_model.md",
         ],
