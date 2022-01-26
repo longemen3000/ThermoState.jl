@@ -2,7 +2,7 @@ using Test
 using ThermoState
 using ThermoState.Types
 using ThermoState.QuickStates
-
+using ThermoState: value
 using Unitful
 
 
