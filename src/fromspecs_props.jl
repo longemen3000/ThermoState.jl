@@ -1,5 +1,3 @@
-##TODO: CHECK UNITS
-
 const MolarEnergyUnits = Unitful.Units{U,(Unitful.𝐍^-1)*Unitful.𝐌*Unitful.𝐋^2/Unitful.𝐓^2,A} where A where U
 const MassEnergyUnits = Unitful.Units{U,Unitful.𝐋^2/Unitful.𝐓^2,A} where A where U
 const MolUnits = Unitful.Units{U,Unitful.𝐍,A} where A where U
@@ -34,14 +32,26 @@ function mass(model::FromState,st::ThermodynamicState,unit::T=u"kg",mw=nothing) 
     return convert_unit(u"kg",unit,val)
 end
 
+function mass(model::FromState,st::ThermodynamicState,mw::T) where T
+    return mass(model,st,u"kg",mw)
+end
+
 function moles(model::FromState,st::ThermodynamicState,unit::T=u"mol",mw=nothing) where T <: MolUnits
     val = moles2(st,mw)
     return convert_unit(u"mol",unit,val)
 end
 
-function molar_mass(model::FromState,st::ThermodynamicState,unit=u"kg/mol",mw=nothing)
+function moles(model::FromState,st::ThermodynamicState,mw::T) where T
+    return moles(model,st,u"mol",mw)
+end
+
+function molar_mass(model::FromState,st::ThermodynamicState,unit::T = u"kg/mol",mw=nothing) where T<:Unitful.Units
     val = kg_per_mol2(st,mw)
     return convert_unit(u"kg/mol",unit,val)
+end
+
+function molar_mass(model::FromState,st::ThermodynamicState,mw::T) where T
+    return molar_mass(model,st,u"kg/mol",mw)
 end
 
 for (op,sp) in zip((:mol_helmholtz, :mol_gibbs, :mol_internal_energy, :mol_enthalpy),INTENSIVE_ENERGY_UNITS)
@@ -50,6 +60,10 @@ for (op,sp) in zip((:mol_helmholtz, :mol_gibbs, :mol_internal_energy, :mol_entha
             sval = throw_get_spec($sp,st)
             val = to_spec(st,sval,mw,MOLAR())
             return convert_unit(u"J/mol",unit,val)
+        end
+
+        function $op(model::FromState,st::ThermodynamicState,mw::T) where T 
+            return $op(model,st,u"J/mol",mw)
         end
     end
 end
@@ -60,7 +74,10 @@ for (op,sp) in zip((:mass_helmholtz, :mass_gibbs, :mass_internal_energy, :mass_e
             sval = throw_get_spec($sp,st)
             val = to_spec(st,sval,mw,MASS())
             return convert_unit(u"J/kg",unit,val)
-        end    
+        end   
+        function $op(model::FromState,st::ThermodynamicState,mw::T) where T 
+            return $op(model,st,u"J/kg",mw)
+        end
     end
 end
 
@@ -71,13 +88,22 @@ for (op,sp) in zip((:total_helmholtz, :total_gibbs, :total_internal_energy, :tot
                 val = to_spec(st,sval,mw,TOTAL())
                 return convert_unit(u"J",unit,val)
             end
+            function $op(model::FromState,st::ThermodynamicState,mw::T) where T 
+                return $op(model,st,u"J",mw)
+            end
     end
 end
+
+
 
 function mol_entropy(model::FromState,st::ThermodynamicState,unit::T=u"J/(K*mol)",mw=nothing) where T <: MolEntropyUnits
     sval = throw_get_spec(Entropy,st)
     val = to_spec(st,sval,mw,MOLAR())
     return convert_unit(u"J/(mol*K)",unit,val)
+end
+
+function mol_entropy(model::FromState,st::ThermodynamicState,mw::T) where T
+    return mol_entropy(model,st,u"J/(mol*K)",mw)
 end
 
 function mass_entropy(model::FromState,st::ThermodynamicState,unit::T=u"J/(K*kg)",mw=nothing) where T <: MassEntropyUnits
@@ -86,10 +112,18 @@ function mass_entropy(model::FromState,st::ThermodynamicState,unit::T=u"J/(K*kg)
     return convert_unit(u"J/(kg*K)",unit,val)
 end
 
+function mass_entropy(model::FromState,st::ThermodynamicState,mw::T) where T
+    return mass_entropy(model,st,u"J/(kg*K)",mw)
+end
+
 function total_entropy(model::FromState,st::ThermodynamicState,unit::T=u"J/(K)",mw=nothing) where T <: EntropyUnits
     sval = throw_get_spec(Entropy,st)
     val = to_spec(st,sval,mw,TOTAL())
     return convert_unit(u"J/(K)",unit,val)
+end
+
+function total_entropy(model::FromState,st::ThermodynamicState,mw::T) where T
+    return total_entropy(model,st,u"J/(K)",mw)
 end
 
 function total_volume(model::FromState,st::ThermodynamicState,unit::T=u"m^3",mw=nothing) where T <: Unitful.VolumeUnits
@@ -98,16 +132,28 @@ function total_volume(model::FromState,st::ThermodynamicState,unit::T=u"m^3",mw=
     return convert_unit(u"m^3",unit,val)
 end
 
+function total_volume(model::FromState,st::ThermodynamicState,mw::T) where T
+    return total_volume(model,st,u"m^3",mw)
+end
+
 function mass_volume(model::FromState,st::ThermodynamicState,unit::T=u"(m^3)/kg",mw=nothing) where T <: MassVolumeUnits
     sval = throw_get_spec(VolumeAmount,st)
     val = to_spec(st,sval,mw,VolumeAmount{MASS,VOLUME}())
     return convert_unit(u"m^3/kg",unit,val)
 end
 
+function mass_volume(model::FromState,st::ThermodynamicState,mw::T) where T
+    return mass_volume(model,st,u"m^3/kg",mw)
+end
+
 function mol_volume(model::FromState,st::ThermodynamicState,unit::T=u"(m^3)/mol",mw=nothing) where T <: MolVolumeUnits
     sval = throw_get_spec(VolumeAmount,st)
     val = to_spec(st,sval,mw,VolumeAmount{MOLAR,VOLUME}())
     return convert_unit(u"m^3/mol",unit,val)
+end
+
+function mol_volume(model::FromState,st::ThermodynamicState,mw::T) where T
+    return mol_volume(model,st,u"m^3/mol",mw)
 end
 
 function mass_density(model::FromState,st::ThermodynamicState,unit::T=u"kg/m^3",mw=nothing) where T <: MassDensityUnits
@@ -200,4 +246,5 @@ default_units(::typeof(mol_cv)) = u"J/(mol*K)"
 default_units(::typeof(mass_cp)) = u"J/(kg*K)"
 default_units(::typeof(mass_cv)) = u"J/(kg*K)"
 default_units(::typeof(sound_speed)) = u"m/s"
+
 

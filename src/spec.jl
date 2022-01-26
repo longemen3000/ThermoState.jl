@@ -76,7 +76,7 @@ struct Spec{T <: AbstractSpec,U}
     val::U
 end
 
-value(s::Spec) = s.val
+value(s::T) where T<:Spec = s.val
 specification(s::Spec) = s.type
 
 """

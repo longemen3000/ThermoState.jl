@@ -21,7 +21,7 @@ export Spec,ThermodynamicState,VariableSpec
 export spec,state
 
 #spec utilities
-export value,specification,values,get_spec
+export specification,get_spec,has_spec,amount_type
 #FromState Model
 export FromState
 

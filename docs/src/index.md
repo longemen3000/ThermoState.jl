@@ -6,7 +6,7 @@ CurrentModule = ThermoState
 ThermoState.jl is a basic block for interfacing and specifying thermodynamic models. this package proposes and provides tools to create a common property interface of the form: 
 
 ```julia
-property(model,state,unit)
+property(model,state::ThermodynamicState,unit)::ThermodynamicState
 ```
 
 This package proposes the following conventions for naming properties:
@@ -16,11 +16,6 @@ This package proposes the following conventions for naming properties:
  - `mass_$PROPERTY` is a property of units U/kg.
 
  - `total_$PROPERTY` is a property of units U. (total Helmholtz energy has joule units)
-
- See all defined properties in the API section
-```@index
-```
-
 
 
 

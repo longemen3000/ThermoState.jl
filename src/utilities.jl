@@ -13,12 +13,25 @@ julia> normalize_units(273.15)
 273.15
 ```
 """
-normalize_units(x) =  Unitful.ustrip.(Unitful.upreferred.(x))
+function normalize_units(x::Unitful.Quantity{T}) where T
+    x::T =  Unitful.ustrip(Unitful.upreferred(x))
+end
+
+function normalize_units(x::AbstractVector{T}) where T<:Unitful.Quantity{Q} where Q
+    return Unitful.ustrip.(Unitful.upreferred.(x))
+end
+
+normalize_units(x::Number) = x
+normalize_units(x::AbstractVector) = x
 
 
 #upreferred, but the standard unit with just numbers is transformed to kg/mol
 function mw_mul(x,mw::Unitful.Quantity)
-    return upreferred(x*mw)
+    return normalize_units(x*mw)
+end
+
+function mw_mul(x::Unitful.Quantity,mw::Unitful.Quantity)
+    return normalize_units(x*mw)
 end
 
 function mw_mul(x,mw)
@@ -26,7 +39,11 @@ function mw_mul(x,mw)
 end
 
 function mw_div(x,mw::Unitful.Quantity)
-    return upreferred(x/mw)
+    return normalize_units(x/mw)
+end
+
+function mw_div(x::Unitful.Quantity,mw::Unitful.Quantity)
+    return normalize_units(x/mw)
 end
 
 function mw_div(x,mw)

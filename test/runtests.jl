@@ -424,7 +424,7 @@ end
     xn = xn ./ sum(xn)
     st = state(sat=true,t=1u"K",xn=xn)
     @test (@to_units temperature(FromState(),st)) == 1u"K"
-    @test (@to_units temperature(FromState(),st,u"°C")) ==(-5443//20)u"°C"
+    @test (@to_units temperature(FromState(),st,u"°C")) ==-272.15u"°C"
     @test (@to_units mol_fraction(FromState(),st)) == xn
 
 end
