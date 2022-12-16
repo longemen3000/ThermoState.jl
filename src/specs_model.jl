@@ -114,7 +114,7 @@ function mass3(::Tuple{T,MaterialAmount{MASS}},st,mw) where T
     return normalize_units(value(get_spec(MaterialAmount{MASS}(),st)))*_one(st)
 end
 
-function mass3(::Tuple{SingleComponent,MaterialAmount{MOLAR}},st,mw) where T
+function mass3(::Tuple{SingleComponent,MaterialAmount{MOLAR}},st,mw)
     mw_error(mw)
     mol = value(get_spec(MaterialAmount{MOLAR}(),st))
     return normalize_units(mw_mul(mol,mw))*_one(st)
